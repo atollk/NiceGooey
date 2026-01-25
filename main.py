@@ -9,6 +9,8 @@ def process(*, name: str):
 def main():
     parser = ArgumentParser()
     parser.add_argument("--name", type=str, default="World", help="Your name")
+    parser.add_argument("--age", "-a", type=int, help="Your age")
+    parser.add_argument("--disable-meme", "-dm", action="store_true", help="Disable memes")
     args = parser.parse_args()
     process(name=args.name)
 
