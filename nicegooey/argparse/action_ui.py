@@ -13,15 +13,14 @@ class ActionUi[ActionT: argparse.Action]:
     action: ActionT
 
     @staticmethod
-    def from_action(parent: NiceGooeyMain, action: argparse.Action) -> "ActionUiElement":
+    def from_action(parent: NiceGooeyMain, action: argparse.Action) -> "ActionUi | None":
         match action:
             case argparse._StoreAction():
                 return StoreActionUiElement(parent=parent, action=action)
             case argparse._StoreConstAction():
                 return StoreConstActionUiElement(parent=parent, action=action)
             case argparse._ExtendAction():
-                pass  # TODO
-                raise NotImplementedError()
+                return ExtendActionUiElement(parent=parent, action=action)
             case argparse._AppendAction():
                 return AppendActionUiElement(parent=parent, action=action)
             case argparse._AppendConstAction():
@@ -30,7 +29,7 @@ class ActionUi[ActionT: argparse.Action]:
                 return CountActionUiElement(parent=parent, action=action)
             case argparse._HelpAction() | argparse._VersionAction():
                 # help and version are handled differently
-                return ActionUiElement(parent, action)
+                return None
             case argparse._SubParsersAction():
                 pass  # TODO
                 raise NotImplementedError()

@@ -1,7 +1,10 @@
 import argparse
+import contextlib
+import io
 import logging
 import typing
 
+import nicegui.run
 from nicegui import ui, binding
 from nicegui.elements.mixins import validation_element
 
@@ -34,6 +37,23 @@ class HotReloadException(Exception):
     """Exception to signal hot-reload in nicegooey.argparse."""
 
     pass
+
+
+class CallbackWriter(io.StringIO):
+    """a StringIO-based object that calls a function on every write."""
+
+    def __init__(self, callback: typing.Callable[[str], ...], *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.callback = callback
+
+    def write(self, s: str) -> int:
+        result = super().write(s)
+        self.callback(s)
+        return result
+
+    def writelines(self, lines: typing.Iterable[str]) -> None:
+        for line in lines:
+            self.write(line)
 
 
 class NiceGooeyMain:
@@ -71,23 +91,41 @@ class NiceGooeyMain:
             raise RuntimeError("NiceGooeyMain has no parent parser set")
         return self.namespace
 
-    def _submit(self) -> None:
+    async def _submit(self) -> None:
+        # Validate
         validation_error = False
         for action, element in self.action_elements.items():
             validation_error = validation_element or not element.validate()
-        if not validation_error:
-            assert self.main_func is not None
-            self.main_func()
+        if validation_error:
+            logger.warning(f"Validation error: {validation_error}")
+            return
+
+        # Process result
+        assert self.main_func is not None
+        dialog = ui.dialog()
+        with dialog:
+            with ui.card():
+                terminal = ui.xterm()
+                finish_button = ui.button("Close", on_click=dialog.close)
+        finish_button.disable()
+        dialog.open()
+        file_buffer = CallbackWriter(terminal.write)
+        with contextlib.redirect_stdout(file_buffer):
+            await nicegui.run.io_bound(self.main_func)
+        finish_button.enable()
 
     def ui_root(self) -> None:
+        from .action_ui import ActionUi
+
         if self.main_func is None:
             raise RuntimeError("NiceGooeyMain.parse_args called outside of nice_gooey_argparse_main")
 
         # TODO: dark mode to save my eyes
         dark = ui.dark_mode(True)
-        ui.label("Switch mode:")
-        ui.button("Dark", on_click=dark.enable)
-        ui.button("Light", on_click=dark.disable)
+        with ui.row():
+            ui.label("Switch mode:")
+            ui.button("Dark", on_click=dark.enable)
+            ui.button("Light", on_click=dark.disable)
 
         for action_group in self.parent_parser._action_groups:
             # Find relevant actions for this group
@@ -108,15 +146,11 @@ class NiceGooeyMain:
                 ui.label(action_group.title).classes("text-lg font-bold mb-2")
                 with ui.list().props("bordered separator"):
                     for action in actions:
-                        with ui.item():
-                            self._ui_action(action)
+                        element = ActionUi.from_action(self, action)
+                        if element is not None:
+                            with ui.item():
+                                element.render()
         ui.button("Submit").on("click", self._submit)
-
-    def _ui_action(self, action: argparse.Action) -> None:
-        from .action_ui import ActionUi
-
-        element = ActionUi.from_action(self, action)
-        element.render()
 
 
 main_instance = NiceGooeyMain()

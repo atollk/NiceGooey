@@ -1,14 +1,18 @@
+import argparse
+import time
+
 from nicegooey.argparse import nice_gooey_argparse_main
-from argparse import ArgumentParser
 
 
-def process(*, name: str):
-    print(f"Hello from nicegooey! {name}")
+def process(parser: argparse.ArgumentParser, args: argparse.Namespace):
+    print(args)
+    time.sleep(1)
+    print("wake up!")
 
 
 @nice_gooey_argparse_main(patch_argparse=True)
 def main():
-    parser = ArgumentParser()
+    parser = argparse.ArgumentParser()
     parser.add_argument("--name", type=str, default="World", help="Your name")
     parser.add_argument("--age", "-a", type=int, help="Your age")
     parser.add_argument("--disable-meme", "-dm", action="store_true", help="Disable memes")
@@ -19,7 +23,7 @@ def main():
     )
     parser.add_argument("--append", action="append", type=str, help="Append multiple values")
     args = parser.parse_args()
-    process(name=args.name)
+    process(parser, args)
 
 
 if __name__ in {"__main__", "__mp_main__"}:
