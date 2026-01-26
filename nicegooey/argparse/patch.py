@@ -1,28 +1,31 @@
 import contextlib
+import logging
 import typing
-from .main import NiceGooeyMain
+from .main import main_instance, HotReloadException
+import functools
+import argparse
 
 Param = typing.ParamSpec("Param")
 RetType = typing.TypeVar("RetType")
 MainCallable = typing.Callable[Param, RetType]
 
-main_instance = NiceGooeyMain()
-
 
 @contextlib.contextmanager
 def _argparse_patch_context(*, patch: bool) -> typing.Generator[None, None, None]:
     """Context manager to patch argparse.ArgumentParser with nice_gooey.argparse.ArgumentParser."""
-    import argparse as std_argparse
-    import nicegooey.argparse as ng_argparse
 
-    argument_parser_backup = std_argparse.ArgumentParser
-    if patch:
-        std_argparse.ArgumentParser = ng_argparse.ArgumentParser
-    try:
+    def parse_args(self: argparse.ArgumentParser, *args, **kwargs) -> argparse.Namespace | typing.Never:
+        return main_instance.parse_args(self, *args, **kwargs)
+
+    if not patch:
         yield
-    finally:
-        if patch:
-            std_argparse.ArgumentParser = argument_parser_backup
+    else:
+        original_parse_args = argparse.ArgumentParser.parse_args
+        argparse.ArgumentParser.parse_args = parse_args
+        try:
+            yield
+        finally:
+            argparse.ArgumentParser.parse_args = original_parse_args
 
 
 @contextlib.contextmanager
@@ -36,11 +39,16 @@ def _active_main_function_context(main_func: MainCallable) -> typing.Generator[N
         main_instance.main_func = None
 
 
-def nice_gooey_argparse_main(patch_argparse: bool = True) -> typing.Callable[[MainCallable], MainCallable]:
+def nice_gooey_argparse_main(*, patch_argparse: bool = True) -> typing.Callable[[MainCallable], MainCallable]:
     def decorator(func: MainCallable) -> MainCallable:
+        @functools.wraps(func)
         def wrapper(*args: Param.args, **kwargs: Param.kwargs) -> RetType:
             with _argparse_patch_context(patch=patch_argparse), _active_main_function_context(main_func=func):
-                return func(*args, **kwargs)
+                try:
+                    return func(*args, **kwargs)
+                except HotReloadException:
+                    logging.getLogger("nicegooey.argparse").info("Hot-reload triggered")
+                    return None
 
         return wrapper
 

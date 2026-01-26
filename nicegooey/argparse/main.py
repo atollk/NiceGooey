@@ -1,37 +1,70 @@
 import argparse
+import logging
 import typing
 
-from nicegui import ui
+from nicegui import ui, binding
 from nicegui.elements.mixins import validation_element
 
 if typing.TYPE_CHECKING:
-    from .argument_parser import ArgumentParser
     from .action_ui import ActionUi
+
+logger = logging.getLogger("nicegooey.argparse")
+
+
+class BindingNamespace(argparse.Namespace):
+    def __init__(self, **kwargs: typing.Any) -> None:
+        super().__init__(**kwargs)
+        self._bindings: dict[str, binding.BindableProperty] = {}
+
+    def __setattr__(self, key: str, value: typing.Any) -> None:
+        if isinstance(value, binding.BindableProperty):
+            self._bindings[key] = value
+        else:
+            super().__setattr__(key, value)
+
+    def __getattr__(self, item: str) -> typing.Any:
+        _bindings = super().__getattribute__("_bindings")
+        if item in _bindings:
+            return _bindings[item].value
+        else:
+            return super().__getattribute__(item)
+
+
+class HotReloadException(Exception):
+    """Exception to signal hot-reload in nicegooey.argparse."""
+
+    pass
 
 
 class NiceGooeyMain:
-    parent_parser: "ArgumentParser | None" = None
-    main_func: typing.Callable | None = None
-    is_running: bool = False
+    # State
+    parent_parser: argparse.ArgumentParser | None
+    main_func: typing.Callable | None
+    is_running: bool
 
-    namespace: argparse.Namespace = argparse.Namespace()
+    # Argument values
+    namespace: BindingNamespace
 
-    action_elements: dict[argparse.Action, "ActionUi"] = {}
+    # UI elements
+    action_elements: dict[argparse.Action, "ActionUi"]
+
+    def __init__(self):
+        self.parent_parser = None
+        self.main_func = None
+        self.is_running = False
+        self.namespace = BindingNamespace()
+        self.action_elements = {}
 
     def parse_args(
-        self, argument_parser: "ArgumentParser", *args, **kwargs
+        self, argument_parser: argparse.ArgumentParser, *args, **kwargs
     ) -> argparse.Namespace | typing.Never:
         if self.is_running:
             return self._get_namespace()
         else:
             self.is_running = True
             self.parent_parser = argument_parser
-            self._run(*args, **kwargs)
-
-    def _run(self, *args, **kwargs) -> typing.Never:
-        # TODO: make reload work
-        ui.run(root=self.ui_root, reload=False)
-        raise AssertionError("nicegui.ui.run should not return")
+            ui.run(root=self.ui_root, reload=False)
+            raise AssertionError("nicegui.ui.run should not return")
 
     def _get_namespace(self) -> argparse.Namespace:
         if self.parent_parser is None:
@@ -49,11 +82,34 @@ class NiceGooeyMain:
     def ui_root(self) -> None:
         if self.main_func is None:
             raise RuntimeError("NiceGooeyMain.parse_args called outside of nice_gooey_argparse_main")
-        parser_actions = self.parent_parser._actions
-        with ui.list().props("dense separator"):
-            for action in parser_actions:
-                with ui.item():
-                    self._ui_action(action)
+
+        # TODO: dark mode to save my eyes
+        dark = ui.dark_mode(True)
+        ui.label("Switch mode:")
+        ui.button("Dark", on_click=dark.enable)
+        ui.button("Light", on_click=dark.disable)
+
+        for action_group in self.parent_parser._action_groups:
+            # Find relevant actions for this group
+            actions = []
+            for action in action_group._actions:
+                container = getattr(action, "container", None)
+                if container is None:
+                    logger.warning(f"Action {action} has no container attribute")
+                else:
+                    if container is action_group:
+                        actions.append(action)
+
+            if not actions:
+                continue
+
+            # Render
+            with ui.card().classes("w-full"):
+                ui.label(action_group.title).classes("text-lg font-bold mb-2")
+                with ui.list().props("bordered separator"):
+                    for action in actions:
+                        with ui.item():
+                            self._ui_action(action)
         ui.button("Submit").on("click", self._submit)
 
     def _ui_action(self, action: argparse.Action) -> None:
@@ -61,3 +117,6 @@ class NiceGooeyMain:
 
         element = ActionUi.from_action(self, action)
         element.render()
+
+
+main_instance = NiceGooeyMain()
