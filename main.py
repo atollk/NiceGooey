@@ -1,7 +1,7 @@
 import argparse
 import time
 
-from nicegooey.argparse import nice_gooey_argparse_main
+from nicegooey.argparse import nice_gooey_argparse_main, ArgumentParserConfig, NgArgumentParser
 
 
 def process(parser: argparse.ArgumentParser, args: argparse.Namespace):
@@ -10,9 +10,12 @@ def process(parser: argparse.ArgumentParser, args: argparse.Namespace):
     print("wake up!")
 
 
-@nice_gooey_argparse_main(patch_argparse=True)
+@nice_gooey_argparse_main(patch_argparse=False)
 def main():
-    parser = argparse.ArgumentParser()
+    config = ArgumentParserConfig(argument_vp_width="w-4xl")
+    parser = NgArgumentParser()
+    parser.nicegooey_config = config
+
     parser.add_argument("--name", type=str, default="World", help="Your name")
     parser.add_argument("--age", "-a", type=int, help="Your age")
     parser.add_argument("--disable-meme", "-dm", action="store_true", help="Disable memes")

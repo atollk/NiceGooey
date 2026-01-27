@@ -1,7 +1,8 @@
 import contextlib
-import logging
 import typing
-from .main import main_instance, HotReloadException
+
+from .main import main_instance
+from .argument_parser import NgArgumentParser
 import functools
 import argparse
 
@@ -13,15 +14,12 @@ MainCallable = typing.Callable[Param, RetType]
 @contextlib.contextmanager
 def _argparse_patch_context(*, patch: bool) -> typing.Generator[None, None, None]:
     """Context manager to patch argparse.ArgumentParser with nice_gooey.argparse.ArgumentParser."""
-
-    def parse_args(self: argparse.ArgumentParser, *args, **kwargs) -> argparse.Namespace | typing.Never:
-        return main_instance.parse_args(self, *args, **kwargs)
-
     if not patch:
         yield
     else:
         original_parse_args = argparse.ArgumentParser.parse_args
-        argparse.ArgumentParser.parse_args = parse_args
+        # pyrefly: ignore[bad-assignment]
+        argparse.ArgumentParser.parse_args = NgArgumentParser.parse_args
         try:
             yield
         finally:
@@ -44,11 +42,7 @@ def nice_gooey_argparse_main(*, patch_argparse: bool = True) -> typing.Callable[
         @functools.wraps(func)
         def wrapper(*args: Param.args, **kwargs: Param.kwargs) -> RetType:
             with _argparse_patch_context(patch=patch_argparse), _active_main_function_context(main_func=func):
-                try:
-                    return func(*args, **kwargs)
-                except HotReloadException:
-                    logging.getLogger("nicegooey.argparse").info("Hot-reload triggered")
-                    return None
+                return func(*args, **kwargs)
 
         return wrapper
 
