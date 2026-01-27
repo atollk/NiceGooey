@@ -82,23 +82,24 @@ class NiceGooeyMain:
         if self.main_func is None:
             raise RuntimeError("NiceGooeyMain.parse_args called outside of nice_gooey_argparse_main")
 
-        # TODO: dark mode to save my eyes
-        dark = ui.dark_mode(True)
-        with ui.row():
-            ui.label("Switch mode:")
-            ui.button("Dark", on_click=dark.enable)
-            ui.button("Light", on_click=dark.disable)
+        with ui.column(align_items="center"):
+            # TODO: dark mode to save my eyes
+            dark = ui.dark_mode(True)
+            with ui.row():
+                ui.label("Switch mode:")
+                ui.button("Dark", on_click=dark.enable)
+                ui.button("Light", on_click=dark.disable)
 
-        width = (
-            self.parser_config.argument_vp_width
-            if isinstance(self.parser_config.argument_vp_width, str)
-            else f"w-{self.parser_config.argument_vp_width}"
-        )
-        assert self.parent_parser is not None
-        with ui.column().classes(width):
-            for action_group in self.parent_parser._action_groups:
-                self._render_action_group(action_group)
-        ui.button("Submit").on("click", self._submit)
+            width = (
+                self.parser_config.argument_vp_width
+                if isinstance(self.parser_config.argument_vp_width, str)
+                else f"w-{self.parser_config.argument_vp_width}"
+            )
+            assert self.parent_parser is not None
+            with ui.column().classes(width):
+                for action_group in self.parent_parser._action_groups:
+                    self._render_action_group(action_group)
+            ui.button("Submit").on("click", self._submit)
 
     def _render_action_group(self, action_group: argparse._ArgumentGroup) -> None:
         from .action_ui import ActionUi
@@ -119,11 +120,11 @@ class NiceGooeyMain:
         # Render
         with ui.card().classes("w-full"):
             ui.label(action_group.title or "").classes("text-lg font-bold mb-2")
-            with ui.list().props("bordered separator"):
+            with ui.list().classes("flex justify-between"):
                 for action in actions:
                     element = ActionUi.from_action(self, action)
                     if element is not None:
-                        with ui.item():
+                        with ui.item().classes("border-2"):
                             element.render()
 
 

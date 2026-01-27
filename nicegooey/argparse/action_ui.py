@@ -5,6 +5,7 @@ import typing
 
 from nicegui import ui
 from nicegui.elements.mixins import value_element, validation_element
+from nicegui.elements.mixins.validation_element import ValidationElement
 
 from .main import NiceGooeyMain
 
@@ -50,10 +51,8 @@ class ActionUi[ActionT: argparse.Action]:
             case str():
                 assert self.parent.parent_parser is not None
                 return self.parent.parent_parser._registry_get("type", self.action.type)
-            case callable():
-                return self.action.type
             case _:
-                raise ValueError(f"Unsupported action type: {self.action.type}")
+                return self.action.type
 
     def render_action_name(self):
         with ui.row(align_items="center"):
@@ -96,12 +95,13 @@ class ActionUiElement[ActionT: argparse.Action](ActionUi[ActionT], abc.ABC):
         init: typing.Callable[..., value_element.ValueElement],
         forward_transform: typing.Callable[[typing.Any], typing.Any] = lambda x: x,
         **init_kwargs,
-    ) -> None:
+    ) -> value_element.ValueElement:
         """
         Creates/Renders the input element for this action and stores it in `self.element`.
         :param init: The type/constructor to use for the input element.
         :param forward_transform: The forward transformation when binding the input element value to the respective namespace variable.
         :param init_kwargs: Any arguments to be passed to the element constructor.
+        :return `self.element`
         """
         el = init(value=self.action.default, **init_kwargs)
         if isinstance(el, validation_element.ValidationElement):
@@ -112,9 +112,10 @@ class ActionUiElement[ActionT: argparse.Action](ActionUi[ActionT], abc.ABC):
             target_object=self.parent.namespace, target_name=self.action.dest, forward=forward_transform
         )
         self.element = el
+        return self.element
 
     @abc.abstractmethod
-    def _create_input_element(self) -> None:
+    def _create_input_element(self) -> value_element.ValueElement:
         """Creates the input element for this action."""
         raise NotImplementedError()
 
@@ -127,7 +128,7 @@ class ActionUiElement[ActionT: argparse.Action](ActionUi[ActionT], abc.ABC):
 
 class StoreActionUiElement(ActionUiElement[argparse._StoreAction]):
     @typing.override
-    def _create_input_element(self) -> None:
+    def _create_input_element(self) -> value_element.ValueElement:
         def forward_transform(v: typing.Any) -> typing.Any:
             ns = argparse.Namespace()
             ns.__setattr__(self.action.dest, getattr(self.parent.namespace, self.action.dest))
@@ -140,24 +141,29 @@ class StoreActionUiElement(ActionUiElement[argparse._StoreAction]):
                 self.action(self.parent.parent_parser, ns, cast)
             return getattr(ns, self.action.dest)
 
+        if self.action.choices is not None:
+            # TODO: make the size consistent
+            choices = list(self.action.choices)
+            return self._create_input_element_generic(ui.select, options=choices)
+
         match self._action_type():
             case builtins.bool:
-                self._create_input_element_generic(ui.checkbox, forward_transform)
+                return self._create_input_element_generic(ui.checkbox, forward_transform)
             case builtins.int:
-                self._create_input_element_generic(ui.number, forward_transform, format="%d")
+                return self._create_input_element_generic(ui.number, forward_transform, format="%d")
             case builtins.float:
-                self._create_input_element_generic(ui.number, forward_transform, format="%f")
+                return self._create_input_element_generic(ui.number, forward_transform, format="%f")
             case builtins.str:
-                self._create_input_element_generic(ui.input, forward_transform)
+                return self._create_input_element_generic(ui.input, forward_transform)
             case _:
-                self._create_input_element_generic(
+                return self._create_input_element_generic(
                     ui.input, forward_transform, validation=self._validate_input_value
                 )
 
 
 class StoreConstActionUiElement(ActionUiElement[argparse._StoreConstAction]):
     @typing.override
-    def _create_input_element(self) -> None:
+    def _create_input_element(self) -> value_element.ValueElement:
         def forward_transform(v: typing.Any) -> typing.Any:
             if v is True:
                 ns = argparse.Namespace()
@@ -167,18 +173,20 @@ class StoreConstActionUiElement(ActionUiElement[argparse._StoreConstAction]):
             else:
                 return self.action.default
 
-        self._create_input_element_generic(ui.checkbox, forward_transform)
+        return self._create_input_element_generic(ui.checkbox, forward_transform)
 
 
 class CountActionUiElement(ActionUiElement[argparse._CountAction]):
     @typing.override
-    def _create_input_element(self) -> None:
-        self._create_input_element_generic(ui.number, format="%d")
+    def _create_input_element(self) -> value_element.ValueElement:
+        return self._create_input_element_generic(ui.number, format="%d")
 
 
 class ListActionUiElement[ActionT: argparse.Action](ActionUiElement[ActionT], abc.ABC):
+    add_element_default_value: typing.Any = None
+
     @typing.override
-    def _create_input_element(self) -> None:
+    def _create_input_element(self) -> value_element.ValueElement:
         def forward_transform(vs: list[typing.Any] | None) -> list[typing.Any] | None:
             ns = argparse.Namespace()
             ns.__setattr__(self.action.dest, getattr(self.parent.namespace, self.action.dest))
@@ -189,59 +197,70 @@ class ListActionUiElement[ActionT: argparse.Action](ActionUiElement[ActionT], ab
             else:
                 return cast
 
-        self._create_input_element_generic(ui.input_chips, forward_transform)
+        el = self._create_input_element_generic(ui.input_chips, forward_transform)
+        el.classes("w-xl")
+        return el
 
-    def _create_add_element_generic(
-        self, init: typing.Callable[..., value_element.ValueElement], **init_kwargs
-    ) -> None:
-        """Creates the ui element that can be used to add individual items to the list."""
-        el = init(value=self.action.default, **init_kwargs)
-        if isinstance(el, validation_element.ValidationElement):
-            el.without_auto_validation()
-
+    def _create_add_buton(self, value_el: value_element.ValueElement) -> ui.button:
         def add() -> None:
+            if isinstance(value_el, validation_element.ValidationElement):
+                if not value_el.validate():
+                    return
             ns = argparse.Namespace()
             assert self.parent.parent_parser is not None
             assert self.element is not None
-            self.action(self.parent.parent_parser, ns, el.value)
+            self.action(self.parent.parent_parser, ns, value_el.value)
             new = (self.element.value or []) + getattr(ns, self.action.dest)
             self.element.set_value(new)
-            el.set_value(None)
+            value_el.set_value(self.add_element_default_value)
 
-        ui.button(icon="plus", on_click=add)
-
-    @abc.abstractmethod
-    def _create_add_element(self) -> None:
-        raise NotImplementedError()
-
-    @typing.override
-    def render(self) -> None:
-        with ui.column():
-            self.render_action_name()
-            self._create_input_element()
-            self._create_add_element()
+        return ui.button(on_click=add).props("square padding=xs")
 
 
 class AppendActionUiElement(ListActionUiElement[argparse._AppendAction]):
     @typing.override
-    def _create_add_element(self) -> None:
-        match self._action_type():
-            case builtins.bool:
-                self._create_add_element_generic(ui.checkbox)
-            case builtins.int:
-                self._create_add_element_generic(ui.number, format="%d")
-            case builtins.float:
-                self._create_add_element_generic(ui.number, format="%f")
-            case builtins.str:
-                self._create_add_element_generic(ui.input)
-            case _:
-                self._create_add_element_generic(ui.input)
+    def render(self) -> None:
+        with ui.column():
+            self.render_action_name()
+            with ui.row():
+                value_el = self._create_add_element()
+                self._create_add_buton(value_el).set_icon("south")
+            self._create_input_element()
+
+    def _create_add_element(self) -> value_element.ValueElement:
+        if self.action.choices is not None:
+            # TODO: make the size consistent
+            choices = list(self.action.choices)
+            value_el = ui.select(choices)
+        else:
+            match self._action_type():
+                case builtins.bool:
+                    value_el = ui.checkbox()
+                case builtins.int:
+                    value_el = ui.number(format="%d")
+                case builtins.float:
+                    value_el = ui.number(format="%f")
+                case builtins.str:
+                    value_el = ui.input()
+                case _:
+                    value_el = ui.input()
+
+        if isinstance(value_el, ValidationElement):
+            value_el.validation = {"Must enter a value": lambda v: v is not None}
+            value_el.without_auto_validation()
+        self.add_element_default_value = value_el.value
+        return value_el
 
 
 class AppendConstActionUiElement(ListActionUiElement[argparse._AppendConstAction]):
     @typing.override
-    def _create_add_element(self) -> None:
-        self._create_add_element_generic(value_element.ValueElement)
+    def render(self) -> None:
+        with ui.column():
+            self.render_action_name()
+            with ui.row(align_items="center"):
+                self._create_input_element().props("use-input=false")
+                value_el = value_element.ValueElement(value=None)
+                self._create_add_buton(value_el).set_icon("add")
 
 
 class ExtendActionUiElement(AppendActionUiElement):
