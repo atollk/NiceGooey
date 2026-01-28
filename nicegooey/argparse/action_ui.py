@@ -42,6 +42,25 @@ class ActionUi[ActionT: argparse.Action]:
         self.parent = parent
         self.action = action
 
+    def render_action_name(self):
+        with ui.row(align_items="center").props("data-testid=ng-action-name"):
+            if isinstance(self.action.metavar, str):
+                name = self.action.metavar
+            elif isinstance(self.action.metavar, tuple):
+                name = self.action.metavar[0]
+            else:
+                name = self.action.dest
+            ui.label(name).classes("font-bold")
+            if self.action.help:
+                with ui.button(icon="question_mark").props("round padding=xs size=xs"):
+                    ui.tooltip(self.action.help)
+
+    def render(self) -> ui.element:
+        return ui.element()
+
+    def validate(self) -> bool:
+        return True
+
     def _action_type(self) -> typing.Callable[[str], typing.Any]:
         match self.action.type:
             case None:
@@ -54,24 +73,26 @@ class ActionUi[ActionT: argparse.Action]:
             case _:
                 return self.action.type
 
-    def render_action_name(self):
-        with ui.row(align_items="center"):
-            if isinstance(self.action.metavar, str):
-                name = self.action.metavar
-            elif isinstance(self.action.metavar, tuple):
-                name = self.action.metavar[0]
-            else:
-                name = self.action.dest
-            ui.label(name).classes("font-bold")
-            if self.action.help:
-                with ui.button(icon="question_mark").props("round padding=xs size=xs"):
-                    ui.tooltip(self.action.help)
-
-    def render(self) -> None:
-        pass
-
-    def validate(self) -> bool:
-        return True
+    def _action_type_input(self, *args, **kwargs) -> value_element.ValueElement:
+        """Creates a ValueElement that represents the input of a single item matching the type of this action."""
+        el: value_element.ValueElement
+        if self.action.choices is not None:
+            # TODO: make the size consistent
+            choices = list(self.action.choices)
+            el = ui.select(options=choices, *args, **kwargs)
+        match self._action_type():
+            case builtins.bool:
+                el = ui.checkbox(*args, **kwargs)
+            case builtins.int:
+                el = ui.number(format="%d", *args, **kwargs).props("dense")
+            case builtins.float:
+                el = ui.number(format="%f", *args, **kwargs).props("dense")
+            case builtins.str:
+                el = ui.input(*args, **kwargs).props("dense")
+            case _:
+                el = ui.input(*args, **kwargs).props("dense")
+        el.props("data-testid=ng-action-type-input")
+        return el
 
 
 class ActionUiElement[ActionT: argparse.Action](ActionUi[ActionT], abc.ABC):
@@ -92,20 +113,22 @@ class ActionUiElement[ActionT: argparse.Action](ActionUi[ActionT], abc.ABC):
 
     def _create_input_element_generic(
         self,
-        init: typing.Callable[..., value_element.ValueElement],
+        init: typing.Callable[[typing.Any], value_element.ValueElement],
         forward_transform: typing.Callable[[typing.Any], typing.Any] = lambda x: x,
-        **init_kwargs,
+        validation: validation_element.ValidationFunction | validation_element.ValidationDict | None = None,
     ) -> value_element.ValueElement:
         """
         Creates/Renders the input element for this action and stores it in `self.element`.
         :param init: The type/constructor to use for the input element.
         :param forward_transform: The forward transformation when binding the input element value to the respective namespace variable.
-        :param init_kwargs: Any arguments to be passed to the element constructor.
         :return `self.element`
         """
-        el = init(value=self.action.default, **init_kwargs)
+        el = init(self.action.default)
         if isinstance(el, validation_element.ValidationElement):
             el.without_auto_validation()
+            if validation is not None:
+                el.validation = validation
+                el.error = None
         if not hasattr(self.parent.namespace, self.action.dest):
             setattr(self.parent.namespace, self.action.dest, self.action.default)
         el.bind_value(
@@ -120,10 +143,12 @@ class ActionUiElement[ActionT: argparse.Action](ActionUi[ActionT], abc.ABC):
         raise NotImplementedError()
 
     @typing.override
-    def render(self) -> None:
-        with ui.column():
+    def render(self) -> ui.element:
+        c = ui.column()
+        with c:
             self.render_action_name()
             self._create_input_element()
+        return c
 
 
 class StoreActionUiElement(ActionUiElement[argparse._StoreAction]):
@@ -141,24 +166,10 @@ class StoreActionUiElement(ActionUiElement[argparse._StoreAction]):
                 self.action(self.parent.parent_parser, ns, cast)
             return getattr(ns, self.action.dest)
 
-        if self.action.choices is not None:
-            # TODO: make the size consistent
-            choices = list(self.action.choices)
-            return self._create_input_element_generic(ui.select, options=choices)
-
-        match self._action_type():
-            case builtins.bool:
-                return self._create_input_element_generic(ui.checkbox, forward_transform)
-            case builtins.int:
-                return self._create_input_element_generic(ui.number, forward_transform, format="%d")
-            case builtins.float:
-                return self._create_input_element_generic(ui.number, forward_transform, format="%f")
-            case builtins.str:
-                return self._create_input_element_generic(ui.input, forward_transform)
-            case _:
-                return self._create_input_element_generic(
-                    ui.input, forward_transform, validation=self._validate_input_value
-                )
+        el = self._create_input_element_generic(
+            lambda v: self._action_type_input(value=v), forward_transform, self._validate_input_value
+        )
+        return el
 
 
 class StoreConstActionUiElement(ActionUiElement[argparse._StoreConstAction]):
@@ -179,7 +190,7 @@ class StoreConstActionUiElement(ActionUiElement[argparse._StoreConstAction]):
 class CountActionUiElement(ActionUiElement[argparse._CountAction]):
     @typing.override
     def _create_input_element(self) -> value_element.ValueElement:
-        return self._create_input_element_generic(ui.number, format="%d")
+        return self._create_input_element_generic(lambda v: ui.number(v, format="%d"))
 
 
 class ListActionUiElement[ActionT: argparse.Action](ActionUiElement[ActionT], abc.ABC):
@@ -214,53 +225,42 @@ class ListActionUiElement[ActionT: argparse.Action](ActionUiElement[ActionT], ab
             self.element.set_value(new)
             value_el.set_value(self.add_element_default_value)
 
-        return ui.button(on_click=add).props("square padding=xs")
+        return ui.button(on_click=add).props("square padding=xs").props("data-testid=ng-action-add-button")
 
 
 class AppendActionUiElement(ListActionUiElement[argparse._AppendAction]):
     @typing.override
-    def render(self) -> None:
-        with ui.column():
+    def render(self) -> ui.element:
+        c = ui.column()
+        with c:
             self.render_action_name()
-            with ui.row():
+            with ui.row(align_items="center"):
                 value_el = self._create_add_element()
                 self._create_add_buton(value_el).set_icon("south")
             self._create_input_element()
+        return c
 
     def _create_add_element(self) -> value_element.ValueElement:
-        if self.action.choices is not None:
-            # TODO: make the size consistent
-            choices = list(self.action.choices)
-            value_el = ui.select(choices)
-        else:
-            match self._action_type():
-                case builtins.bool:
-                    value_el = ui.checkbox()
-                case builtins.int:
-                    value_el = ui.number(format="%d")
-                case builtins.float:
-                    value_el = ui.number(format="%f")
-                case builtins.str:
-                    value_el = ui.input()
-                case _:
-                    value_el = ui.input()
-
+        value_el = self._action_type_input()
         if isinstance(value_el, ValidationElement):
             value_el.validation = {"Must enter a value": lambda v: v is not None}
             value_el.without_auto_validation()
+            value_el.error = None
         self.add_element_default_value = value_el.value
         return value_el
 
 
 class AppendConstActionUiElement(ListActionUiElement[argparse._AppendConstAction]):
     @typing.override
-    def render(self) -> None:
-        with ui.column():
+    def render(self) -> ui.element:
+        c = ui.column()
+        with c:
             self.render_action_name()
             with ui.row(align_items="center"):
                 self._create_input_element().props("use-input=false")
                 value_el = value_element.ValueElement(value=None)
                 self._create_add_buton(value_el).set_icon("add")
+        return c
 
 
 class ExtendActionUiElement(AppendActionUiElement):

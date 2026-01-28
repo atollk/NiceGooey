@@ -26,6 +26,11 @@ def main():
         "--append_const", action="append_const", const="NiceGooey", help="Append a constant value"
     )
     parser.add_argument("--append", action="append", type=str, help="Append multiple values")
+    group2 = parser.add_mutually_exclusive_group()
+    group2.add_argument("--asdf")
+    group3 = group1.add_mutually_exclusive_group()
+    group3.add_argument("--xxx")
+    group3.add_argument("--yyy")
     args = parser.parse_args()
     process(parser, args)
 
