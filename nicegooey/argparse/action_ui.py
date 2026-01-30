@@ -8,10 +8,10 @@ from nicegui.elements.mixins import value_element, validation_element
 from nicegui.elements.mixins.validation_element import ValidationElement
 
 from .main import NiceGooeyMain
+from .ui_util import UiWrapper
 
 
-class ActionUi[ActionT: argparse.Action]:
-    parent: NiceGooeyMain
+class ActionUi[ActionT: argparse.Action](UiWrapper):
     action: ActionT
 
     @staticmethod
@@ -39,7 +39,7 @@ class ActionUi[ActionT: argparse.Action]:
                 raise NotImplementedError(f"UI for action type {type(action)} not implemented")
 
     def __init__(self, parent: NiceGooeyMain, action: ActionT) -> None:
-        self.parent = parent
+        super().__init__(parent)
         self.action = action
 
     def render_action_name(self):
@@ -54,12 +54,6 @@ class ActionUi[ActionT: argparse.Action]:
             if self.action.help:
                 with ui.button(icon="question_mark").props("round padding=xs size=xs"):
                     ui.tooltip(self.action.help)
-
-    def render(self) -> ui.element:
-        return ui.element()
-
-    def validate(self) -> bool:
-        return True
 
     def _action_type(self) -> typing.Callable[[str], typing.Any]:
         match self.action.type:
@@ -80,19 +74,34 @@ class ActionUi[ActionT: argparse.Action]:
             # TODO: make the size consistent
             choices = list(self.action.choices)
             el = ui.select(options=choices, *args, **kwargs)
-        match self._action_type():
-            case builtins.bool:
-                el = ui.checkbox(*args, **kwargs)
-            case builtins.int:
-                el = ui.number(format="%d", *args, **kwargs).props("dense")
-            case builtins.float:
-                el = ui.number(format="%f", *args, **kwargs).props("dense")
-            case builtins.str:
-                el = ui.input(*args, **kwargs).props("dense")
-            case _:
-                el = ui.input(*args, **kwargs).props("dense")
+        else:
+            match self._action_type():
+                case builtins.bool:
+                    el = ui.checkbox(*args, **kwargs)
+                case builtins.int:
+                    el = ui.number(format="%d", *args, **kwargs).props("dense")
+                case builtins.float:
+                    el = ui.number(format="%f", *args, **kwargs).props("dense")
+                case builtins.str:
+                    el = ui.input(*args, **kwargs).props("dense")
+                case _:
+                    el = ui.input(*args, **kwargs).props("dense")
         el.props("data-testid=ng-action-type-input")
         return el
+
+    def _action_default(self) -> typing.Any:
+        if self.action.default is not None:
+            return self.action.default
+        if self.action.choices is not None:
+            return []
+        else:
+            match self._action_type():
+                case builtins.bool:
+                    return False
+                case builtins.int | builtins.float:
+                    return 0
+                case _:
+                    return ""
 
 
 class ActionUiElement[ActionT: argparse.Action](ActionUi[ActionT], abc.ABC):
@@ -123,14 +132,14 @@ class ActionUiElement[ActionT: argparse.Action](ActionUi[ActionT], abc.ABC):
         :param forward_transform: The forward transformation when binding the input element value to the respective namespace variable.
         :return `self.element`
         """
-        el = init(self.action.default)
+        el = init(self._action_default())
         if isinstance(el, validation_element.ValidationElement):
             el.without_auto_validation()
             if validation is not None:
                 el.validation = validation
                 el.error = None
         if not hasattr(self.parent.namespace, self.action.dest):
-            setattr(self.parent.namespace, self.action.dest, self.action.default)
+            setattr(self.parent.namespace, self.action.dest, self._action_default())
         el.bind_value(
             target_object=self.parent.namespace, target_name=self.action.dest, forward=forward_transform
         )
@@ -159,7 +168,7 @@ class StoreActionUiElement(ActionUiElement[argparse._StoreAction]):
             ns.__setattr__(self.action.dest, getattr(self.parent.namespace, self.action.dest))
             try:
                 cast = self._action_type()(v)
-            except TypeError:
+            except (TypeError, ValueError):
                 pass
             else:
                 assert self.parent.parent_parser is not None
@@ -182,7 +191,7 @@ class StoreConstActionUiElement(ActionUiElement[argparse._StoreConstAction]):
                 self.action(self.parent.parent_parser, ns, None)
                 return getattr(ns, self.action.dest)
             else:
-                return self.action.default
+                return self._action_default()
 
         return self._create_input_element_generic(ui.checkbox, forward_transform)
 

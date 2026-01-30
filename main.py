@@ -29,7 +29,14 @@ def main():
     group2 = parser.add_mutually_exclusive_group()
     group2.add_argument("--asdf")
     group3 = group1.add_mutually_exclusive_group()
-    group3.add_argument("--xxx")
+
+    def validate_xxx(v: str) -> str:
+        if len(v) < 3:
+            raise ValueError()
+        else:
+            return v
+
+    group3.add_argument("--xxx", type=validate_xxx)
     group3.add_argument("--yyy")
     args = parser.parse_args()
     process(parser, args)
