@@ -3,52 +3,11 @@ import typing
 
 from nicegui import ui
 
-from .ui_util import UiWrapper
-from .action_ui import ActionUi
+from .util import UiWrapper
+from .action import ActionUi
 
 if typing.TYPE_CHECKING:
-    from .main import NiceGooeyMain
-
-
-class RootUi(UiWrapper):
-    children: list["ArgumentGroupUi"]
-
-    def __init__(self, parent: "NiceGooeyMain") -> None:
-        super().__init__(parent)
-        self.children = []
-
-    @typing.override
-    def render(self) -> ui.element:
-        with ui.column(align_items="center").props("data-testid=ng-root") as root:
-            # TODO: dark mode to save my eyes
-            dark = ui.dark_mode(True)
-            with ui.row():
-                ui.label("Switch mode:")
-                ui.button("Dark", on_click=dark.enable)
-                ui.button("Light", on_click=dark.disable)
-
-            width = (
-                self.parser_config.argument_vp_width
-                if isinstance(self.parser_config.argument_vp_width, str)
-                else f"w-{self.parser_config.argument_vp_width}"
-            )
-            parent_parser = self.parent.parent_parser
-            assert parent_parser is not None
-            with ui.column().classes(width):
-                for action_group in parent_parser._action_groups:
-                    action_group = ArgumentGroupUi(self.parent, action_group)
-                    self.children.append(action_group)
-                    action_group.render()
-            on_submit = self.parent.submit
-            ui.button("Submit").on_click(on_submit)
-        return root
-
-    @typing.override
-    def validate(self) -> bool:
-        validation_failed = False
-        for child in self.children:
-            validation_failed = child.validate() or validation_failed
-        return not validation_failed
+    from ..main import NiceGooeyMain
 
 
 class ArgumentGroupUi(UiWrapper):

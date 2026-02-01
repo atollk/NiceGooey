@@ -38,6 +38,14 @@ def main():
 
     group3.add_argument("--xxx", type=validate_xxx)
     group3.add_argument("--yyy")
+
+    subps = parser.add_subparsers()
+    subp1 = subps.add_parser("sub1")
+    subp1.add_argument("--sub1a")
+    subp1.add_argument("--sub1b", type=float)
+    subp2 = subps.add_parser("sub2")
+    subp2.add_argument("--sub2a", type=str)
+
     args = parser.parse_args()
     process(parser, args)
 

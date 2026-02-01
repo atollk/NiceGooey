@@ -8,7 +8,7 @@ from .util import BindingNamespace, logger, CallbackWriter
 from .argument_parser import ArgumentParserConfig, NgArgumentParser
 
 if typing.TYPE_CHECKING:
-    from .group_ui import RootUi
+    from .ui_classes.root import RootUi
 
 
 class NiceGooeyMain:
@@ -75,7 +75,7 @@ class NiceGooeyMain:
         finish_button.enable()
 
     def _ui_root(self) -> None:
-        from .group_ui import RootUi
+        from .ui_classes.root import RootUi
 
         if self.main_func is None:
             raise RuntimeError("NiceGooeyMain.parse_args called outside of nice_gooey_argparse_main")

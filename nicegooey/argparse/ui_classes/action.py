@@ -7,8 +7,8 @@ from nicegui import ui
 from nicegui.elements.mixins import value_element, validation_element
 from nicegui.elements.mixins.validation_element import ValidationElement
 
-from .main import NiceGooeyMain
-from .ui_util import UiWrapper
+from ..main import NiceGooeyMain
+from .util import UiWrapper
 
 
 class ActionUi[ActionT: argparse.Action](UiWrapper):
@@ -29,12 +29,9 @@ class ActionUi[ActionT: argparse.Action](UiWrapper):
                 return AppendConstActionUiElement(parent=parent, action=action)
             case argparse._CountAction():
                 return CountActionUiElement(parent=parent, action=action)
-            case argparse._HelpAction() | argparse._VersionAction():
-                # help and version are handled differently
+            case argparse._HelpAction() | argparse._VersionAction() | argparse._SubParsersAction():
+                # handled differently
                 return None
-            case argparse._SubParsersAction():
-                pass  # TODO
-                raise NotImplementedError()
             case _:
                 raise NotImplementedError(f"UI for action type {type(action)} not implemented")
 

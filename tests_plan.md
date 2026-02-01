@@ -44,3 +44,11 @@ Verifies (for an action of str type), that the different options of "nargs" work
 ### Special cases 1
 
 https://stackoverflow.com/a/22751724/1833497
+
+### System test 1
+
+A clone of the complete OpenTofu CLI; no functionality, just the CLI arguments and their validation.
+
+### System test 2
+
+A clone of the complete uv CLI; no functionality, just the CLI arguments and their validation.

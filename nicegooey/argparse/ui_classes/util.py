@@ -2,10 +2,10 @@ import typing
 
 from nicegui import ui
 
-from . import ArgumentParserConfig
+from .. import ArgumentParserConfig
 
 if typing.TYPE_CHECKING:
-    from .main import NiceGooeyMain
+    from ..main import NiceGooeyMain
 
 
 class Validator(typing.Protocol):
