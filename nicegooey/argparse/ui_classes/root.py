@@ -108,12 +108,12 @@ class SubparserUi(UiWrapper):
         ]
 
     def render_tab(self) -> ui.tab:
-        self.tab = ui.tab(self.subparser.prog)
+        self.tab = ui.tab(self.subparser.prog).props(f"data-testid=ng-subparser-tab-{self.title}")
         return self.tab
 
     def render_tab_panel(self) -> ui.tab_panel:
         assert self.tab is not None
-        panel = ui.tab_panel(self.tab)
+        panel = ui.tab_panel(self.tab).props(f"data-testid=ng-subparser-tabpanel-{self.title}")
         with panel:
             for group in self.action_groups:
                 group.render()

@@ -34,7 +34,8 @@ The test should include that storing values / adding and removing elements updat
 
 ### Subparsers
 
-TODO
+Test which creates three subparsers: one without any arguments; one with two simple arguments; and one with a more complex structure with a group.
+Also test it for both required and optional subparsers in combination with an argument outside of the subparsers.
 
 ### nargs
 
