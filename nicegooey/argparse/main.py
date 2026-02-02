@@ -81,7 +81,6 @@ class NiceGooeyMain:
             raise RuntimeError("NiceGooeyMain.parse_args called outside of nice_gooey_argparse_main")
 
         self.ui_root = RootUi(self)
-        self.ui_root.on_submit = self.submit
         self.ui_root.render()
 
 

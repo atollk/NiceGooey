@@ -70,6 +70,7 @@ class ActionUi[ActionT: argparse.Action](UiWrapper):
         if self.action.choices is not None:
             # TODO: make the size consistent
             choices = list(self.action.choices)
+            # pyrefly: ignore[bad-keyword-argument]
             el = ui.select(options=choices, *args, **kwargs)
         else:
             match self._action_type():

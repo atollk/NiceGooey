@@ -87,7 +87,7 @@ class MutuallyExclusiveGroupUi(UiWrapper):
 
     @typing.override
     def render(self) -> ui.element:
-        render_action = ui.refreshable_method(self._render_action)
+        render_action = ui.refreshable(self._render_action)
 
         with ui.row(align_items="center").props("data-testid=ng-me-group") as root:
             choices = {action: (action.metavar or action.dest) for action in self.group._group_actions}
