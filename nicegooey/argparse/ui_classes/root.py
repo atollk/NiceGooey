@@ -23,9 +23,7 @@ class RootUi(UiWrapper):
 
         # Collect action groups
         self.action_groups = [
-            ArgumentGroupUi(self.parent, action_group)
-            for action_group in parent_parser._action_groups
-            if action_group._group_actions
+            ArgumentGroupUi(self.parent, action_group) for action_group in parent_parser._action_groups
         ]
 
         # Collect subparsers
@@ -106,9 +104,7 @@ class SubparserUi(UiWrapper):
         self.subparser = subparser
         self.tab = None
         self.action_groups = [
-            ArgumentGroupUi(self.parent, action_group)
-            for action_group in self.subparser._action_groups
-            if action_group._group_actions
+            ArgumentGroupUi(self.parent, action_group) for action_group in self.subparser._action_groups
         ]
 
     def render_tab(self) -> ui.tab:

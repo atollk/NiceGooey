@@ -11,13 +11,33 @@ if typing.TYPE_CHECKING:
 
 
 class ArgumentGroupUi(UiWrapper):
-    children: list[UiWrapper]
+    children: list["ActionUi | MutuallyExclusiveGroupUi"]
     group: argparse._ArgumentGroup
 
     def __init__(self, parent: "NiceGooeyMain", group: argparse._ArgumentGroup) -> None:
         super().__init__(parent)
-        self.children = []
         self.group = group
+        self.children = []
+
+        mutually_exclusive_groups_done = set()
+        for action in self.group._group_actions:
+            me_group = next(
+                (
+                    me_group
+                    for me_group in self.group._mutually_exclusive_groups
+                    if action in me_group._group_actions
+                ),
+                None,
+            )
+            if me_group is None:
+                ui_container = ActionUi.from_action(self.parent, action)
+            else:
+                if me_group in mutually_exclusive_groups_done:
+                    continue
+                mutually_exclusive_groups_done.add(me_group)
+                ui_container = MutuallyExclusiveGroupUi(self.parent, me_group)
+            if ui_container is not None:
+                self.children.append(ui_container)
 
     @typing.override
     def validate(self) -> bool:
@@ -37,29 +57,18 @@ class ArgumentGroupUi(UiWrapper):
 
     @typing.override
     def render(self) -> ui.element:
-        mutually_exclusive_groups_done = set()
+        if not self.children:
+            return ui.element()
         with ui.card().classes("w-full").props(f"data-testid=ng-group-{self.group.title}") as root:
             ui.label(self.group.title or "").classes("text-lg font-bold mb-2")
             with ui.list().classes("flex justify-between"):
-                for action in self.group._group_actions:
-                    # If this action is part of a mutually exclusive group, render that entire group at this point, if it has not been rendered already.
-                    me_group = next(
-                        (
-                            me_group
-                            for me_group in self.group._mutually_exclusive_groups
-                            if action in me_group._group_actions
-                        ),
-                        None,
-                    )
-                    if me_group is None:
-                        self._render_action(action)
+                for child in self.children:
+                    if isinstance(child, ActionUi):
+                        with ui.item().classes("border-2"):
+                            child.render().props(f"data-testid=ng-action-{child.action.dest}")
                     else:
-                        if me_group in mutually_exclusive_groups_done:
-                            continue
-                        mutually_exclusive_groups_done.add(me_group)
-                        me_group_ui = MutuallyExclusiveGroupUi(self.parent, me_group)
-                        self.children.append(me_group_ui)
-                        me_group_ui.render()
+                        with ui.card():
+                            child.render()
         return root
 
 
