@@ -14,16 +14,28 @@ if typing.TYPE_CHECKING:
 
 class NiceGooeyMain:
     # State
-    parent_parser: argparse.ArgumentParser | None = None
-    main_func: typing.Callable | None = None
-    is_running: bool = False
-    parser_config: ArgumentParserConfig | None = None
+    parent_parser: argparse.ArgumentParser | None
+    main_func: typing.Callable | None
+    is_running: bool
+    parser_config: ArgumentParserConfig | None
 
     # Argument values
-    namespace: BindingNamespace = BindingNamespace()
+    namespace: BindingNamespace
 
     # UI elements
-    ui_root: "RootUi | None" = None
+    ui_root: "RootUi | None"
+
+    def __init__(self):
+        self.reset()
+
+    def reset(self) -> None:
+        """Used to reset the instance during testing."""
+        self.parent_parser = None
+        self.main_func = None
+        self.is_running = False
+        self.parser_config = None
+        self.namespace = BindingNamespace()
+        self.ui_root = None
 
     def parse_args(
         self,
@@ -81,4 +93,4 @@ class NiceGooeyMain:
         self.ui_root.render()
 
 
-main_instance = NiceGooeyMain()
+main_instance: typing.Final[NiceGooeyMain] = NiceGooeyMain()

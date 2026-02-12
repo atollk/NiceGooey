@@ -29,13 +29,16 @@ def _argparse_patch_context(*, patch: bool) -> typing.Generator[None, None, None
 
 @contextlib.contextmanager
 def _active_main_function_context(main_func: MainCallable) -> typing.Generator[None, None, None]:
-    if main_instance.main_func is not None:
-        raise RuntimeError("Nested active_main_function_context is not allowed")
+    if not nicegui.helpers.is_user_simulation():
+        # In tests, this function is called multiple within a test due to how nicegui implements the simulation.
+        if main_instance.main_func is not None:
+            raise RuntimeError("Nested active_main_function_context is not allowed")
     main_instance.main_func = main_func
     try:
         yield
     finally:
         if not nicegui.helpers.is_user_simulation():
+            # In tests, this function is called multiple within a test due to how nicegui implements the simulation.
             main_instance.main_func = None
 
 
