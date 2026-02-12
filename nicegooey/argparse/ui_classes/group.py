@@ -51,7 +51,7 @@ class ArgumentGroupUi(UiWrapper):
         if ui_container is not None:
             self.children.append(ui_container)
             with ui.item().classes("border-2"):
-                return ui_container.render().props(f"data-testid=ng-action-{action.dest}")
+                return ui_container.render().mark(f"ng-action-{action.dest}")
         else:
             return ui.element()
 
@@ -59,13 +59,13 @@ class ArgumentGroupUi(UiWrapper):
     def render(self) -> ui.element:
         if not self.children:
             return ui.element()
-        with ui.card().classes("w-full").props(f"data-testid=ng-group-{self.group.title}") as root:
+        with ui.card().classes("w-full").mark(f"ng-group-{self.group.title}") as root:
             ui.label(self.group.title or "").classes("text-lg font-bold mb-2")
             with ui.list().classes("flex justify-between"):
                 for child in self.children:
                     if isinstance(child, ActionUi):
                         with ui.item().classes("border-2"):
-                            child.render().props(f"data-testid=ng-action-{child.action.dest}")
+                            child.render().mark(f"ng-action-{child.action.dest}")
                     else:
                         with ui.card():
                             child.render()
@@ -90,7 +90,7 @@ class MutuallyExclusiveGroupUi(UiWrapper):
         self.active_element = ui_container
         if ui_container is not None:
             with ui.item().classes("border-2"):
-                return ui_container.render().props(f"data-testid=ng-action-{action.dest}")
+                return ui_container.render().mark(f"ng-action-{action.dest}")
         else:
             return ui.element()
 
@@ -98,7 +98,7 @@ class MutuallyExclusiveGroupUi(UiWrapper):
     def render(self) -> ui.element:
         render_action = ui.refreshable(self._render_action)
 
-        with ui.row(align_items="center").props("data-testid=ng-me-group") as root:
+        with ui.row(align_items="center").mark("ng-me-group") as root:
             choices = {action: (action.metavar or action.dest) for action in self.group._group_actions}
             if not choices:
                 raise RuntimeError(f"Mutually exclusive group must not be empty: {self.group}")

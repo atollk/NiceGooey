@@ -1,5 +1,4 @@
 import pytest
-from nicegui import ui
 from nicegui.testing import User
 
 from nicegooey.argparse import nice_gooey_argparse_main, NgArgumentParser
@@ -15,12 +14,10 @@ async def test_append_action_with_str(user: User) -> None:
 
     assert main_instance.namespace.tags == []
 
-    input_field = user.find(ui.input).filter(
-        lambda x: x.element.props.get("data-testid") == "ng-action-type-input"
-    )
-    add_button = user.find(ui.button).filter(
-        lambda x: x.element.props.get("data-testid") == "ng-action-add-button"
-    )
+    input_field = user.find(marker="ng-action-type-input")
+    assert len(input_field.elements) == 1
+    add_button = user.find(marker="ng-action-add-button")
+    assert len(add_button.elements) == 1
 
     input_field.type("python")
     add_button.click()

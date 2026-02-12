@@ -24,6 +24,8 @@ async def test_store_const_action(user: User) -> None:
 
     assert main_instance.namespace.verbose == "NORMAL"
 
+    # TODO: test indeterminate state
+
 
 @nice_gooey_argparse_main(patch_argparse=False)
 def main():

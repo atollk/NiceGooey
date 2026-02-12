@@ -45,7 +45,7 @@ class RootUi(UiWrapper):
 
     @typing.override
     def render(self) -> ui.element:
-        with ui.column(align_items="center").props("data-testid=ng-root") as root:
+        with ui.column(align_items="center").mark("ng-root") as root:
             # TODO: dark mode to save my eyes
             dark = ui.dark_mode(True)
             with ui.row():
@@ -64,6 +64,7 @@ class RootUi(UiWrapper):
                         child.render()
 
                     if self.subparsers:
+                        assert self.subparsers_action is not None
                         none_tab = None
                         with ui.tabs() as ui_tabs:
                             if not self.subparsers_action.required:
@@ -109,12 +110,12 @@ class SubparserUi(UiWrapper):
         ]
 
     def render_tab(self) -> ui.tab:
-        self.tab = ui.tab(self.subparser.prog).props(f"data-testid=ng-subparser-tab-{self.title}")
+        self.tab = ui.tab(self.subparser.prog).mark(f"ng-subparser-tab-{self.title}")
         return self.tab
 
     def render_tab_panel(self) -> ui.tab_panel:
         assert self.tab is not None
-        panel = ui.tab_panel(self.tab).props(f"data-testid=ng-subparser-tabpanel-{self.title}")
+        panel = ui.tab_panel(self.tab).mark(f"ng-subparser-tabpanel-{self.title}")
         with panel:
             for group in self.action_groups:
                 group.render()

@@ -18,6 +18,7 @@ async def test_store_false_action(user: User) -> None:
     checkbox = user.find(ui.checkbox)
     checkbox.click()
 
+    # pyrefly: ignore[unnecessary-comparison]
     assert main_instance.namespace.cache is False
 
 

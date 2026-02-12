@@ -20,6 +20,7 @@ class UiWrapper(Validator):
 
     @property
     def parser_config(self) -> ArgumentParserConfig:
+        assert self.parent.parser_config is not None
         return self.parent.parser_config
 
     def render(self) -> ui.element:

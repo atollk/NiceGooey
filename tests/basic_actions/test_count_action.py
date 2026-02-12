@@ -1,9 +1,18 @@
 import pytest
 from nicegui import ui
-from nicegui.testing import User
+from nicegui.testing import User, UserInteraction
 
 from nicegooey.argparse import nice_gooey_argparse_main, NgArgumentParser
 from nicegooey.argparse.main import main_instance
+
+
+import nicegui.ui
+
+
+def input_number(interaction: UserInteraction, number: int) -> None:
+    for element in interaction.elements:
+        assert isinstance(element, nicegui.ui.number)
+        element.value = number
 
 
 @pytest.mark.nicegui_main_file(__file__)
@@ -16,7 +25,7 @@ async def test_count_action(user: User) -> None:
     assert main_instance.namespace.verbose == 0
 
     number_input = user.find(ui.number)
-    number_input.type("3")
+    input_number(number_input, 3)
 
     assert main_instance.namespace.verbose == 3
 

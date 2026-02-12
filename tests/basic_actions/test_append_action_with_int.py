@@ -1,9 +1,15 @@
+import nicegui.elements.number
 import pytest
-from nicegui import ui
-from nicegui.testing import User
+from nicegui.testing import User, UserInteraction
 
 from nicegooey.argparse import nice_gooey_argparse_main, NgArgumentParser
 from nicegooey.argparse.main import main_instance
+
+
+def input_number(interaction: UserInteraction, number: str) -> None:
+    for element in interaction.elements:
+        assert isinstance(element, nicegui.ui.number)
+        element.value = number
 
 
 @pytest.mark.nicegui_main_file(__file__)
@@ -15,20 +21,20 @@ async def test_append_action_with_int(user: User) -> None:
 
     assert main_instance.namespace.numbers == []
 
-    number_input = user.find(ui.number)
-    add_button = user.find(ui.button).filter(
-        lambda x: x.element.props.get("data-testid") == "ng-action-add-button"
-    )
+    number_input = user.find(marker="ng-action-type-input")
+    assert len(number_input.elements) == 1
+    add_button = user.find(marker="ng-action-add-button")
+    assert len(add_button.elements) == 1
 
-    number_input.type("42")
+    input_number(number_input, "42")
     add_button.click()
     assert main_instance.namespace.numbers == [42]
 
-    number_input.type("100")
+    input_number(number_input, "100")
     add_button.click()
     assert main_instance.namespace.numbers == [42, 100]
 
-    number_input.type("7")
+    input_number(number_input, "7")
     add_button.click()
     assert main_instance.namespace.numbers == [42, 100, 7]
 

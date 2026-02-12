@@ -1,5 +1,4 @@
 import pytest
-from nicegui import ui
 from nicegui.testing import User
 
 from nicegooey.argparse import nice_gooey_argparse_main, NgArgumentParser
@@ -15,9 +14,8 @@ async def test_append_const_action(user: User) -> None:
 
     assert main_instance.namespace.flags == []
 
-    add_button = user.find(ui.button).filter(
-        lambda x: x.element.props.get("data-testid") == "ng-action-add-button"
-    )
+    add_button = user.find(marker="ng-action-add-button")
+    assert len(add_button.elements) == 1
 
     add_button.click()
     assert main_instance.namespace.flags == ["FLAG"]
