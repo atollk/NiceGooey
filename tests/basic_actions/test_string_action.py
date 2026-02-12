@@ -1,5 +1,3 @@
-"""Tests for basic action types in NiceGooey."""
-
 import pytest
 from nicegui import ui
 from nicegui.testing import User
@@ -15,11 +13,9 @@ async def test_string_action(user: User) -> None:
     await user.open("/")
     await user.should_see("name")
 
-    # Find the input field and type a value
     input_field = user.find(ui.input)
     input_field.type("Alice")
 
-    # Verify the namespace value
     assert main_instance.namespace.name == "Alice"
 
 

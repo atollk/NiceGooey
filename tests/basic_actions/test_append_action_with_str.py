@@ -1,0 +1,46 @@
+import pytest
+from nicegui import ui
+from nicegui.testing import User
+
+from nicegooey.argparse import nice_gooey_argparse_main, NgArgumentParser
+from nicegooey.argparse.main import main_instance
+
+
+@pytest.mark.nicegui_main_file(__file__)
+async def test_append_action_with_str(user: User) -> None:
+    """Test append action with string type."""
+
+    await user.open("/")
+    await user.should_see("tags")
+
+    assert main_instance.namespace.tags == []
+
+    input_field = user.find(ui.input).filter(
+        lambda x: x.element.props.get("data-testid") == "ng-action-type-input"
+    )
+    add_button = user.find(ui.button).filter(
+        lambda x: x.element.props.get("data-testid") == "ng-action-add-button"
+    )
+
+    input_field.type("python")
+    add_button.click()
+    assert main_instance.namespace.tags == ["python"]
+
+    input_field.type("testing")
+    add_button.click()
+    assert main_instance.namespace.tags == ["python", "testing"]
+
+    input_field.type("nicegui")
+    add_button.click()
+    assert main_instance.namespace.tags == ["python", "testing", "nicegui"]
+
+
+@nice_gooey_argparse_main(patch_argparse=False)
+def main():
+    parser = NgArgumentParser()
+    parser.add_argument("--tag", action="append", type=str, dest="tags", help="Add tags")
+    parser.parse_args()
+
+
+if __name__ == "__main__":
+    main()
