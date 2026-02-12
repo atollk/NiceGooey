@@ -10,7 +10,7 @@ class ArgumentParserConfig:
 
 
 class NgArgumentParser(argparse.ArgumentParser):
-    nicegooey_config: ArgumentParserConfig
+    nicegooey_config: ArgumentParserConfig = ArgumentParserConfig()
 
     @overload
     def parse_args(self, args: Sequence[str] | None = None, namespace: None = None) -> Namespace: ...

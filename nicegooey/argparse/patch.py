@@ -1,6 +1,7 @@
 import contextlib
 import typing
 
+import nicegui.helpers
 from .main import main_instance
 from .argument_parser import NgArgumentParser
 import functools
@@ -34,7 +35,8 @@ def _active_main_function_context(main_func: MainCallable) -> typing.Generator[N
     try:
         yield
     finally:
-        main_instance.main_func = None
+        if not nicegui.helpers.is_user_simulation():
+            main_instance.main_func = None
 
 
 def nice_gooey_argparse_main(*, patch_argparse: bool = True) -> typing.Callable[[MainCallable], MainCallable]:

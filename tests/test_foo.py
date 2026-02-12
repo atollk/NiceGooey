@@ -1,0 +1,34 @@
+"""Tests for basic action types in NiceGooey."""
+
+import pytest
+from nicegui import ui
+from nicegui.testing import User
+
+from nicegooey.argparse import nice_gooey_argparse_main, NgArgumentParser
+from nicegooey.argparse.main import main_instance
+
+
+@pytest.mark.nicegui_main_file(__file__)
+async def test_string_action(user: User) -> None:
+    """Test a basic string action with input field."""
+
+    await user.open("/")
+    await user.should_see("name")
+
+    # Find the input field and type a value
+    input_field = user.find(ui.input)
+    input_field.type("Alice")
+
+    # Verify the namespace value
+    assert main_instance.namespace.name == "Alice"
+
+
+@nice_gooey_argparse_main(patch_argparse=False)
+def main():
+    parser = NgArgumentParser()
+    parser.add_argument("--name", type=str, help="Your name")
+    parser.parse_args()
+
+
+if __name__ == "__main__":
+    main()

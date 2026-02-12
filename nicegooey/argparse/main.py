@@ -3,6 +3,7 @@ import contextlib
 import typing
 
 import nicegui.run
+import nicegui.helpers
 from nicegui import ui
 from .util import BindingNamespace, logger, CallbackWriter
 from .argument_parser import ArgumentParserConfig, NgArgumentParser
@@ -13,23 +14,16 @@ if typing.TYPE_CHECKING:
 
 class NiceGooeyMain:
     # State
-    parent_parser: argparse.ArgumentParser | None
-    main_func: typing.Callable | None
-    is_running: bool
-    parser_config: ArgumentParserConfig
+    parent_parser: argparse.ArgumentParser | None = None
+    main_func: typing.Callable | None = None
+    is_running: bool = False
+    parser_config: ArgumentParserConfig | None = None
 
     # Argument values
-    namespace: BindingNamespace
+    namespace: BindingNamespace = BindingNamespace()
 
     # UI elements
-    ui_root: "RootUi | None"
-
-    def __init__(self):
-        self.parent_parser = None
-        self.main_func = None
-        self.is_running = False
-        self.namespace = BindingNamespace()
-        self.ui_root = None
+    ui_root: "RootUi | None" = None
 
     def parse_args(
         self,
@@ -45,7 +39,10 @@ class NiceGooeyMain:
             else:
                 self.parser_config = ArgumentParserConfig()
             ui.run(root=self._ui_root, reload=False)
-            raise AssertionError("nicegui.ui.run should not return")
+            if nicegui.helpers.is_user_simulation():
+                return argparse.Namespace()
+            else:
+                raise AssertionError("nicegui.ui.run should not return")
 
     def _get_namespace(self) -> argparse.Namespace:
         if self.parent_parser is None:

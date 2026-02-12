@@ -12,7 +12,7 @@ if typing.TYPE_CHECKING:
 
 class RootUi(UiWrapper):
     action_groups: list[ArgumentGroupUi]
-    subparsers_action: argparse._SubParsersAction
+    subparsers_action: argparse._SubParsersAction | None
     subparsers: list["SubparserUi"]
 
     def __init__(self, parent: "NiceGooeyMain") -> None:
@@ -21,10 +21,11 @@ class RootUi(UiWrapper):
         parent_parser = self.parent.parent_parser
         assert parent_parser is not None
 
-        # Collect action groups
         self.action_groups = [
             ArgumentGroupUi(self.parent, action_group) for action_group in parent_parser._action_groups
         ]
+        self.subparsers_action = None
+        self.subparsers = []
 
         # Collect subparsers
         subparser_group = parent_parser._subparsers
