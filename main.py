@@ -12,6 +12,17 @@ def process(parser: argparse.ArgumentParser, args: argparse.Namespace):
 
 @nice_gooey_argparse_main(patch_argparse=False)
 def main():
+    parser = NgArgumentParser()
+
+    me_group = parser.add_mutually_exclusive_group()
+    me_group.add_argument("--mode-fast", action="store_true", dest="mode", help="Fast mode")
+    me_group.add_argument("--mode-slow", action="store_true", dest="mode", help="Slow mode")
+
+    parser.parse_args()
+
+
+@nice_gooey_argparse_main(patch_argparse=False)
+def main2():
     config = ArgumentParserConfig(argument_vp_width="w-4xl")
     parser = NgArgumentParser()
     parser.nicegooey_config = config

@@ -15,7 +15,7 @@ async def test_mutually_exclusive_group_basic(user: User) -> None:
     assert select is not None
 
     select.click()
-    await user.should_see("option-a")
+    await user.should_see("option_a")
 
 
 @nice_gooey_argparse_main(patch_argparse=False)

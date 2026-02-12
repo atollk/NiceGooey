@@ -13,10 +13,10 @@ async def test_two_action_groups(user: User) -> None:
     await user.should_see("Database Options")
     await user.should_see("Logging Options")
 
-    await user.should_see("db-host")
-    await user.should_see("db-port")
-    await user.should_see("log-level")
-    await user.should_see("log-file")
+    await user.should_see("db_host")
+    await user.should_see("db_port")
+    await user.should_see("log_level")
+    await user.should_see("log_file")
 
 
 @nice_gooey_argparse_main(patch_argparse=False)

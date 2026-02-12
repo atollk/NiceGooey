@@ -14,7 +14,7 @@ async def test_mutually_exclusive_group_switching(user: User) -> None:
     select = user.find(ui.select)
 
     select.click()
-    await user.should_see("mode-fast")
+    await user.should_see("mode_fast")
 
 
 @nice_gooey_argparse_main(patch_argparse=False)
