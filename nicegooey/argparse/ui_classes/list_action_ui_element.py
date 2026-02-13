@@ -20,12 +20,12 @@ class ListActionUiElement[ActionT: argparse.Action](ActionUiElement[ActionT], ab
         return ui.input_chips(default)
 
     @typing.override
-    def _input_element_forward_transform(self, vs: typing.Any) -> list[typing.Any] | None:
+    def _input_element_forward_transform(self, v: typing.Any) -> list[typing.Any] | None:
         # assert isinstance(vs, list) or vs is None  TODO
         ns = argparse.Namespace()
         ns.__setattr__(self.action.dest, getattr(self.parent.namespace, self.action.dest))
         try:
-            cast = [self._action_type()(v) for v in (vs or [])]
+            cast = [self._action_type()(u) for u in (v or [])]
         except TypeError:
             return getattr(ns, self.action.dest)
         else:

@@ -64,17 +64,20 @@ class ActionInputBaseElement:
     action: argparse.Action
     parser: argparse.ArgumentParser
 
-    basic_element: value_element.ValueElement | None = None
-    nargs_wrapper_element: DisableableElement | None = None
-    required_wrapper_element: ui.element | None = None
+    basic_element: value_element.ValueElement
+    nargs_wrapper_element: DisableableElement
+    required_wrapper_element: ui.element
 
     BASIC_ELEMENT_MARKER: typing.Final[str] = "ng-action-type-input-basic"
     NARGS_WRAPPER_MARKER: typing.Final[str] = "ng-action-type-input-nargs-wrapper"
     REQUIRED_WRAPPER_MARKER: typing.Final[str] = "ng-action-type-input-required-wrapper"
 
-    def __init__(self, action: argparse.Action, parser: argparse.ArgumentParser) -> None:
+    def __init__(
+        self, action: argparse.Action, parser: argparse.ArgumentParser, init_value: typing.Any = None
+    ) -> None:
         self.action = action
         self.parser = parser
+        self._render(init_value)
 
     def _action_type_input_basic_element(self, value: typing.Any) -> value_element.ValueElement:
         basic_element: value_element.ValueElement
@@ -135,7 +138,7 @@ class ActionInputBaseElement:
         required_wrapper.mark("ng-action-type-input-required-wrapper")
         return required_wrapper
 
-    def render(self, value: typing.Any) -> None:
+    def _render(self, value: typing.Any) -> None:
         """Creates a ValueElement that represents the input of a single item matching the type of this action."""
 
         def basic_element_f():
@@ -271,8 +274,10 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, abc.ABC):
         return self._action_default()
 
     def _input_element_init(self, default: typing.Any) -> value_element.ValueElement:
-        input_base = ActionInputBaseElement(action=self.action, parser=self.parent.parent_parser)
-        input_base.render(default)
+        assert self.parent.parent_parser is not None
+        input_base = ActionInputBaseElement(
+            action=self.action, parser=self.parent.parent_parser, init_value=default
+        )
         return input_base.basic_element
 
     def _create_input_element(self) -> value_element.ValueElement:

@@ -1,8 +1,6 @@
 import argparse
 import typing
 
-from nicegui import ui
-from nicegui.elements.mixins import value_element
 
 from .action_ui_element import ActionUiElement
 
@@ -29,7 +27,3 @@ class StoreConstActionUiElement(ActionUiElement[argparse._StoreConstAction]):
             return False
         else:
             return None
-
-    @typing.override
-    def _action_type_input_basic_element(self, value: bool) -> value_element.ValueElement:
-        return ui.checkbox(value=value)
