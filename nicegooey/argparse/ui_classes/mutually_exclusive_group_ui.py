@@ -3,7 +3,7 @@ import typing
 
 from nicegui import ui
 
-from .action_ui_element import ActionUiElement
+from .actions.action_ui_element import ActionUiElement
 from .util import UiWrapper
 
 if typing.TYPE_CHECKING:

@@ -76,4 +76,4 @@ def main3():
 
 
 if __name__ in {"__main__", "__mp_main__"}:
-    main3()
+    main2()

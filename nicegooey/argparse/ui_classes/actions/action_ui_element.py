@@ -8,8 +8,8 @@ from nicegui import ui, ElementFilter
 from nicegui.elements.mixins import value_element, validation_element
 from nicegui.elements.mixins.disableable_element import DisableableElement
 
-from ..main import NiceGooeyMain
-from nicegooey.argparse.ui_classes.util import UiWrapper, Nargs
+from ...main import NiceGooeyMain
+from nicegooey.argparse.ui_classes.util import UiWrapper, Nargs, MaxWidthSelect
 
 
 @dataclasses.dataclass
@@ -82,10 +82,8 @@ class ActionInputBaseElement:
     def _action_type_input_basic_element(self, value: typing.Any) -> value_element.ValueElement:
         basic_element: value_element.ValueElement
         if self.action.choices is not None:
-            # TODO: make the size consistent
             choices = list(self.action.choices)
-            # pyrefly: ignore[bad-keyword-argument]
-            basic_element = ui.select(options=choices, value=value)
+            basic_element = MaxWidthSelect(options=choices, value=value)
         else:
             match ActionInfoHelper(action=self.action, parser=self.parser).action_type():
                 case builtins.bool:
