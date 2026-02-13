@@ -31,5 +31,5 @@ class StoreConstActionUiElement(ActionUiElement[argparse._StoreConstAction]):
             return None
 
     @typing.override
-    def _input_element_init(self, default: typing.Any) -> value_element.ValueElement:
-        return ui.checkbox(default)
+    def _action_type_input_basic_element(self, value: bool) -> value_element.ValueElement:
+        return ui.checkbox(value=value)

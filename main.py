@@ -61,5 +61,19 @@ def main2():
     process(parser, args)
 
 
+@nice_gooey_argparse_main(patch_argparse=False)
+def main3():
+    parser = NgArgumentParser()
+
+    parser.add_argument("--output", type=str, required=True, help="Output file path")
+    # parser.add_argument("--input", type=str, nargs="+", help="One or more input files")
+    # parser.add_argument("--tags", type=str, nargs="*", help="Optional list of tags")
+    # parser.add_argument("--coords", type=float, nargs=2, metavar=("X", "Y"), help="X and Y coordinates")
+    parser.add_argument("--verbose", action="store_true", help="Enable verbose output")
+
+    args = parser.parse_args()
+    process(parser, args)
+
+
 if __name__ in {"__main__", "__mp_main__"}:
-    main2()
+    main3()

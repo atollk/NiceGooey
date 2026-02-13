@@ -21,7 +21,8 @@ class ExtendActionUiElement(ListActionUiElement[argparse._ExtendAction]):
         return c
 
     def _create_add_element(self) -> value_element.ValueElement:
-        value_el = self._action_type_input()
+        self._action_type_input()
+        value_el = self.element
         if isinstance(value_el, ValidationElement):
             value_el.validation = {"Must enter a value": lambda v: v is not None}
             value_el.without_auto_validation()
