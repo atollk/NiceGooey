@@ -13,19 +13,30 @@ class ListActionUiElement[ActionT: argparse.Action](ActionUiElement[ActionT], ab
 
     @typing.override
     def _create_input_element(self) -> value_element.ValueElement:
-        def forward_transform(vs: list[typing.Any] | None) -> list[typing.Any] | None:
-            ns = argparse.Namespace()
-            ns.__setattr__(self.action.dest, getattr(self.parent.namespace, self.action.dest))
-            try:
-                cast = [self._action_type()(v) for v in (vs or [])]
-            except TypeError:
-                return getattr(ns, self.action.dest)
-            else:
-                return cast
+        return super()._create_input_element().classes("w-xl")
 
-        el = self._create_input_element_generic(ui.input_chips, forward_transform=forward_transform)
-        el.classes("w-xl")
-        return el
+    @typing.override
+    def _input_element_init(self, default: typing.Any) -> value_element.ValueElement:
+        return ui.input_chips(default)
+
+    @typing.override
+    def _input_element_forward_transform(self, vs: typing.Any) -> list[typing.Any] | None:
+        # assert isinstance(vs, list) or vs is None  TODO
+        ns = argparse.Namespace()
+        ns.__setattr__(self.action.dest, getattr(self.parent.namespace, self.action.dest))
+        try:
+            cast = [self._action_type()(v) for v in (vs or [])]
+        except TypeError:
+            return getattr(ns, self.action.dest)
+        else:
+            return cast
+
+    def _create_add_button(self, value_el: value_element.ValueElement) -> ui.button:
+        return (
+            ui.button(on_click=lambda: self._on_add_button_click(value_el))
+            .props("square padding=xs")
+            .mark("ng-action-add-button")
+        )
 
     def _on_add_button_click(self, value_el: value_element.ValueElement) -> None:
         if isinstance(value_el, validation_element.ValidationElement):
@@ -38,10 +49,3 @@ class ListActionUiElement[ActionT: argparse.Action](ActionUiElement[ActionT], ab
         new = (self.element.value or []) + getattr(ns, self.action.dest)
         self.element.set_value(new)
         value_el.set_value(self.add_element_default_value)
-
-    def _create_add_button(self, value_el: value_element.ValueElement) -> ui.button:
-        return (
-            ui.button(on_click=lambda: self._on_add_button_click(value_el))
-            .props("square padding=xs")
-            .mark("ng-action-add-button")
-        )

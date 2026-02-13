@@ -1,15 +1,9 @@
-import nicegui.elements.number
 import pytest
-from nicegui.testing import User, UserInteraction
+from nicegui.testing import User
 
 from nicegooey.argparse import nice_gooey_argparse_main, NgArgumentParser
 from nicegooey.argparse.main import main_instance
-
-
-def input_number(interaction: UserInteraction, number: str) -> None:
-    for element in interaction.elements:
-        assert isinstance(element, nicegui.ui.number)
-        element.value = number
+from tests.conftest import input_number
 
 
 @pytest.mark.nicegui_main_file(__file__)

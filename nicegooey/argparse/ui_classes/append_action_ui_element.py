@@ -13,7 +13,7 @@ class AppendActionUiElement(ListActionUiElement[argparse._AppendAction]):
     def render(self) -> ui.element:
         c = ui.column()
         with c:
-            self.render_action_name()
+            self._render_action_name()
             with ui.row(align_items="center"):
                 value_el = self._create_add_element()
                 self._create_add_button(value_el).set_icon("south")

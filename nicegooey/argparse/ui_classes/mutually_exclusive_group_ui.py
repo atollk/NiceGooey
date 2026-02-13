@@ -3,8 +3,8 @@ import typing
 
 from nicegui import ui
 
+from .action_ui_element import ActionUiElement
 from .util import UiWrapper
-from .action_ui import ActionUi
 
 if typing.TYPE_CHECKING:
     from ..main import NiceGooeyMain
@@ -24,7 +24,7 @@ class MutuallyExclusiveGroupUi(UiWrapper):
         return self.active_element is None or self.active_element.validate()
 
     def _render_action(self, action: argparse.Action) -> ui.element:
-        ui_container = ActionUi.from_action(self.parent, action)
+        ui_container = ActionUiElement.from_action(self.parent, action)
         self.active_element = ui_container
         if ui_container is not None:
             with ui.item().classes("border-2"):

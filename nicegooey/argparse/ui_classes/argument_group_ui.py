@@ -3,8 +3,8 @@ import typing
 
 from nicegui import ui
 
+from nicegooey.argparse.ui_classes.action_ui_element import ActionUiElement
 from .util import UiWrapper
-from .action_ui import ActionUi
 
 if typing.TYPE_CHECKING:
     from ..main import NiceGooeyMain
@@ -12,7 +12,7 @@ if typing.TYPE_CHECKING:
 
 
 class ArgumentGroupUi(UiWrapper):
-    children: list["ActionUi | MutuallyExclusiveGroupUi"]
+    children: list["ActionUiElement | MutuallyExclusiveGroupUi"]
     group: argparse._ArgumentGroup
 
     def __init__(self, parent: "NiceGooeyMain", group: argparse._ArgumentGroup) -> None:
@@ -33,7 +33,7 @@ class ArgumentGroupUi(UiWrapper):
                 None,
             )
             if me_group is None:
-                ui_container = ActionUi.from_action(self.parent, action)
+                ui_container = ActionUiElement.from_action(self.parent, action)
             else:
                 if me_group in mutually_exclusive_groups_done:
                     continue
@@ -50,7 +50,7 @@ class ArgumentGroupUi(UiWrapper):
         return not validation_failed
 
     def _render_action(self, action: argparse.Action) -> ui.element:
-        ui_container = ActionUi.from_action(self.parent, action)
+        ui_container = ActionUiElement.from_action(self.parent, action)
         if ui_container is not None:
             self.children.append(ui_container)
             with ui.item().classes("border-2"):
@@ -66,7 +66,7 @@ class ArgumentGroupUi(UiWrapper):
             ui.label(self.group.title or "").classes("text-lg font-bold mb-2")
             with ui.list().classes("flex justify-between"):
                 for child in self.children:
-                    if isinstance(child, ActionUi):
+                    if isinstance(child, ActionUiElement):
                         with ui.item().classes("border-2"):
                             child.render().mark(f"ng-action-{child.action.dest}")
                     else:
