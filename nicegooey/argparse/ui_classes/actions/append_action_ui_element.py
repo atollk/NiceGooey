@@ -5,7 +5,7 @@ from nicegui import ui
 from nicegui.elements.mixins import value_element
 from nicegui.elements.mixins.validation_element import ValidationElement
 
-from .action_ui_element import ActionInputBaseElement
+from .action_input_base import ActionInputBaseElement
 from .list_action_ui_element import ListActionUiElement
 
 
