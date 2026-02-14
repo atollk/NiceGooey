@@ -22,24 +22,37 @@ def main():
 
 
 @nice_gooey_argparse_main(patch_argparse=False)
-def main2():
+def main2(required: bool = False, nargs: int | str | None = None):
     config = ArgumentParserConfig(argument_vp_width="w-4xl")
     parser = NgArgumentParser()
     parser.nicegooey_config = config
 
-    parser.add_argument("--name", type=str, default="World", help="Your name")
-    parser.add_argument("--age", "-a", type=int, help="Your age")
-    parser.add_argument("--disable-meme", "-dm", action="store_true", help="Disable memes")
-    parser.add_argument("--favorite-food", choices=["banana", "apple"])
+    parser.add_argument("--name", type=str, default="World", help="Your name", required=required, nargs=nargs)
+    parser.add_argument("--age", "-a", type=int, help="Your age", required=required, nargs=nargs)
+    parser.add_argument("--disable-meme", "-dm", action="store_true", help="Disable memes", required=required)
+    parser.add_argument("--favorite-food", choices=["banana", "apple"], required=required, nargs=nargs)
     group1 = parser.add_argument_group(title="gruppo")
-    group1.add_argument("--level", type=int, choices=range(1, 6), help="Pick a level from 1 to 5")
-    parser.add_argument(
-        "--append_const", action="append_const", const="NiceGooey", help="Append a constant value"
+    group1.add_argument(
+        "--level",
+        type=int,
+        choices=range(1, 6),
+        help="Pick a level from 1 to 5",
+        required=required,
+        nargs=nargs,
     )
-    parser.add_argument("--append", action="append", type=str, help="Append multiple values")
-    group2 = parser.add_mutually_exclusive_group()
-    group2.add_argument("--asdf")
-    group3 = group1.add_mutually_exclusive_group()
+    parser.add_argument(
+        "--append_const",
+        action="append_const",
+        const="NiceGooey",
+        help="Append a constant value",
+        required=required,
+    )
+    parser.add_argument(
+        "--append", action="append", type=str, help="Append multiple values", required=required, nargs=nargs
+    )
+    group2 = parser.add_mutually_exclusive_group(required=required)
+    group2.add_argument("--asdf", nargs=nargs)
+    group3 = group1.add_mutually_exclusive_group(required=required)
 
     def validate_xxx(v: str) -> str:
         if len(v) < 3:
@@ -47,33 +60,19 @@ def main2():
         else:
             return v
 
-    group3.add_argument("--xxx", type=validate_xxx)
-    group3.add_argument("--yyy")
+    group3.add_argument("--xxx", type=validate_xxx, nargs=nargs)
+    group3.add_argument("--yyy", nargs=nargs)
 
-    subps = parser.add_subparsers()
+    subps = parser.add_subparsers(required=required)
     subp1 = subps.add_parser("sub1")
-    subp1.add_argument("--sub1a")
-    subp1.add_argument("--sub1b", type=float)
+    subp1.add_argument("--sub1a", required=required, nargs=nargs)
+    subp1.add_argument("--sub1b", type=float, required=required, nargs=nargs)
     subp2 = subps.add_parser("sub2")
-    subp2.add_argument("--sub2a", type=str)
-
-    args = parser.parse_args()
-    process(parser, args)
-
-
-@nice_gooey_argparse_main(patch_argparse=False)
-def main3():
-    parser = NgArgumentParser()
-
-    parser.add_argument("--output", type=str, required=True, help="Output file path")
-    # parser.add_argument("--input", type=str, nargs="+", help="One or more input files")
-    # parser.add_argument("--tags", type=str, nargs="*", help="Optional list of tags")
-    # parser.add_argument("--coords", type=float, nargs=2, metavar=("X", "Y"), help="X and Y coordinates")
-    parser.add_argument("--verbose", action="store_true", help="Enable verbose output")
+    subp2.add_argument("--sub2a", type=str, required=required, nargs=nargs)
 
     args = parser.parse_args()
     process(parser, args)
 
 
 if __name__ in {"__main__", "__mp_main__"}:
-    main2()
+    main2(required=False, nargs="*")

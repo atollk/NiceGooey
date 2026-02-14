@@ -57,7 +57,7 @@ class ActionInputBaseElement:
         self, basic_element: typing.Callable[[], value_element.ValueElement]
     ) -> DisableableValidationElement:
         nargs = ActionInfoHelper(action=self.action, parser=self.parser).action_nargs()
-        with DisableableValidationElement({}) as nargs_wrapper_element:
+        with DisableableValidationElement(value=None, validation={}) as nargs_wrapper_element:
             match nargs:
                 case Nargs.SINGLE_ELEMENT | Nargs.OPTIONAL:
                     basic_element()

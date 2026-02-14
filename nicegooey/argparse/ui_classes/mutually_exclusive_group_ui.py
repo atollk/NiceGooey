@@ -23,7 +23,9 @@ class MutuallyExclusiveGroupUi(UiWrapper):
     def validate(self) -> bool:
         return self.active_element is None or self.active_element.validate()
 
-    def _render_action(self, action: argparse.Action) -> ui.element:
+    def _render_action(self, action: argparse.Action | None) -> ui.element:
+        if action is None:
+            return ui.element()
         ui_container = ActionUiElement.from_action(self.parent, action)
         self.active_element = ui_container
         if ui_container is not None:
@@ -37,12 +39,18 @@ class MutuallyExclusiveGroupUi(UiWrapper):
         render_action = ui.refreshable(self._render_action)
 
         with ui.row(align_items="center").mark("ng-me-group") as root:
-            choices = {action: (action.metavar or action.dest) for action in self.group._group_actions}
+            choices: dict[argparse.Action | None, str] = {
+                action: (action.metavar or action.dest) for action in self.group._group_actions
+            }
+            default_choice = self.group._group_actions[0]
             if not choices:
                 raise RuntimeError(f"Mutually exclusive group must not be empty: {self.group}")
+            if not self.group.required:
+                choices = {**{None: "-"}, **choices}  # "-" should be the first item
+                default_choice = None
             selector = ui.select(
                 choices,
-                value=self.group._group_actions[0],
+                value=default_choice,
                 on_change=lambda val: render_action.refresh(val.value),
             )
             render_action(selector.value)

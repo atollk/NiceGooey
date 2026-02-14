@@ -66,20 +66,7 @@ class RootUi(UiWrapper):
                             child.render()
 
                         if self.subparsers:
-                            assert self.subparsers_action is not None
-                            none_tab = None
-                            with ui.tabs() as ui_tabs:
-                                if not self.subparsers_action.required:
-                                    none_tab = ui.tab("-")
-                                for child in self.subparsers:
-                                    child.render_tab()
-                            with ui.tab_panels(
-                                ui_tabs, value=self.subparsers[0].tab if none_tab is None else none_tab
-                            ):
-                                if none_tab is not None:
-                                    ui.tab_panel(none_tab)
-                                for child in self.subparsers:
-                                    child.render_tab_panel()
+                            self._render_subparsers()
 
                     # Submit button
                     on_submit = self.parent.submit
@@ -89,6 +76,21 @@ class RootUi(UiWrapper):
                 # TODO: nicer license info
                 ui.link("License", "/license")
         return root
+
+    def _render_subparsers(self) -> None:
+        assert self.subparsers is not None
+        assert self.subparsers_action is not None
+        none_tab = None
+        with ui.tabs() as ui_tabs:
+            if not self.subparsers_action.required:
+                none_tab = ui.tab("-")
+            for child in self.subparsers:
+                child.render_tab()
+        with ui.tab_panels(ui_tabs, value=self.subparsers[0].tab if none_tab is None else none_tab):
+            if none_tab is not None:
+                ui.tab_panel(none_tab)
+            for child in self.subparsers:
+                child.render_tab_panel()
 
     @typing.override
     def validate(self) -> bool:
