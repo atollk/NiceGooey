@@ -33,25 +33,57 @@ class ActionInputBaseElement:
         self.parser = parser
         self._render(init_value)
 
-    def _action_type_input_basic_element(self, value: typing.Any) -> value_element.ValueElement:
+    def _action_type_input_basic_element(self) -> value_element.ValueElement:
         basic_element: value_element.ValueElement
         if self.action.choices is not None:
             choices = list(self.action.choices)
-            basic_element = MaxWidthSelect(options=choices, value=value)
+            basic_element = MaxWidthSelect(options=choices)
         else:
-            match ActionInfoHelper(action=self.action, parser=self.parser).action_type():
+            _, action_type = ActionInfoHelper(action=self.action, parser=self.parser).action_type()
+            match action_type:
                 case builtins.bool:
-                    basic_element = ui.checkbox(value=value)
+                    basic_element = ui.checkbox()
                 case builtins.int:
-                    basic_element = ui.number(format="%d", value=value).props("dense")
+                    basic_element = ui.number(format="%d").props("dense")
                 case builtins.float:
-                    basic_element = ui.number(format="%f", value=value).props("dense")
+                    basic_element = ui.number(
+                        format="%f",
+                    ).props("dense")
                 case builtins.str:
-                    basic_element = ui.input(value=value).props("dense")
+                    basic_element = ui.input().props("dense")
                 case _:
-                    basic_element = ui.input(value=value).props("dense")
+                    basic_element = ui.input().props("dense")
         basic_element.mark(self.BASIC_ELEMENT_MARKER)
         return basic_element
+
+    def __list_element(self, basic_element: typing.Callable[[], value_element.ValueElement]) -> ui.element:
+        def on_add_button_click() -> None:
+            if isinstance(add_element, validation_element.ValidationElement):
+                if not add_element.validate():
+                    return
+            list_element.set_value(list_element.value + [add_element.value])
+            add_element.set_value(add_element_default_value)
+
+        with ui.column() as c:
+            with ui.row(align_items="center"):
+                # Create single-item add element
+                add_element = basic_element().mark()
+                if isinstance(add_element, validation_element.ValidationElement):
+                    add_element.validation = {"Must enter a value": lambda v: v is not None}
+                    add_element.without_auto_validation()
+                    add_element.error = None
+                add_element_default_value = add_element.value
+
+                # Create add button
+                add_button = (
+                    ui.button(on_click=lambda: on_add_button_click())
+                    .props("square padding=xs")
+                    .mark("ng-action-add-button")
+                )
+                add_button.set_icon("south")
+            list_element = ui.input_chips(value=[])
+            list_element.mark(self.BASIC_ELEMENT_MARKER)
+        return c
 
     def _action_type_input_nargs_wrapper(
         self, basic_element: typing.Callable[[], value_element.ValueElement]
@@ -62,8 +94,7 @@ class ActionInputBaseElement:
                 case Nargs.SINGLE_ELEMENT | Nargs.OPTIONAL:
                     basic_element()
                 case Nargs.ZERO_OR_MORE | Nargs.ONE_OR_MORE:
-                    # TODO
-                    raise NotImplementedError("nargs values * and + are not supported in _action_type_input")
+                    self.__list_element(basic_element)
                 case Nargs.PARSER | Nargs.REMAINDER | Nargs.SUPPRESS:
                     raise NotImplementedError(f"nargs value {nargs} are not supported in _action_type_input")
                 case int(n):
@@ -94,7 +125,7 @@ class ActionInputBaseElement:
         """Creates a ValueElement that represents the input of a single item matching the type of this action."""
 
         def basic_element_f():
-            return self._action_type_input_basic_element(value)
+            return self._action_type_input_basic_element()
 
         def nargs_wrapper_element_f():
             return self._action_type_input_nargs_wrapper(basic_element_f)
@@ -116,8 +147,9 @@ class ActionInputBaseElement:
         )
         assert len(nargs_wrapper_element) == 1
         nargs_wrapper_element = nargs_wrapper_element[0]
-        assert isinstance(nargs_wrapper_element, DisableableElement)
+        assert isinstance(nargs_wrapper_element, DisableableValidationElement)
 
+        basic_element.set_value(value)
         self.basic_element = basic_element
         self.nargs_wrapper_element = nargs_wrapper_element
         self.required_wrapper_element = required_wrapper_element

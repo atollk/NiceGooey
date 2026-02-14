@@ -83,8 +83,15 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, abc.ABC):
                 with ui.button(icon="question_mark").props("round padding=xs size=xs"):
                     ui.tooltip(self.action.help)
 
-    def _action_type(self) -> typing.Callable[[str], typing.Any]:
-        return self._action_info.action_type()
+    def _action_type(self) -> typing.Callable[[typing.Any], typing.Any]:
+        type_count, type_base = self._action_info.action_type()
+        match type_count:
+            case ActionInfoHelper.TypeCount.Zero:
+                return lambda v: None
+            case ActionInfoHelper.TypeCount.One:
+                return type_base
+            case ActionInfoHelper.TypeCount.Many:
+                return lambda v: [v]
 
     def _action_default(self) -> typing.Any:
         return self._action_info.action_default()

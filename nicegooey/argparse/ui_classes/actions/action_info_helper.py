@@ -1,7 +1,9 @@
 import argparse
 import builtins
 import dataclasses
+import enum
 import typing
+import warnings
 
 from nicegooey.argparse.ui_classes.util import Nargs
 
@@ -11,32 +13,60 @@ class ActionInfoHelper:
     action: argparse.Action
     parser: argparse.ArgumentParser
 
-    def action_type(self) -> typing.Callable[[str], typing.Any]:
+    class TypeCount(enum.Enum):
+        Zero = "0"
+        One = "1"
+        Many = "*"
+
+    def _is_nargs_multiple(self) -> TypeCount:
+        nargs = self.action_nargs()
+        is_multiple = nargs in (Nargs.ZERO_OR_MORE, Nargs.ONE_OR_MORE) or (
+            isinstance(nargs, int) and nargs > 0
+        )
+        if is_multiple:
+            return self.TypeCount.Many
+        elif nargs == 0:
+            return self.TypeCount.Zero
+        else:
+            return self.TypeCount.One
+
+    def action_type(self) -> tuple[TypeCount, typing.Callable[[str], typing.Any]]:
         """Returns the type of this action, or a reasonable default if no type is set."""
+        base_type = None
         match self.action.type:
             case None:
-                return str
+                base_type = str
             case argparse.FileType:
                 raise NotImplementedError("argparse.FileType is deprecated and not supported.")
             case str():
-                return self.parser._registry_get("type", self.action.type)
+                base_type = self.parser._registry_get("type", self.action.type)
             case _:
-                return self.action.type
+                base_type = self.action.type
+        return self._is_nargs_multiple(), base_type
 
     def action_default(self) -> typing.Any:
         """Returns the default value for this action, or a reasonable default if no default is set."""
+        type_count, type_base = self.action_type()
+
         if self.action.default is not None:
+            if type_count == self.TypeCount.Many and not isinstance(self.action.default, list):
+                warnings.warn("Action expects multiple arguments but the default is not a list.")
+                return [self.action.default]
             return self.action.default
-        if self.action.choices is not None:
-            return []
-        else:
-            match self.action_type():
-                case builtins.bool:
-                    return False
-                case builtins.int | builtins.float:
-                    return 0
-                case _:
-                    return ""
+
+        match type_count:
+            case self.TypeCount.Zero:
+                return None
+            case self.TypeCount.One:
+                match type_base:
+                    case builtins.bool:
+                        return False
+                    case builtins.int | builtins.float:
+                        return 0
+                    case _:
+                        return ""
+            case self.TypeCount.Many:
+                return []
 
     def action_nargs(self) -> int | Nargs:
         """Returns the nargs of this action, or a reasonable default if no nargs is set."""

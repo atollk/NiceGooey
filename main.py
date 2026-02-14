@@ -11,12 +11,10 @@ def process(parser: argparse.ArgumentParser, args: argparse.Namespace):
 
 
 @nice_gooey_argparse_main(patch_argparse=False)
-def main():
+def main1(*args, **kwargs):
     parser = NgArgumentParser()
 
-    me_group = parser.add_mutually_exclusive_group()
-    me_group.add_argument("--mode-fast", action="store_true", dest="mode", help="Fast mode")
-    me_group.add_argument("--mode-slow", action="store_true", dest="mode", help="Slow mode")
+    parser.add_argument("--name", type=str, default="World", help="Your name", required=False, nargs="*")
 
     parser.parse_args()
 
@@ -75,4 +73,4 @@ def main2(required: bool = False, nargs: int | str | None = None):
 
 
 if __name__ in {"__main__", "__mp_main__"}:
-    main2(required=False, nargs="*")
+    main1(required=False, nargs="*")
