@@ -91,7 +91,7 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, abc.ABC):
             case ActionInfoHelper.TypeCount.One:
                 return type_base
             case ActionInfoHelper.TypeCount.Many:
-                return lambda v: [v]
+                return lambda v: list(v)
 
     def _action_default(self) -> typing.Any:
         return self._action_info.action_default()

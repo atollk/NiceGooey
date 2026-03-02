@@ -94,9 +94,6 @@ class RootUi(UiWrapper):
 
     @typing.override
     def validate(self) -> bool:
-        validation_failed = False
-        for group in self.action_groups:
-            validation_failed = group.validate() or validation_failed
-        for subparser in self.subparsers:
-            validation_failed = subparser.validate() or validation_failed
-        return not validation_failed
+        group_validations = [group.validate() for group in self.action_groups]
+        subparser_validations = [subparser.validate() for subparser in self.subparsers]
+        return all(group_validations) and all(subparser_validations)

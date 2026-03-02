@@ -44,10 +44,8 @@ class ArgumentGroupUi(UiWrapper):
 
     @typing.override
     def validate(self) -> bool:
-        validation_failed = False
-        for child in self.children:
-            validation_failed = child.validate() or validation_failed
-        return not validation_failed
+        child_validations = [child.validate() for child in self.children]
+        return all(child_validations)
 
     def _render_action(self, action: argparse.Action) -> ui.element:
         ui_container = ActionUiElement.from_action(self.parent, action)

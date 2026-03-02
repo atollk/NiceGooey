@@ -11,7 +11,8 @@ class StoreActionUiElement(ActionUiElement[argparse._StoreAction]):
         ns = argparse.Namespace()
         ns.__setattr__(self.action.dest, getattr(self.parent.namespace, self.action.dest))
         try:
-            cast = self._action_type()(v)
+            t = self._action_type()
+            cast = t(v)
         except (TypeError, ValueError):
             pass
         else:
