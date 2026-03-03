@@ -12,8 +12,8 @@ async def test_append_const_and_append_same_dest(user: User) -> None:
 
     await user.open("/")
 
-    await user.should_see("add-flag")
-    await user.should_see("add-item")
+    await user.should_see("add_flag")
+    await user.should_see("add_item")
 
     assert main_instance.namespace.items == []
 
@@ -24,9 +24,7 @@ async def test_append_const_and_append_same_dest(user: User) -> None:
 
     assert "FLAG" in main_instance.namespace.items
 
-    input_field = user.find(ui.input).filter(
-        lambda x: x.element.props.get("data-testid") == "ng-action-type-input"
-    )
+    input_field = user.find(marker="ng-action-type-input-basic")
     input_field.type("custom")
 
 

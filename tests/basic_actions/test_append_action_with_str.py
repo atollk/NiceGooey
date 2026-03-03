@@ -14,7 +14,7 @@ async def test_append_action_with_str(user: User) -> None:
 
     assert main_instance.namespace.tags == []
 
-    input_field = user.find(marker="ng-action-type-input")
+    input_field = user.find(marker="ng-action-type-input-basic")
     assert len(input_field.elements) == 1
     add_button = user.find(marker="ng-action-add-button")
     assert len(add_button.elements) == 1
@@ -23,10 +23,12 @@ async def test_append_action_with_str(user: User) -> None:
     add_button.click()
     assert main_instance.namespace.tags == ["python"]
 
+    input_field.clear()
     input_field.type("testing")
     add_button.click()
     assert main_instance.namespace.tags == ["python", "testing"]
 
+    input_field.clear()
     input_field.type("nicegui")
     add_button.click()
     assert main_instance.namespace.tags == ["python", "testing", "nicegui"]

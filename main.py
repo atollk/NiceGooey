@@ -14,7 +14,7 @@ def process(parser: argparse.ArgumentParser, args: argparse.Namespace):
 def main1(*args, **kwargs):
     parser = NgArgumentParser()
 
-    parser.add_argument("--name", type=str, default="World", help="Your name", required=False, nargs="*")
+    parser.add_argument("--name", type=str, help="Your name", required=False, nargs=2)
 
     parser.parse_args()
 

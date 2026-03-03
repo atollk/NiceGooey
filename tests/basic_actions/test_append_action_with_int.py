@@ -15,20 +15,20 @@ async def test_append_action_with_int(user: User) -> None:
 
     assert main_instance.namespace.numbers == []
 
-    number_input = user.find(marker="ng-action-type-input")
+    number_input = user.find(marker="ng-action-type-input-basic")
     assert len(number_input.elements) == 1
     add_button = user.find(marker="ng-action-add-button")
     assert len(add_button.elements) == 1
 
-    input_number(number_input, "42")
+    input_number(number_input, 42)
     add_button.click()
     assert main_instance.namespace.numbers == [42]
 
-    input_number(number_input, "100")
+    input_number(number_input, 100)
     add_button.click()
     assert main_instance.namespace.numbers == [42, 100]
 
-    input_number(number_input, "7")
+    input_number(number_input, 7)
     add_button.click()
     assert main_instance.namespace.numbers == [42, 100, 7]
 

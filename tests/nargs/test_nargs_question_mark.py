@@ -17,11 +17,10 @@ async def test_nargs_question_mark(user: User) -> None:
     assert main_instance.namespace.optional == "DEFAULT"
 
     input_field = user.find(ui.input)
+    input_field.clear()
     input_field.type("custom-value")
 
     assert main_instance.namespace.optional == "custom-value"
-
-    input_field.clear()
 
 
 @nice_gooey_argparse_main(patch_argparse=False)

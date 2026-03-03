@@ -12,10 +12,11 @@ async def test_two_store_actions_same_dest_last_wins(user: User) -> None:
 
     await user.open("/")
 
-    await user.should_see("field-a")
-    await user.should_see("field-b")
+    await user.should_see("field_a")
+    await user.should_see("field_b")
 
     input_a = user.find(ui.input)
+    input_a.clear()
     input_a.type("value-a")
 
     assert main_instance.namespace.shared == "value-a"

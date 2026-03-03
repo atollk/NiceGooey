@@ -12,8 +12,7 @@ async def test_string_and_int_same_dest(user: User) -> None:
 
     await user.open("/")
 
-    await user.should_see("value-str")
-    await user.should_see("value-int")
+    await user.should_see("value")
 
     assert main_instance.namespace.value in ("", 0)
 

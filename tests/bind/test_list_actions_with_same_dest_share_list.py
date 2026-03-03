@@ -11,8 +11,8 @@ async def test_list_actions_with_same_dest_share_list(user: User) -> None:
 
     await user.open("/")
 
-    await user.should_see("add-a")
-    await user.should_see("add-b")
+    await user.should_see("add_a")
+    await user.should_see("add_b")
 
     assert main_instance.namespace.items == []
 

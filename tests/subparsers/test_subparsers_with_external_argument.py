@@ -10,7 +10,7 @@ async def test_subparsers_with_external_argument(user: User) -> None:
 
     await user.open("/")
 
-    await user.should_see("global-option")
+    await user.should_see("global_option")
 
     await user.should_see("cmd1")
     await user.should_see("cmd2")

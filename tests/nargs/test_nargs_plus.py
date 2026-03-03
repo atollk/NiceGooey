@@ -11,7 +11,7 @@ async def test_nargs_plus(user: User) -> None:
 
     await user.open("/")
 
-    await user.should_see("required-items")
+    await user.should_see("required_items")
 
     assert main_instance.namespace.required_items in (None, [])
 

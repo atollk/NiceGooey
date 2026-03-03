@@ -15,6 +15,7 @@ async def test_binding_updates_all_fields(user: User) -> None:
     assert main_instance.namespace.name == "default"
 
     input1 = user.find(ui.input)
+    input1.clear()
     input1.type("Alice")
 
     assert main_instance.namespace.name == "Alice"
