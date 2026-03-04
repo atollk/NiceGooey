@@ -9,6 +9,7 @@ from .action_info_helper import ActionInfoHelper
 from .action_input_base import ActionInputBaseElement
 from ...main import NiceGooeyMain
 from nicegooey.argparse.ui_classes.util import UiWrapper, Nargs
+from ..util import unbind
 
 
 class ActionUiElement[ActionT: argparse.Action](UiWrapper, abc.ABC):
@@ -120,30 +121,62 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, abc.ABC):
     def _input_element_default(self) -> typing.Any:
         return self._action_default()
 
-    def _input_element_init(self, default: typing.Any) -> value_element.ValueElement:
+    def _input_element_init(self, default: typing.Any) -> ActionInputBaseElement:
         assert self.parent.parent_parser is not None
         input_base = ActionInputBaseElement(
             action=self.action, parser=self.parent.parent_parser, init_value=default
         )
-        return input_base.basic_element
+        return input_base
 
     def _create_input_element(self) -> value_element.ValueElement:
         """
         Creates/Renders the input element for this action and stores it in `self.element`.
         :return `self.element`
         """
-        el = self._input_element_init(self._input_element_default())
+        input_base = self._input_element_init(self._input_element_default())
+        el = input_base.basic_element
         if isinstance(el, validation_element.ValidationElement):
             el.without_auto_validation()
             el.validation = self._input_element_validate
             el.error = None
         if not hasattr(self.parent.namespace, self.action.dest):
             setattr(self.parent.namespace, self.action.dest, self._action_default())
+
+        # Bind the namespace value to the element which handles the value.
+        # TODO: only bind if enabled (for actions with an enable checkbox)
         el.bind_value(
             target_object=self.parent.namespace,
             target_name=self.action.dest,
             forward=self._input_element_forward_transform,
             backward=self._input_element_backward_transform,
         )
+
+        # Bind the checkbox that enables/disables the input element, if it exists.
+        if input_base.enable_box_element is not None:
+            box = input_base.enable_box_element
+
+            def on_enable_box_change() -> None:
+                if box.value:
+                    # bind
+                    el.bind_value(
+                        target_object=self.parent.namespace,
+                        target_name=self.action.dest,
+                        forward=self._input_element_forward_transform,
+                        backward=self._input_element_backward_transform,
+                    )
+                    # set namespace value
+                    setattr(
+                        self.parent.namespace,
+                        self.action.dest,
+                        self._input_element_forward_transform(el.value),
+                    )
+                else:
+                    # unbind el
+                    unbind(el, "value", self.parent.namespace, self.action.dest)
+                    # set namespace value to default
+                    setattr(self.parent.namespace, self.action.dest, self._action_default())
+
+            box.on_value_change(on_enable_box_change)
+
         self.element = el
         return self.element

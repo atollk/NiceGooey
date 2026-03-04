@@ -20,10 +20,12 @@ class ActionInputBaseElement:
 
     basic_element: value_element.ValueElement
     nargs_wrapper_element: validation_element.ValidationElement
+    enable_box_element: ui.checkbox | None
     required_wrapper_element: ui.element
 
     BASIC_ELEMENT_MARKER: typing.Final[str] = "ng-action-type-input-basic"
     NARGS_WRAPPER_MARKER: typing.Final[str] = "ng-action-type-input-nargs-wrapper"
+    ENABLE_BOX_MARKER: typing.Final[str] = "ng-action-type-input-enable-box"
     REQUIRED_WRAPPER_MARKER: typing.Final[str] = "ng-action-type-input-required-wrapper"
 
     def __init__(
@@ -117,8 +119,9 @@ class ActionInputBaseElement:
                 with ui.row():
                     with ui.checkbox() as enable_box:
                         ui.tooltip("Enable")
+                    enable_box.mark(self.ENABLE_BOX_MARKER)
                     nargs_wrapper_element().bind_enabled(enable_box, "value")
-        required_wrapper.mark("ng-action-type-input-required-wrapper")
+        required_wrapper.mark(self.REQUIRED_WRAPPER_MARKER)
         return required_wrapper
 
     def _render(self, value: typing.Any) -> None:
@@ -149,7 +152,18 @@ class ActionInputBaseElement:
         nargs_wrapper_element = nargs_wrapper_element[0]
         assert isinstance(nargs_wrapper_element, DisableableValidationElement)
 
+        enable_box_elements = list(
+            ElementFilter(marker=self.ENABLE_BOX_MARKER).within(instance=required_wrapper_element)
+        )
+        if len(enable_box_elements) > 0:
+            assert len(enable_box_elements) == 1
+            enable_box_element = enable_box_elements[0]
+            assert isinstance(enable_box_element, ui.checkbox)
+        else:
+            enable_box_element = None
+
         basic_element.set_value(value)
         self.basic_element = basic_element
         self.nargs_wrapper_element = nargs_wrapper_element
+        self.enable_box_element = enable_box_element
         self.required_wrapper_element = required_wrapper_element

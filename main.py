@@ -1,6 +1,7 @@
 import argparse
 import time
 
+
 from nicegooey.argparse import nice_gooey_argparse_main, ArgumentParserConfig, NgArgumentParser
 
 
@@ -13,10 +14,9 @@ def process(parser: argparse.ArgumentParser, args: argparse.Namespace):
 @nice_gooey_argparse_main(patch_argparse=False)
 def main1(*args, **kwargs):
     parser = NgArgumentParser()
-
-    parser.add_argument("--name", type=str, help="Your name", required=False, nargs=2)
-
-    parser.parse_args()
+    parser.add_argument("--enable", action="store_true", help="Enable feature")
+    ns = parser.parse_args()
+    print(ns.enable)
 
 
 @nice_gooey_argparse_main(patch_argparse=False)

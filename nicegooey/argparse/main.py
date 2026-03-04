@@ -4,8 +4,10 @@ import typing
 
 import nicegui.run
 import nicegui.helpers
+import nicegui.binding
 from nicegui import ui
-from .util import BindingNamespace, logger, CallbackWriter
+
+from .util import logger, CallbackWriter
 from .argument_parser import ArgumentParserConfig, NgArgumentParser
 
 if typing.TYPE_CHECKING:
@@ -20,7 +22,7 @@ class NiceGooeyMain:
     parser_config: ArgumentParserConfig | None
 
     # Argument values
-    namespace: BindingNamespace
+    namespace: argparse.Namespace
 
     # UI elements
     ui_root: "RootUi | None"
@@ -34,7 +36,7 @@ class NiceGooeyMain:
         self.main_func = None
         self.is_running = False
         self.parser_config = None
-        self.namespace = BindingNamespace()
+        self.namespace = argparse.Namespace()
         self.ui_root = None
 
     def parse_args(
@@ -61,7 +63,8 @@ class NiceGooeyMain:
     def _get_namespace(self) -> argparse.Namespace:
         if self.parent_parser is None:
             raise RuntimeError("NiceGooeyMain has no parent parser set")
-        return self.namespace
+        ns = self.namespace
+        return ns
 
     async def submit(self) -> None:
         # Validate

@@ -9,22 +9,37 @@ logger = logging.getLogger("nicegooey.argparse")
 
 
 class BindingNamespace(argparse.Namespace):
+    _bindings: dict[str, binding.BindableProperty]
+
     def __init__(self, **kwargs: typing.Any) -> None:
         super().__init__(**kwargs)
-        self._bindings: dict[str, binding.BindableProperty] = {}
+        super().__setattr__("_bindings", {})
 
     def __setattr__(self, key: str, value: typing.Any) -> None:
         if isinstance(value, binding.BindableProperty):
             self._bindings[key] = value
+        elif not key.startswith("___"):
+            b = binding.BindableProperty()
+            b.__set_name__(self, key)
+            b.__set__(self, value)
+            self._bindings[key] = b
         else:
             super().__setattr__(key, value)
 
     def __getattr__(self, name: str) -> typing.Any:
         _bindings = super().__getattribute__("_bindings")
         if name in _bindings:
-            return _bindings[name].value
+            return _bindings[name]
         else:
             return super().__getattribute__(name)
+
+    def to_pure_namespace(self) -> argparse.Namespace:
+        """Returns a pure `argparse.Namespace` with the same values as this `BindingNamespace`."""
+        ns = argparse.Namespace()
+        for key in self._bindings:
+            v = getattr(self, key).__get__(self)
+            setattr(ns, key, v)
+        return ns
 
 
 class CallbackWriter(io.StringIO):

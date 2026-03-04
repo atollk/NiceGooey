@@ -1,5 +1,9 @@
+- action_input_base.py -> when "enabled" is clicked (i.e. state is changed), the action needs to be evaluated to set the namespace value
+
+
 - support "required" + tests
 - support nargs == 0
+- use Bindings instead of "active links" (https://nicegui.io/documentation/section_binding_properties#bindable_properties_for_maximum_performance)
 - keyboard controls (tab, enter)
 
 
