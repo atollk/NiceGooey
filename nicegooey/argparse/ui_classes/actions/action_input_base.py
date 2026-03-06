@@ -7,7 +7,7 @@ from nicegui.elements.mixins import value_element, validation_element
 from nicegui.elements.mixins.disableable_element import DisableableElement
 
 from nicegooey.argparse.ui_classes.actions.action_info_helper import ActionInfoHelper
-from nicegooey.argparse.ui_classes.util import MaxWidthSelect, Nargs
+from nicegooey.argparse.ui_classes.util import MaxWidthSelect, Nargs, DisableableDiv
 
 
 class DisableableValidationElement(validation_element.ValidationElement, DisableableElement):
@@ -120,7 +120,10 @@ class ActionInputBaseElement:
                     with ui.checkbox() as enable_box:
                         ui.tooltip("Enable")
                     enable_box.mark(self.ENABLE_BOX_MARKER)
-                    nargs_wrapper_element().bind_enabled(enable_box, "value")
+                    with DisableableDiv() as nargs_wrapper:
+                        nargs_wrapper_element()
+                    nargs_wrapper.bind_enabled(enable_box, "value")
+
         required_wrapper.mark(self.REQUIRED_WRAPPER_MARKER)
         return required_wrapper
 

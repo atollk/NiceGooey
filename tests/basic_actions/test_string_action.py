@@ -22,7 +22,7 @@ async def test_string_action(user: User) -> None:
 @nice_gooey_argparse_main(patch_argparse=False)
 def main():
     parser = NgArgumentParser()
-    parser.add_argument("--name", type=str, help="Your name")
+    parser.add_argument("--name", type=str, help="Your name", required=True)
     parser.parse_args()
 
 

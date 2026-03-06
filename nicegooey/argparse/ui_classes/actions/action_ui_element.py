@@ -9,7 +9,6 @@ from .action_info_helper import ActionInfoHelper
 from .action_input_base import ActionInputBaseElement
 from ...main import NiceGooeyMain
 from nicegooey.argparse.ui_classes.util import UiWrapper, Nargs
-from ..util import unbind
 
 
 class ActionUiElement[ActionT: argparse.Action](UiWrapper, abc.ABC):
@@ -17,6 +16,9 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, abc.ABC):
 
     action: ActionT
     element: value_element.ValueElement | None = None
+
+    enable_backward_bind: bool = True
+    enable_forward_bind: bool = True
 
     @staticmethod
     def from_action(parent: NiceGooeyMain, action: argparse.Action) -> "ActionUiElement | None":
@@ -134,6 +136,10 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, abc.ABC):
         :return `self.element`
         """
         input_base = self._input_element_init(self._input_element_default())
+
+        # temp: remove after debugging
+        self.input_base = input_base
+
         el = input_base.basic_element
         if isinstance(el, validation_element.ValidationElement):
             el.without_auto_validation()
@@ -142,41 +148,47 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, abc.ABC):
         if not hasattr(self.parent.namespace, self.action.dest):
             setattr(self.parent.namespace, self.action.dest, self._action_default())
 
-        # Bind the namespace value to the element which handles the value.
-        # TODO: only bind if enabled (for actions with an enable checkbox)
-        el.bind_value(
-            target_object=self.parent.namespace,
-            target_name=self.action.dest,
-            forward=self._input_element_forward_transform,
-            backward=self._input_element_backward_transform,
-        )
-
         # Bind the checkbox that enables/disables the input element, if it exists.
         if input_base.enable_box_element is not None:
             box = input_base.enable_box_element
 
             def on_enable_box_change() -> None:
                 if box.value:
-                    # bind
-                    el.bind_value(
-                        target_object=self.parent.namespace,
-                        target_name=self.action.dest,
-                        forward=self._input_element_forward_transform,
-                        backward=self._input_element_backward_transform,
-                    )
-                    # set namespace value
+                    self.enable_backward_bind = True
+                    self.enable_forward_bind = True
                     setattr(
                         self.parent.namespace,
                         self.action.dest,
                         self._input_element_forward_transform(el.value),
                     )
                 else:
-                    # unbind el
-                    unbind(el, "value", self.parent.namespace, self.action.dest)
-                    # set namespace value to default
+                    self.enable_backward_bind = False
+                    self.enable_forward_bind = False
                     setattr(self.parent.namespace, self.action.dest, self._action_default())
 
             box.on_value_change(on_enable_box_change)
+            on_enable_box_change()
+
+        # Bind the namespace value to the element which handles the value.
+        # It is important that this is done after the enable_box logic; otherwise, an initially disabled checkbox would still override the default.
+        def forward(v: typing.Any) -> typing.Any:
+            if self.enable_forward_bind:
+                return self._input_element_forward_transform(v)
+            else:
+                return getattr(self.parent.namespace, self.action.dest)
+
+        def backward(v: typing.Any) -> typing.Any:
+            if self.enable_backward_bind:
+                return self._input_element_backward_transform(v)
+            else:
+                return el.value
+
+        el.bind_value(
+            target_object=self.parent.namespace,
+            target_name=self.action.dest,
+            forward=forward,
+            backward=backward,
+        )
 
         self.element = el
         return self.element

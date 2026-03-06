@@ -27,7 +27,7 @@ async def test_count_action(user: User) -> None:
 @nice_gooey_argparse_main(patch_argparse=False)
 def main():
     parser = NgArgumentParser()
-    parser.add_argument("--verbose", "-v", action="count", default=0, help="Verbosity level")
+    parser.add_argument("--verbose", "-v", action="count", default=0, help="Verbosity level", required=True)
     parser.parse_args()
 
 

@@ -32,7 +32,9 @@ async def test_extend_action(user: User) -> None:
 @nice_gooey_argparse_main(patch_argparse=False)
 def main():
     parser = NgArgumentParser()
-    parser.add_argument("--item", action="extend", nargs="+", type=str, dest="items", help="Extend items")
+    parser.add_argument(
+        "--item", action="extend", nargs="+", type=str, dest="items", help="Extend items", required=True
+    )
     parser.parse_args()
 
 

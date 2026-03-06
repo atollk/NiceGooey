@@ -33,7 +33,7 @@ async def test_action_with_type_validation(user: User) -> None:
 @nice_gooey_argparse_main(patch_argparse=False)
 def main():
     parser = NgArgumentParser()
-    parser.add_argument("--username", type=validate_min_length, help="Username (min 3 chars)")
+    parser.add_argument("--username", type=validate_min_length, help="Username (min 3 chars)", required=True)
     parser.parse_args()
 
 

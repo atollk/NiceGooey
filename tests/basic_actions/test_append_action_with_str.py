@@ -37,7 +37,7 @@ async def test_append_action_with_str(user: User) -> None:
 @nice_gooey_argparse_main(patch_argparse=False)
 def main():
     parser = NgArgumentParser()
-    parser.add_argument("--tag", action="append", type=str, dest="tags", help="Add tags")
+    parser.add_argument("--tag", action="append", type=str, dest="tags", help="Add tags", required=True)
     parser.parse_args()
 
 

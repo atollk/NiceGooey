@@ -3,7 +3,7 @@ import enum
 import typing
 
 from nicegui import ui
-import nicegui.binding
+from nicegui.elements.mixins.disableable_element import DisableableElement
 
 from ..argument_parser import ArgumentParserConfig
 
@@ -26,6 +26,8 @@ class Validator(typing.Protocol):
 
 
 class UiWrapper(Validator):
+    """Generic base class for most UI elements."""
+
     parent: "NiceGooeyMain"
 
     def __init__(self, parent: "NiceGooeyMain") -> None:
@@ -44,6 +46,8 @@ class UiWrapper(Validator):
 
 
 class MaxWidthSelect(ui.select):
+    """A select element that is as wide as its longest option, but no wider."""
+
     def __init__(self, options: list[str], **kwargs):
         super().__init__(options, **kwargs)
 
@@ -61,61 +65,28 @@ class MaxWidthSelect(ui.select):
         self.classes("w-full")
 
 
-def unbind_to(
-    self_obj: typing.Any, self_name: str, other_obj: typing.Any, other_name: str, strict: bool = False
-) -> None:
-    """Undo a bind_to call of a nicegui element."""
-    key = (id(self_obj), self_name)
-    if key not in nicegui.binding.bindings:
-        if strict:
-            raise ValueError(f"No bindings found for {self_obj}.{self_name}")
-    else:
-        new_bindings = [
-            x
-            for x in nicegui.binding.bindings[key]
-            if self_obj is x[0] and other_obj is x[1] and other_name is x[2]
-        ]
-        if len(new_bindings) == len(nicegui.binding.bindings[key]) and strict:
-            raise ValueError(f"No binding found from {self_obj}.{self_name} to {other_obj}.{other_name}")
-        nicegui.binding.bindings[key] = new_bindings
+class DisableableDiv(DisableableElement):
+    """A div that can be disabled, i.e. have a disabled style and prevent interaction with its children."""
 
-    if key in nicegui.binding.bindable_properties:
-        nicegui.binding.active_links = [
-            x
-            for x in nicegui.binding.active_links
-            if not (self_obj is x[0] and self_name is x[1] and other_obj is x[2] and other_name is x[3])
-        ]
+    _inner_loading: ui.element
 
+    def __init__(self, **kwargs: typing.Any) -> None:
+        super().__init__(**kwargs)
+        self.style("position: relative")  # contain the q-inner-loading overlay within this div
 
-def unbind_from(
-    self_obj: typing.Any, self_name: str, other_obj: typing.Any, other_name: str, strict: bool = False
-) -> None:
-    """Undo a bind_from call of a nicegui element."""
-    key = (id(other_obj), other_name)
-    if key not in nicegui.binding.bindings:
-        if strict:
-            raise ValueError(f"No bindings found for {other_obj}.{other_name}")
-    else:
-        new_bindings = [
-            x
-            for x in nicegui.binding.bindings[key]
-            if other_obj is x[0] and self_obj is x[1] and self_name is x[2]
-        ]
-        if len(new_bindings) == len(nicegui.binding.bindings[key]) and strict:
-            raise ValueError(f"No binding found from {other_obj}.{other_name} to {self_obj}.{self_name}")
-        nicegui.binding.bindings[key] = new_bindings
+        self._inner_loading = ui.element(tag="q-inner-loading")
+        self._inner_loading.move(self)
+        self._inner_loading.style("z-index: 100")  # make sure the loading overlay is above all children
 
-    if key in nicegui.binding.bindable_properties:
-        nicegui.binding.active_links = [
-            x
-            for x in nicegui.binding.active_links
-            if not (other_obj is x[0] and self_name is x[1] and self_obj is x[2] and self_name is x[3])
-        ]
+        # Make the overlay transparent - we'll style the children instead
+        self._inner_loading.props("dark=false")
+        self._inner_loading.style("background: transparent")
 
+        self._handle_enabled_change(True)
 
-def unbind(
-    self_obj: typing.Any, self_name: str, other_obj: typing.Any, other_name: str, strict: bool = False
-) -> None:
-    """Undo a bind call of a nicegui element."""
-    unbind_to(self_obj, self_name, other_obj, other_name, strict)
-    unbind_from(self_obj, self_name, other_obj, other_name, strict)
+    def _handle_enabled_change(self, enabled: bool) -> None:
+        self._inner_loading.props.set_bool("showing", not enabled)
+        if enabled:
+            self.style(remove="filter: grayscale(0.7) opacity(0.5); cursor: not-allowed")
+        else:
+            self.style("filter: grayscale(0.7) opacity(0.5); cursor: not-allowed")
