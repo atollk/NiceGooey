@@ -48,6 +48,10 @@ class ActionInfoHelper:
         """Returns the default value for this action, or a reasonable default if no default is set."""
         type_count, type_base = self.action_type()
 
+        # ugly hack but I don't know a better solution
+        if isinstance(self.action, argparse._AppendAction):
+            return []
+
         if self.action.default is not None:
             if type_count == self.TypeCount.Many and not isinstance(self.action.default, list):
                 warnings.warn("Action expects multiple arguments but the default is not a list.")

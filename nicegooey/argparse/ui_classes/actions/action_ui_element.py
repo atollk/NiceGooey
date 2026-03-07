@@ -90,7 +90,7 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, abc.ABC):
         type_count, type_base = self._action_info.action_type()
         match type_count:
             case ActionInfoHelper.TypeCount.Zero:
-                return lambda v: None
+                return lambda v: v
             case ActionInfoHelper.TypeCount.One:
                 return type_base
             case ActionInfoHelper.TypeCount.Many:

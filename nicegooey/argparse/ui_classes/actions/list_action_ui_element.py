@@ -17,9 +17,25 @@ class ListActionInputBaseElement(ActionInputBaseElement):
         if self.action.required:
             raise NotImplementedError("Required list actions are not supported yet")  # TODO
         else:
+
+            def on_add_button_click(
+                list_element: value_element.ValueElement,
+                inner_element: value_element.ValueElement,
+                inner_element_default_value: typing.Any,
+            ) -> None:
+                """Override the on_click function to call the action instead of just appending to the list."""
+                if isinstance(inner_element, validation_element.ValidationElement):
+                    if not inner_element.validate():
+                        return
+                ns = argparse.Namespace()
+                ns.__setattr__(self.action.dest, list_element.value)
+                self.action(self.parser, ns, inner_element.value)
+                list_element.value = getattr(ns, self.action.dest)
+                inner_element.set_value(inner_element_default_value)
+
             with ui.element() as required_wrapper:
                 required_wrapper.mark(self.REQUIRED_WRAPPER_MARKER)
-                return self._list_element(nargs_wrapper_element)
+                return self._list_element(nargs_wrapper_element, on_add_button_click=on_add_button_click)
 
 
 class ListActionUiElement[ActionT: argparse.Action](ActionUiElement[ActionT], abc.ABC):
@@ -39,15 +55,8 @@ class ListActionUiElement[ActionT: argparse.Action](ActionUiElement[ActionT], ab
 
     @typing.override
     def _input_element_forward_transform(self, v: typing.Any) -> list[typing.Any] | None:
-        # assert isinstance(vs, list) or vs is None  TODO
-        ns = argparse.Namespace()
-        ns.__setattr__(self.action.dest, getattr(self.parent.namespace, self.action.dest))
-        try:
-            cast = [self._action_type()(u) for u in (v or [])]
-        except TypeError:
-            return getattr(ns, self.action.dest)
-        else:
-            return cast
+        assert isinstance(v, list) or v is None
+        return [self._action_type()(u) for u in (v or [])]
 
     def _create_add_button(self, value_el: value_element.ValueElement) -> ui.button:
         return (

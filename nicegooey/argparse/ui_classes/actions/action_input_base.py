@@ -19,7 +19,7 @@ class ActionInputBaseElement:
     parser: argparse.ArgumentParser
 
     basic_element: value_element.ValueElement
-    nargs_wrapper_element: validation_element.ValidationElement
+    nargs_wrapper_element: value_element.ValueElement
     enable_box_element: ui.checkbox | None
     required_wrapper_element: ui.element
 
@@ -62,16 +62,25 @@ class ActionInputBaseElement:
         return basic_element
 
     def _list_element(
-        self, inner_element_f: typing.Callable[[], value_element.ValueElement]
+        self,
+        inner_element_f: typing.Callable[[], value_element.ValueElement],
+        on_add_button_click: typing.Callable[
+            [value_element.ValueElement, value_element.ValueElement, typing.Any], None
+        ]
+        | None = None,
     ) -> value_element.ValueElement:
         """Creates and returns an element for inputting multiple items of the given inner element."""
 
-        def on_add_button_click() -> None:
+        def on_add_button_click_default(
+            list_element: value_element.ValueElement,
+            inner_element: value_element.ValueElement,
+            inner_element_default_value: typing.Any,
+        ) -> None:
             if isinstance(inner_element, validation_element.ValidationElement):
                 if not inner_element.validate():
                     return
             list_element.set_value(list_element.value + [inner_element.value])
-            inner_element.set_value(add_element_default_value)
+            inner_element.set_value(inner_element_default_value)
 
         with ui.column():
             with ui.row(align_items="center"):
@@ -85,13 +94,20 @@ class ActionInputBaseElement:
                     inner_element.validation = {"Must enter a value": lambda v: v is not None}
                     inner_element.without_auto_validation()
                     inner_element.error = None
-                add_element_default_value = inner_element.value
+                inner_element_default_value = inner_element.value
 
                 # Create add button
+                on_click = (
+                    (lambda: on_add_button_click(list_element, inner_element, inner_element_default_value))
+                    if on_add_button_click is not None
+                    else (
+                        lambda: on_add_button_click_default(
+                            list_element, inner_element, inner_element_default_value
+                        )
+                    )
+                )
                 add_button = (
-                    ui.button(on_click=lambda: on_add_button_click())
-                    .props("square padding=xs")
-                    .mark(self.ADD_BUTTON_MARKER)
+                    ui.button(on_click=on_click).props("square padding=xs").mark(self.ADD_BUTTON_MARKER)
                 )
                 add_button.set_icon("south")
             list_element = ui.input_chips(value=[])
