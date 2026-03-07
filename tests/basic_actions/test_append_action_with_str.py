@@ -15,7 +15,10 @@ async def test_append_action_with_str(user: User) -> None:
 
     assert main_instance.namespace.tags == []
 
-    input_field = user.find(marker=ActionInputBaseElement.LIST_INNER_ELEMENT_MARKER)
+    input_field = user.find(
+        marker=ActionInputBaseElement.BASIC_ELEMENT_MARKER
+        + ActionInputBaseElement.LIST_INNER_ELEMENT_MARKER_SUFFIX
+    )
     assert len(input_field.elements) == 1
     add_button = user.find(marker=ActionInputBaseElement.ADD_BUTTON_MARKER)
     assert len(add_button.elements) == 1
@@ -38,7 +41,7 @@ async def test_append_action_with_str(user: User) -> None:
 @nice_gooey_argparse_main(patch_argparse=False)
 def main():
     parser = NgArgumentParser()
-    parser.add_argument("--tag", action="append", type=str, dest="tags", help="Add tags", required=True)
+    parser.add_argument("--tag", action="append", type=str, dest="tags", help="Add tags")
     parser.parse_args()
 
 

@@ -6,19 +6,13 @@ from nicegui import ui
 from nicegui.elements.mixins import value_element, validation_element
 
 from .action_ui_element import ActionUiElement
-from .action_input_base import ActionInputBaseElement, DisableableValidationElement
+from .action_input_base import ActionInputBaseElement
 
 
 class ListActionInputBaseElement(ActionInputBaseElement):
     @typing.override
-    def _action_type_input_nargs_wrapper(
-        self, basic_element: typing.Callable[[], value_element.ValueElement]
-    ) -> DisableableValidationElement:
-        return super()._action_type_input_nargs_wrapper(basic_element)
-
-    @typing.override
     def _action_type_input_required_wrapper(
-        self, nargs_wrapper_element: typing.Callable[[], DisableableValidationElement]
+        self, nargs_wrapper_element: typing.Callable[[], value_element.ValueElement]
     ) -> ui.element:
         if self.action.required:
             raise NotImplementedError("Required list actions are not supported yet")  # TODO

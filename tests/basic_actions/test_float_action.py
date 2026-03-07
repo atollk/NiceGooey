@@ -5,8 +5,6 @@ from nicegui.testing import User
 from nicegooey.argparse import nice_gooey_argparse_main, NgArgumentParser
 from nicegooey.argparse.main import main_instance
 
-from tests.conftest import input_number
-
 
 @pytest.mark.nicegui_main_file(__file__)
 async def test_float_action(user: User) -> None:
@@ -16,7 +14,8 @@ async def test_float_action(user: User) -> None:
     await user.should_see("price")
 
     number_input = user.find(ui.number)
-    input_number(number_input, "19.99")
+    number_input.clear()
+    number_input.type("19.99")
 
     assert main_instance.namespace.price == 19.99
 

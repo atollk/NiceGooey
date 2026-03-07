@@ -39,9 +39,15 @@ class MutuallyExclusiveGroupUi(UiWrapper):
         render_action = ui.refreshable(self._render_action)
 
         with ui.row(align_items="center").mark("ng-me-group") as root:
-            choices: dict[argparse.Action | None, str] = {
-                action: (action.metavar or action.dest) for action in self.group._group_actions
-            }
+            choices: dict[argparse.Action | None, str] = {}
+            for action in self.group._group_actions:
+                if isinstance(action.metavar, str):
+                    action_name = action.metavar
+                elif isinstance(action.metavar, tuple):
+                    action_name = action.metavar[0]
+                else:
+                    action_name = action.dest
+                choices[action] = action_name
             default_choice = self.group._group_actions[0]
             if not choices:
                 raise RuntimeError(f"Mutually exclusive group must not be empty: {self.group}")

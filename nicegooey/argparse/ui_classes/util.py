@@ -53,6 +53,7 @@ class MaxWidthSelect(ui.select):
 
         # Reparent: wrap self in an inline-block div after creation
         longest = max((str(opt) for opt in options), key=len)
+        assert self.parent_slot is not None
         with self.parent_slot.parent:
             with ui.element("div").classes("relative inline-block") as wrapper:
                 # Hidden sizer with only the longest label

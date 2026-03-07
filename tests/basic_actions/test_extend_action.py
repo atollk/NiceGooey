@@ -15,7 +15,10 @@ async def test_extend_action(user: User) -> None:
 
     assert main_instance.namespace.items == []
 
-    input_field = user.find(marker=ActionInputBaseElement.LIST_INNER_ELEMENT_MARKER)
+    input_field = user.find(
+        marker=ActionInputBaseElement.BASIC_ELEMENT_MARKER
+        + ActionInputBaseElement.LIST_INNER_ELEMENT_MARKER_SUFFIX
+    )
     assert len(input_field.elements) == 1
     add_button = user.find(marker=ActionInputBaseElement.ADD_BUTTON_MARKER)
     assert len(add_button.elements) == 1

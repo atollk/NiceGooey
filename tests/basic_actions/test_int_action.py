@@ -6,9 +6,6 @@ from nicegooey.argparse import nice_gooey_argparse_main, NgArgumentParser
 from nicegooey.argparse.main import main_instance
 
 
-from tests.conftest import input_number
-
-
 @pytest.mark.nicegui_main_file(__file__)
 async def test_int_action(user: User) -> None:
     """Test integer action with number input."""
@@ -17,7 +14,7 @@ async def test_int_action(user: User) -> None:
     await user.should_see("age")
 
     number_input = user.find(ui.number)
-    input_number(number_input, "42")
+    number_input.type("42")
 
     assert main_instance.namespace.age == 42
 

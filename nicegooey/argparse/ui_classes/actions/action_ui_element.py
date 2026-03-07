@@ -95,6 +95,8 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, abc.ABC):
                 return type_base
             case ActionInfoHelper.TypeCount.Many:
                 return lambda v: list(v)
+            case _:
+                raise ValueError(f"Invalid type count {type_count}")
 
     def _action_default(self) -> typing.Any:
         return self._action_info.action_default()
@@ -137,7 +139,7 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, abc.ABC):
         """
         input_base = self._input_element_init(self._input_element_default())
 
-        el = input_base.nargs_value_element
+        el = input_base.nargs_wrapper_element
         if isinstance(el, validation_element.ValidationElement):
             el.without_auto_validation()
             el.validation = self._input_element_validate

@@ -6,9 +6,6 @@ from nicegooey.argparse import nice_gooey_argparse_main, NgArgumentParser
 from nicegooey.argparse.main import main_instance
 
 
-from tests.conftest import input_number
-
-
 @pytest.mark.nicegui_main_file(__file__)
 async def test_count_action(user: User) -> None:
     """Test count action (increments a counter)."""
@@ -19,7 +16,7 @@ async def test_count_action(user: User) -> None:
     assert main_instance.namespace.verbose == 0
 
     number_input = user.find(ui.number)
-    input_number(number_input, 3)
+    number_input.type(3)
 
     assert main_instance.namespace.verbose == 3
 
