@@ -6,6 +6,26 @@ from nicegui import ui
 from nicegui.elements.mixins import value_element, validation_element
 
 from .action_ui_element import ActionUiElement
+from .action_input_base import ActionInputBaseElement, DisableableValidationElement
+
+
+class ListActionInputBaseElement(ActionInputBaseElement):
+    @typing.override
+    def _action_type_input_nargs_wrapper(
+        self, basic_element: typing.Callable[[], value_element.ValueElement]
+    ) -> DisableableValidationElement:
+        return super()._action_type_input_nargs_wrapper(basic_element)
+
+    @typing.override
+    def _action_type_input_required_wrapper(
+        self, nargs_wrapper_element: typing.Callable[[], DisableableValidationElement]
+    ) -> ui.element:
+        if self.action.required:
+            raise NotImplementedError("Required list actions are not supported yet")  # TODO
+        else:
+            with ui.element() as required_wrapper:
+                required_wrapper.mark(self.REQUIRED_WRAPPER_MARKER)
+                return self._list_element(nargs_wrapper_element)
 
 
 class ListActionUiElement[ActionT: argparse.Action](ActionUiElement[ActionT], abc.ABC):
@@ -16,8 +36,12 @@ class ListActionUiElement[ActionT: argparse.Action](ActionUiElement[ActionT], ab
         return super()._create_input_element().classes("w-xl")
 
     @typing.override
-    def _input_element_init(self, default: typing.Any) -> value_element.ValueElement:
-        return ui.input_chips(default)
+    def _input_element_init(self, default: typing.Any) -> ActionInputBaseElement:
+        assert self.parent.parent_parser is not None
+        input_base = ListActionInputBaseElement(
+            action=self.action, parser=self.parent.parent_parser, init_value=default
+        )
+        return input_base
 
     @typing.override
     def _input_element_forward_transform(self, v: typing.Any) -> list[typing.Any] | None:

@@ -14,9 +14,7 @@ def process(parser: argparse.ArgumentParser, args: argparse.Namespace):
 @nice_gooey_argparse_main(patch_argparse=False)
 def main1(*args, **kwargs):
     parser = NgArgumentParser()
-    parser.add_argument(
-        "--number", action="append", type=int, dest="numbers", help="Add numbers", required=True
-    )
+    parser.add_argument("--number", action="store", type=int, dest="numbers", help="Add numbers")
     ns = parser.parse_args()
     print(ns)
 

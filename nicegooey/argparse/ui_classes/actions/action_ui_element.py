@@ -137,10 +137,7 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, abc.ABC):
         """
         input_base = self._input_element_init(self._input_element_default())
 
-        # temp: remove after debugging
-        self.input_base = input_base
-
-        el = input_base.basic_element
+        el = input_base.nargs_value_element
         if isinstance(el, validation_element.ValidationElement):
             el.without_auto_validation()
             el.validation = self._input_element_validate

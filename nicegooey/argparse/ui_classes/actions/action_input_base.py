@@ -23,10 +23,13 @@ class ActionInputBaseElement:
     enable_box_element: ui.checkbox | None
     required_wrapper_element: ui.element
 
+    LIST_INNER_ELEMENT_MARKER_SUFFIX: typing.Final[str] = "-inner"
     BASIC_ELEMENT_MARKER: typing.Final[str] = "ng-action-type-input-basic"
     NARGS_WRAPPER_MARKER: typing.Final[str] = "ng-action-type-input-nargs-wrapper"
+    NARGS_VALUE_ELEMENT_MARKER: typing.Final[str] = "ng-action-type-input-nargs-value"
     ENABLE_BOX_MARKER: typing.Final[str] = "ng-action-type-input-enable-box"
     REQUIRED_WRAPPER_MARKER: typing.Final[str] = "ng-action-type-input-required-wrapper"
+    ADD_BUTTON_MARKER: typing.Final[str] = "ng-action-add-button"
 
     def __init__(
         self, action: argparse.Action, parser: argparse.ArgumentParser, init_value: typing.Any = None
@@ -36,6 +39,7 @@ class ActionInputBaseElement:
         self._render(init_value)
 
     def _action_type_input_basic_element(self) -> value_element.ValueElement:
+        """Creates and returns an input element depending on just the type of this action."""
         basic_element: value_element.ValueElement
         if self.action.choices is not None:
             choices = list(self.action.choices)
@@ -58,60 +62,73 @@ class ActionInputBaseElement:
         basic_element.mark(self.BASIC_ELEMENT_MARKER)
         return basic_element
 
-    def __list_element(self, basic_element: typing.Callable[[], value_element.ValueElement]) -> ui.element:
-        def on_add_button_click() -> None:
-            if isinstance(add_element, validation_element.ValidationElement):
-                if not add_element.validate():
-                    return
-            list_element.set_value(list_element.value + [add_element.value])
-            add_element.set_value(add_element_default_value)
+    def _list_element(
+        self, inner_element_f: typing.Callable[[], value_element.ValueElement]
+    ) -> value_element.ValueElement:
+        """Creates and returns an element for inputting multiple items of the given inner element."""
 
-        with ui.column() as c:
+        def on_add_button_click() -> None:
+            if isinstance(inner_element, validation_element.ValidationElement):
+                if not inner_element.validate():
+                    return
+            list_element.set_value(list_element.value + [inner_element.value])
+            inner_element.set_value(add_element_default_value)
+
+        with ui.column():
             with ui.row(align_items="center"):
                 # Create single-item add element
-                add_element = basic_element().mark()
-                if isinstance(add_element, validation_element.ValidationElement):
-                    add_element.validation = {"Must enter a value": lambda v: v is not None}
-                    add_element.without_auto_validation()
-                    add_element.error = None
-                add_element_default_value = add_element.value
+                inner_element = inner_element_f()
+                inner_element_markers = inner_element._markers
+                inner_element.mark(
+                    *(m + self.LIST_INNER_ELEMENT_MARKER_SUFFIX for m in inner_element_markers)
+                )
+                if isinstance(inner_element, validation_element.ValidationElement):
+                    inner_element.validation = {"Must enter a value": lambda v: v is not None}
+                    inner_element.without_auto_validation()
+                    inner_element.error = None
+                add_element_default_value = inner_element.value
 
                 # Create add button
                 add_button = (
                     ui.button(on_click=lambda: on_add_button_click())
                     .props("square padding=xs")
-                    .mark("ng-action-add-button")
+                    .mark(self.ADD_BUTTON_MARKER)
                 )
                 add_button.set_icon("south")
             list_element = ui.input_chips(value=[])
-            list_element.mark(self.BASIC_ELEMENT_MARKER)
-        return c
+            list_element.mark(*inner_element_markers)
+        return list_element
 
     def _action_type_input_nargs_wrapper(
         self, basic_element: typing.Callable[[], value_element.ValueElement]
-    ) -> DisableableValidationElement:
+    ) -> value_element.ValueElement:  # TODO: should be validation element
+        """Creates and returns an element that wraps the basic element depending on the nargs of this action."""
         nargs = ActionInfoHelper(action=self.action, parser=self.parser).action_nargs()
         with DisableableValidationElement(value=None, validation={}) as nargs_wrapper_element:
             match nargs:
                 case Nargs.SINGLE_ELEMENT | Nargs.OPTIONAL:
-                    basic_element()
+                    nargs_value_element = basic_element()
                 case Nargs.ZERO_OR_MORE | Nargs.ONE_OR_MORE:
-                    self.__list_element(basic_element)
+                    nargs_value_element = self._list_element(basic_element)
                 case Nargs.PARSER | Nargs.REMAINDER | Nargs.SUPPRESS:
                     raise NotImplementedError(f"nargs value {nargs} are not supported in _action_type_input")
                 case int(n):
                     if n == 0:
-                        value_element.ValueElement(value=None).mark(self.BASIC_ELEMENT_MARKER)
+                        nargs_value_element = value_element.ValueElement(value=None).mark(
+                            self.BASIC_ELEMENT_MARKER
+                        )
                     elif n == 1:
-                        basic_element()
+                        nargs_value_element = basic_element()
                     else:
                         raise NotImplementedError("Only nargs 0 or 1 is supported in _action_type_input")
+        nargs_value_element.mark(self.NARGS_VALUE_ELEMENT_MARKER, *nargs_value_element._markers)
         nargs_wrapper_element.mark(self.NARGS_WRAPPER_MARKER)
-        return nargs_wrapper_element
+        return nargs_value_element
 
     def _action_type_input_required_wrapper(
-        self, nargs_wrapper_element: typing.Callable[[], DisableableElement]
+        self, nargs_wrapper_element: typing.Callable[[], DisableableValidationElement]
     ) -> ui.element:
+        """Creates and returns an element that wraps the nargs wrapper element depending on whether this action is required or optional."""
         with ui.element() as required_wrapper:
             if self.action.required:
                 nargs_wrapper_element()
@@ -139,25 +156,28 @@ class ActionInputBaseElement:
         def required_wrapper_element_f():
             return self._action_type_input_required_wrapper(nargs_wrapper_element_f)
 
-        required_wrapper_element = required_wrapper_element_f()
+        with ui.element() as outmost:
+            required_wrapper_element = required_wrapper_element_f()
 
-        basic_elements = list(
-            ElementFilter(marker=self.BASIC_ELEMENT_MARKER).within(instance=required_wrapper_element)
-        )
+        basic_elements = list(ElementFilter(marker=self.BASIC_ELEMENT_MARKER).within(instance=outmost))
         assert len(basic_elements) == 1
         basic_element = basic_elements[0]
         assert isinstance(basic_element, value_element.ValueElement)
 
-        nargs_wrapper_element = list(
-            ElementFilter(marker=self.NARGS_WRAPPER_MARKER).within(instance=required_wrapper_element)
+        nargs_value_elements = list(
+            ElementFilter(marker=self.NARGS_VALUE_ELEMENT_MARKER).within(instance=outmost)
         )
+        assert len(nargs_value_elements) == 1
+        nargs_value_element = nargs_value_elements[0]
+        assert isinstance(nargs_value_element, value_element.ValueElement)
+
+        nargs_wrapper_element = list(ElementFilter(marker=self.NARGS_WRAPPER_MARKER).within(instance=outmost))
         assert len(nargs_wrapper_element) == 1
         nargs_wrapper_element = nargs_wrapper_element[0]
-        assert isinstance(nargs_wrapper_element, DisableableValidationElement)
+        assert isinstance(nargs_wrapper_element, DisableableElement)
+        assert isinstance(nargs_wrapper_element, validation_element.ValidationElement)
 
-        enable_box_elements = list(
-            ElementFilter(marker=self.ENABLE_BOX_MARKER).within(instance=required_wrapper_element)
-        )
+        enable_box_elements = list(ElementFilter(marker=self.ENABLE_BOX_MARKER).within(instance=outmost))
         if len(enable_box_elements) > 0:
             assert len(enable_box_elements) == 1
             enable_box_element = enable_box_elements[0]
@@ -165,8 +185,9 @@ class ActionInputBaseElement:
         else:
             enable_box_element = None
 
-        basic_element.set_value(value)
+        nargs_value_element.set_value(value)
         self.basic_element = basic_element
         self.nargs_wrapper_element = nargs_wrapper_element
+        self.nargs_value_element = nargs_value_element
         self.enable_box_element = enable_box_element
         self.required_wrapper_element = required_wrapper_element

@@ -3,6 +3,7 @@ from nicegui.testing import User
 
 from nicegooey.argparse import nice_gooey_argparse_main, NgArgumentParser
 from nicegooey.argparse.main import main_instance
+from nicegooey.argparse.ui_classes.actions.action_input_base import ActionInputBaseElement
 from tests.conftest import input_number
 
 
@@ -15,9 +16,9 @@ async def test_append_action_with_int(user: User) -> None:
 
     assert main_instance.namespace.numbers == []
 
-    number_input = user.find(marker="ng-action-type-input-basic")
+    number_input = user.find(marker=ActionInputBaseElement.LIST_INNER_ELEMENT_MARKER)
     assert len(number_input.elements) == 1
-    add_button = user.find(marker="ng-action-add-button")
+    add_button = user.find(marker=ActionInputBaseElement.ADD_BUTTON_MARKER)
     assert len(add_button.elements) == 1
 
     input_number(number_input, 42)
