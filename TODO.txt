@@ -14,20 +14,6 @@
 
   These tests are correct but reveal bugs in the implementation:
 
-  1. store_true/store_false/store_const actions don't respond to checkbox clicks
-
-  - Files: test_store_true_action.py, test_store_false_action.py, test_store_const_action.py
-  - Location: nicegooey/argparse/ui_classes/actions/store_const_action_ui_element.py
-  - Issue: Clicking checkbox doesn't update namespace value. The checkbox visual state changes but the binding doesn't trigger the transform functions.
-  - Expected: Checkbox click should toggle value between const and default
-  - Actual: Value remains unchanged
-
-  2. extend action with nargs="+" creates duplicate add buttons
-
-  - File: test_extend_action.py
-  - Issue: The extend action renders TWO add buttons instead of one (count: 2 == 1 assertion fails)
-  - Likely cause: Both the nargs="+" list wrapper AND the extend action UI are creating add buttons
-
   3. Binding updates cause duplicate typing when multiple inputs share same dest
 
   - File: test_binding_updates_all_fields.py
@@ -42,29 +28,8 @@
   - Issue: Test expects to find "field_a" and "field_b" markers but both show as "shared" (the dest name)
   - Impact: When arguments share a dest, you can't distinguish them in the UI for testing
 
-  5. append_const button click doesn't work properly
-
-  - File: test_append_const_and_append_same_dest.py
-  - Issue: The test can't properly interact with append_const button
-  - Note: This may be related to the extend action button duplication issue
-
   6. Mutually exclusive groups don't expose option identifiers
 
   - File: test_mutually_exclusive_group_switching.py
   - Issue: After clicking select dropdown, can't find "mode_fast" marker/content
   - The UI creates a Select element but options aren't exposed as individual markers
-
-  📝 Test Summary
-
-  Original failures: 14 tests
-  Tests fixed: 9 tests
-  Code bugs found: 7 tests (5 distinct bugs)
-  Tests skipped (not implemented): 3 tests (nargs > 1)
-
-  🎯 Priority Code Bugs to Fix
-
-  1. HIGH: store_true/store_false/store_const checkbox binding not working
-  2. HIGH: Duplicate typing when multiple inputs share same dest
-  3. MEDIUM: extend action creates duplicate add buttons
-  4. LOW: Marker naming for shared dest arguments
-  5. LOW: Mutually exclusive group option markers

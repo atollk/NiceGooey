@@ -14,12 +14,13 @@ def process(parser: argparse.ArgumentParser, args: argparse.Namespace):
 def main1(*args, **kwargs):
     parser = NgArgumentParser()
     parser.add_argument(
-        "--verbose",
+        "--optional",
+        nargs="?",
+        type=str,
+        const="CONST",
+        default="DEFAULT",
+        help="Optional value",
         required=True,
-        action="store_const",
-        const="VERBOSE",
-        default="NORMAL",
-        help="Enable verbose mode",
     )
     ns = parser.parse_args()
     print(ns)
@@ -79,4 +80,10 @@ def main2(required: bool = False, nargs: int | str | None = None):
 
 
 if __name__ in {"__main__", "__mp_main__"}:
+    # from nicegui import ui
+    # from nicegui.elements.mixins.value_element import ValueElement
+    # a = ValueElement(value=None)
+    # b = ui.input("foo")
+    # a.bind_value(b, "value")
+    # ui.run()
     main1(required=False, nargs="*")
