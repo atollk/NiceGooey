@@ -1,7 +1,6 @@
 import argparse
 import time
 
-
 from nicegooey.argparse import nice_gooey_argparse_main, ArgumentParserConfig, NgArgumentParser
 
 
@@ -14,7 +13,14 @@ def process(parser: argparse.ArgumentParser, args: argparse.Namespace):
 @nice_gooey_argparse_main(patch_argparse=False)
 def main1(*args, **kwargs):
     parser = NgArgumentParser()
-    parser.add_argument("--number", action="append", type=int, dest="numbers", help="Add numbers")
+    parser.add_argument(
+        "--verbose",
+        required=True,
+        action="store_const",
+        const="VERBOSE",
+        default="NORMAL",
+        help="Enable verbose mode",
+    )
     ns = parser.parse_args()
     print(ns)
 

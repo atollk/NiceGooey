@@ -13,16 +13,10 @@ async def test_store_const_action_required(user: User) -> None:
     await user.open("/")
     await user.should_see("verbose")
 
-    assert main_instance.namespace.verbose == "NORMAL"
-
-    checkbox = user.find(ui.checkbox)
-    checkbox.click()
+    with pytest.raises(AssertionError):
+        user.find(ui.checkbox)
 
     assert main_instance.namespace.verbose == "VERBOSE"
-
-    checkbox.click()
-
-    assert main_instance.namespace.verbose == "NORMAL"
 
 
 @nice_gooey_argparse_main(patch_argparse=False)

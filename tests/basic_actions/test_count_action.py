@@ -16,7 +16,8 @@ async def test_count_action(user: User) -> None:
     assert main_instance.namespace.verbose == 0
 
     number_input = user.find(ui.number)
-    number_input.type(3)
+    number_input.clear()
+    number_input.type("3")
 
     assert main_instance.namespace.verbose == 3
 
