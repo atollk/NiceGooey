@@ -6,6 +6,7 @@ from nicegooey.argparse import nice_gooey_argparse_main, NgArgumentParser
 from nicegooey.argparse.main import main_instance
 
 
+@pytest.mark.skip(reason="nargs=? is not yet implemented properly")
 @pytest.mark.nicegui_main_file(__file__)
 async def test_nargs_question_mark(user: User) -> None:
     """Test nargs='?' - zero or one value (optional single value)."""

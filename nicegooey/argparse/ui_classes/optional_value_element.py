@@ -1,15 +1,19 @@
+import typing
+
 from nicegui.binding import bindable_properties, _propagate
 from nicegui.elements.mixins.value_element import ValueElement
 from nicegui import ui
-from typing import Any, Type, Callable, ClassVar
+from typing import Any, Callable, ClassVar
 
 from nicegooey.argparse.ui_classes.util import DisableableDiv
 
 
-class BindablePropertyProxy:
+class _BindablePropertyProxy:
+    """Helper class inspired by nicegui.BindableProperty to allow defining a property on OptionalValueElement that can be bound to other properties, even though the actual value is stored in the inner element."""
+
     _getter: Callable[[Any], Any]
     _setter: Callable[[Any, Any], None]
-    _change_handler: Callable[[Any], Any] | None
+    _change_handler: Callable[[Any, Any], Any] | None
     name: str | None = None
 
     def __init__(
@@ -39,15 +43,20 @@ class BindablePropertyProxy:
 
 
 class OptionalValueElement(ValueElement):
-    value_proxy: ClassVar[BindablePropertyProxy]
+    """An element that can either have a value of a certain type or be None, with a checkbox to toggle between the two states."""
+
+    value_proxy: ClassVar[_BindablePropertyProxy]
     value_proxy_last_value: Any = None
     inner_element: ValueElement
     checkbox: ui.checkbox
 
-    def __init__(self, *, value: Any, inner: Type[ValueElement]) -> None:
+    class _ValueElementCallable(typing.Protocol):
+        def __call__(self, *, value: Any) -> ValueElement: ...
+
+    def __init__(self, *, inner: Callable[[], ValueElement]) -> None:
         with ui.row(align_items="center"):
             with DisableableDiv() as disableable_div:
-                self.inner_element = inner(value=value)
+                self.inner_element = inner()
                 super().__init__(value=None)
             self.checkbox = ui.checkbox().props("dense")
         self.inner_element.on_value_change(self._sync_from_inner)
@@ -82,7 +91,7 @@ class OptionalValueElement(ValueElement):
         self.value = self.get_value_proxy()
 
 
-OptionalValueElement.value_proxy = BindablePropertyProxy(
+OptionalValueElement.value_proxy = _BindablePropertyProxy(
     OptionalValueElement.get_value_proxy,
     OptionalValueElement.set_value_proxy,
     on_change=lambda sender, value: sender._handle_value_change(value),

@@ -1,6 +1,7 @@
 import argparse
 import builtins
 import typing
+import warnings
 
 from nicegui import ui, ElementFilter
 from nicegui.elements.mixins.value_element import ValueElement
@@ -118,8 +119,12 @@ class ActionInputBaseElement:
             case Nargs.SINGLE_ELEMENT:
                 nargs_value_element = basic_element()
             case Nargs.OPTIONAL:
-                # TODO: there should be an additional checkbox to separate empty values of basic_element from "None", i.e. not passing a value at all
                 nargs_value_element = basic_element()
+                warnings.warn(
+                    "nargs=? is not well supported by nicegooey at the moment and will behave like nargs=None."
+                )
+                # TODO: this doesn't work and I don't know why :(
+                #  nargs_value_element = OptionalValueElement(inner=basic_element)
             case Nargs.ZERO_OR_MORE | Nargs.ONE_OR_MORE:
                 nargs_value_element = self._list_element(basic_element)
             case Nargs.PARSER | Nargs.REMAINDER | Nargs.SUPPRESS:

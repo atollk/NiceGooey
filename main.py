@@ -13,15 +13,9 @@ def process(parser: argparse.ArgumentParser, args: argparse.Namespace):
 @nice_gooey_argparse_main(patch_argparse=False)
 def main1(*args, **kwargs):
     parser = NgArgumentParser()
-    parser.add_argument(
-        "--optional",
-        nargs="?",
-        type=str,
-        const="CONST",
-        default="DEFAULT",
-        help="Optional value",
-        required=True,
-    )
+    me_group = parser.add_mutually_exclusive_group()
+    me_group.add_argument("--mode-fast", action="store_const", const="fast", dest="mode", help="Fast mode")
+    me_group.add_argument("--mode-slow", action="store_const", const="slow", dest="mode", help="Slow mode")
     ns = parser.parse_args()
     print(ns)
 
@@ -79,20 +73,5 @@ def main2(required: bool = False, nargs: int | str | None = None):
     process(parser, args)
 
 
-def main3():
-    def x(v):
-        print(v)
-
-    from nicegui import ui
-    from nicegooey.argparse.ui_classes.optional_value_element import OptionalValueElement
-
-    a = OptionalValueElement(value="foo", inner=ui.input)
-    a.on_value_change(x)
-    b = OptionalValueElement(value="foo", inner=ui.input)
-    a.bind_value(b, "value")
-    ui.run()
-
-
 if __name__ in {"__main__", "__mp_main__"}:
-    main3()
-    # main1(required=False, nargs="*")
+    main1(required=False, nargs="*")
