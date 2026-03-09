@@ -79,11 +79,20 @@ def main2(required: bool = False, nargs: int | str | None = None):
     process(parser, args)
 
 
+def main3():
+    def x(v):
+        print(v)
+
+    from nicegui import ui
+    from nicegooey.argparse.ui_classes.optional_value_element import OptionalValueElement
+
+    a = OptionalValueElement(value="foo", inner=ui.input)
+    a.on_value_change(x)
+    b = OptionalValueElement(value="foo", inner=ui.input)
+    a.bind_value(b, "value")
+    ui.run()
+
+
 if __name__ in {"__main__", "__mp_main__"}:
-    # from nicegui import ui
-    # from nicegui.elements.mixins.value_element import ValueElement
-    # a = ValueElement(value=None)
-    # b = ui.input("foo")
-    # a.bind_value(b, "value")
-    # ui.run()
-    main1(required=False, nargs="*")
+    main3()
+    # main1(required=False, nargs="*")
