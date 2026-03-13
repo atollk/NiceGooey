@@ -1,6 +1,7 @@
 import argparse
 import time
 
+
 from nicegooey.argparse import nice_gooey_argparse_main, ArgumentParserConfig, NgArgumentParser
 
 

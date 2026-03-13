@@ -67,7 +67,7 @@ async def test_mutually_exclusive_group_switching(user: User) -> None:
     user.find("-").click()
 
     # After deselecting, the namespace attribute should be reset to default (None)
-    assert select_element.value is None
+    assert select_element.value == ""
     assert main_instance.namespace.mode is None
 
 

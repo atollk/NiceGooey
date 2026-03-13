@@ -25,8 +25,8 @@ class MutuallyExclusiveGroupUi(UiWrapper):
     def validate(self) -> bool:
         return self.active_element is None or self.active_element.validate()
 
-    def _render_action(self, action: argparse.Action | None) -> ui.element:
-        if action is None:
+    def _render_action(self, action: argparse.Action | typing.Literal[""]) -> ui.element:
+        if action == "":
             return ui.element()
 
         # "Patch" the action to have required=True. In the vanilla argparse, this is disallowed, but for the UI logic it actually makes sense as the selection process already covers the optionality.
@@ -41,8 +41,8 @@ class MutuallyExclusiveGroupUi(UiWrapper):
         else:
             return ui.element()
 
-    def _build_action_choice_names(self) -> dict[argparse.Action | None, str]:
-        choices: dict[argparse.Action | None, str] = {}
+    def _build_action_choice_names(self) -> dict[argparse.Action, str]:
+        choices: dict[argparse.Action, str] = {}
         for action in self.group._group_actions:
             if isinstance(action.metavar, str):
                 action_name = action.metavar
@@ -81,8 +81,8 @@ class MutuallyExclusiveGroupUi(UiWrapper):
             if not choices:
                 raise RuntimeError(f"Mutually exclusive group must not be empty: {self.group}")
             if not self.group.required:
-                choices = {**{None: "-"}, **choices}  # should be the first item
-                default_choice = None
+                choices = {**{"": "-"}, **choices}  # should be the first item
+                default_choice = ""
             selector = ui.select(
                 choices,
                 value=default_choice,
