@@ -11,7 +11,10 @@ from nicegui.elements.mixins.validation_element import ValidationElement
 
 from nicegooey.argparse.main import main_instance, NiceGooeyNamespace
 from nicegooey.argparse.ui_classes.actions.action_info_helper import ActionInfoHelper
-from nicegooey.argparse.ui_classes.util import MaxWidthSelect, Nargs, DisableableDiv, clear_value_element
+from nicegooey.argparse.ui_classes.util import clear_value_element
+from nicegooey.argparse.ui_classes.util.disableable_div import DisableableDiv
+from nicegooey.argparse.ui_classes.util.max_width_select import MaxWidthSelect
+from nicegooey.argparse.ui_classes.util.nargs import Nargs
 
 
 def _find_exactly_one_element[T](filter: ElementFilter, typ: Type[T]) -> T | None:
@@ -135,12 +138,26 @@ class ActionSyncElement:
 
         # Bind the namespace value to the element which handles the value.
         self.namespace._nicegooey_state.events[self.action.dest].subscribe(callback=self.sync_from_namespace)
-        self.sync_to_namespace()
+
+        # Sync the default value to the namespace, unless it was already set by an earlier action.
+        if getattr(self.namespace, self.action.dest, None) is None:
+            self.sync_to_namespace()
+        else:
+            self.sync_from_namespace()
+
+    def delete(self) -> None:
+        """Undoes any actions performed by this element and resets the namespace fields. Notably, this does not set the namespace field to the action's default but erases it completely."""
+        setattr(self.namespace, self.action.dest, None)
 
     def _render_inner_elements(self) -> InnerElements:
         action_info = ActionInfoHelper(action=self.action, parser=self.parser)
 
-        with ui.element() as outmost:
+        if self.action.option_strings:
+            action_marker = self.action.option_strings[0].lstrip(self.parser.prefix_chars)
+        else:
+            action_marker = self.action.dest
+
+        with ui.element().mark(f"ng-action-{action_marker}") as outmost:
             required_wrapper_element = self._action_type_input_required_wrapper(
                 action_info,
                 lambda: self._action_type_input_nargs_wrapper(

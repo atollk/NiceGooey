@@ -4,7 +4,7 @@ import typing
 from nicegui import ui
 
 from nicegooey.argparse.ui_classes.actions.action_ui_element import ActionUiElement
-from .util import UiWrapper
+from .util.ui_wrapper import UiWrapper
 
 if typing.TYPE_CHECKING:
     from ..main import NiceGooeyMain

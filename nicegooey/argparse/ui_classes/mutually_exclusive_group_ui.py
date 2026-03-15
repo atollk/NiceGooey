@@ -4,9 +4,8 @@ import typing
 from nicegui import ui
 import nicegui.events
 
-from .actions.action_info_helper import ActionInfoHelper
 from .actions.action_ui_element import ActionUiElement
-from .util import UiWrapper
+from .util.ui_wrapper import UiWrapper
 
 if typing.TYPE_CHECKING:
     from ..main import NiceGooeyMain
@@ -14,7 +13,7 @@ if typing.TYPE_CHECKING:
 
 class MutuallyExclusiveGroupUi(UiWrapper):
     group: argparse._MutuallyExclusiveGroup
-    active_element: UiWrapper | None
+    active_element: ActionUiElement | None
 
     def __init__(self, parent: "NiceGooeyMain", group: argparse._MutuallyExclusiveGroup) -> None:
         super().__init__(parent)
@@ -62,17 +61,8 @@ class MutuallyExclusiveGroupUi(UiWrapper):
 
         def on_selector_change(ev: nicegui.events.ValueChangeEventArguments) -> None:
             # Undo the previous action
-            previous_action = next(
-                (action for action, label in choices.items() if label == ev.previous_value["label"]), None
-            )
-            if isinstance(previous_action, argparse.Action):
-                setattr(
-                    self.parent.namespace,
-                    previous_action.dest,
-                    ActionInfoHelper(
-                        action=previous_action, parser=self.parent.parent_parser
-                    ).action_default(),
-                )
+            if self.active_element is not None:
+                self.active_element.delete()
             # Render the next action
             render_action.refresh(ev.value)
 

@@ -14,8 +14,9 @@ def process(parser: argparse.ArgumentParser, args: argparse.Namespace):
 @nice_gooey_argparse_main(patch_argparse=False)
 def main1(*args, **kwargs):
     parser = NgArgumentParser()
-    parser.add_argument("--field-a", dest="shared", type=str, help="Field A")
-    parser.add_argument("--field-b", dest="shared", type=str, help="Field B")
+    me_group = parser.add_mutually_exclusive_group()
+    me_group.add_argument("--mode-fast", action="store_const", const="fast", dest="mode", help="Fast mode")
+    me_group.add_argument("--mode-slow", action="store_const", const="slow", dest="mode", help="Slow mode")
     ns = parser.parse_args()
     print(ns)
 

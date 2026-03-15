@@ -1,9 +1,10 @@
 import pytest
-from nicegui import ui
 from nicegui.testing import User
 
 from nicegooey.argparse import nice_gooey_argparse_main, NgArgumentParser
 from nicegooey.argparse.main import main_instance
+from nicegooey.argparse.ui_classes.actions.action_sync_element import ActionSyncElement
+from tests.conftest import find_within
 
 
 @pytest.mark.nicegui_main_file(__file__)
@@ -17,15 +18,32 @@ async def test_append_const_and_append_same_dest(user: User) -> None:
 
     assert main_instance.namespace.items == []
 
-    add_const_button = user.find(ui.button).filter(
-        lambda x: x.element.props.get("data-testid") == "ng-action-add-button"
+    # Find the add button for append_const action (--add-flag)
+    # Now elements have both the action marker and their type marker
+    add_flag_button = find_within(
+        user, marker=ActionSyncElement.ADD_BUTTON_MARKER, within_marker="ng-action-add-flag"
     )
-    add_const_button.click()
+    add_flag_button.click()
+    assert main_instance.namespace.items == ["FLAG"]
 
-    assert "FLAG" in main_instance.namespace.items
+    # Find input and button for append action (--add-item)
+    input_field = find_within(
+        user,
+        marker=ActionSyncElement.BASIC_ELEMENT_MARKER + ActionSyncElement.LIST_INNER_ELEMENT_MARKER_SUFFIX,
+        within_marker="ng-action-add-item",
+    )
+    add_item_button = find_within(
+        user, marker=ActionSyncElement.ADD_BUTTON_MARKER, within_marker="ng-action-add-item"
+    )
 
-    input_field = user.find(marker="ng-action-type-input-basic")
+    # Add a custom item
     input_field.type("custom")
+    add_item_button.click()
+    assert main_instance.namespace.items == ["FLAG", "custom"]
+
+    # Add another FLAG
+    add_flag_button.click()
+    assert main_instance.namespace.items == ["FLAG", "custom", "FLAG"]
 
 
 @nice_gooey_argparse_main(patch_argparse=False)

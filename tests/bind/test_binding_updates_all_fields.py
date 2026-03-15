@@ -14,13 +14,20 @@ async def test_binding_updates_all_fields(user: User) -> None:
 
     assert main_instance.namespace.name == "default"
 
-    input1 = user.find(ui.input)
-    input1.clear()
-    input1.type("Alice")
+    inputs = user.find(ui.input)
+    assert len(inputs.elements) == 2
 
+    input1, input2 = inputs.elements
+
+    # Update the first input
+    input1.value = "Alice"
     assert main_instance.namespace.name == "Alice"
+    assert input2.value == "Alice"  # Second input should be updated too
 
-    # TODO: finish the test
+    # Update the second input
+    input2.value = "Bob"
+    assert main_instance.namespace.name == "Bob"
+    assert input1.value == "Bob"  # First input should be updated too
 
 
 @nice_gooey_argparse_main(patch_argparse=False)

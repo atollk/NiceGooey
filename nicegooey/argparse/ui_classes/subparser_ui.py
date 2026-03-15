@@ -3,8 +3,8 @@ import typing
 
 from nicegui import ui
 
-from .util import UiWrapper
 from .argument_group_ui import ArgumentGroupUi
+from .util.ui_wrapper import UiWrapper
 
 if typing.TYPE_CHECKING:
     from ..main import NiceGooeyMain

@@ -5,7 +5,7 @@ import enum
 import typing
 import warnings
 
-from nicegooey.argparse.ui_classes.util import Nargs
+from nicegooey.argparse.ui_classes.util.nargs import Nargs
 
 
 @dataclasses.dataclass

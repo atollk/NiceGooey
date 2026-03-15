@@ -5,7 +5,7 @@ from nicegui import ui
 
 from .argument_group_ui import ArgumentGroupUi
 from .subparser_ui import SubparserUi
-from .util import UiWrapper
+from .util.ui_wrapper import UiWrapper
 
 if typing.TYPE_CHECKING:
     from ..main import NiceGooeyMain

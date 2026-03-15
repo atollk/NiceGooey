@@ -6,8 +6,8 @@ from nicegui import ui
 
 from .action_info_helper import ActionInfoHelper
 from .action_sync_element import ActionSyncElement
+from ..util.ui_wrapper import UiWrapper
 from ...main import NiceGooeyMain
-from nicegooey.argparse.ui_classes.util import UiWrapper
 
 
 class ActionUiElement[ActionT: argparse.Action](UiWrapper, abc.ABC):
@@ -59,6 +59,10 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, abc.ABC):
     @override
     def validate(self) -> bool:
         return self.element.validate()
+
+    def delete(self) -> None:
+        """Undoes any actions performed by this element and resets the namespace fields."""
+        self.element.delete()
 
     @property
     def _action_info(self) -> ActionInfoHelper:
