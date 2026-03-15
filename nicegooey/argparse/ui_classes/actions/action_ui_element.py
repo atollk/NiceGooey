@@ -18,12 +18,14 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, abc.ABC):
 
     @staticmethod
     def from_action(parent: NiceGooeyMain, action: argparse.Action) -> "ActionUiElement | None":
-        from .store_action_ui_element import StoreActionUiElement
-        from .store_const_action_ui_element import StoreConstActionUiElement
-        from .extend_action_ui_element import ExtendActionUiElement
-        from .append_action_ui_element import AppendActionUiElement
-        from .append_const_action_ui_element import AppendConstActionUiElement
-        from .count_action_ui_element import CountActionUiElement
+        from .action_impls import (
+            StoreActionUiElement,
+            StoreConstActionUiElement,
+            ExtendActionUiElement,
+            AppendActionUiElement,
+            AppendConstActionUiElement,
+            CountActionUiElement,
+        )
 
         match action:
             case argparse._StoreAction():
