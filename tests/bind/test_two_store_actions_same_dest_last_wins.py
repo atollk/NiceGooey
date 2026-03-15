@@ -12,21 +12,21 @@ async def test_two_store_actions_same_dest_last_wins(user: User) -> None:
 
     await user.open("/")
 
-    await user.should_see("field_a")
-    await user.should_see("field_b")
+    await user.should_see("field-a")
+    await user.should_see("field-b")
 
-    input_a = user.find(ui.input)
-    input_a.clear()
-    input_a.type("value-a")
+    input_a, input_b = user.find(ui.input).elements
+    input_a.value = "value-a"
+    input_b.value = "value-b"
 
-    assert main_instance.namespace.shared == "value-a"
+    assert main_instance.namespace.shared == "value-b"
 
 
 @nice_gooey_argparse_main(patch_argparse=False)
 def main():
     parser = NgArgumentParser()
-    parser.add_argument("--field-a", dest="shared", type=str, help="Field A")
-    parser.add_argument("--field-b", dest="shared", type=str, help="Field B")
+    parser.add_argument("--field-a", dest="shared", type=str, help="Field A", required=True)
+    parser.add_argument("--field-b", dest="shared", type=str, help="Field B", required=True)
     parser.parse_args()
 
 

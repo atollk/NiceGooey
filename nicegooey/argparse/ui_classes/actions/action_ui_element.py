@@ -73,7 +73,7 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, abc.ABC):
             elif isinstance(self.action.metavar, tuple):
                 name = self.action.metavar[0]
             else:
-                name = self.action.dest
+                name = self.action.option_strings[0].lstrip(self.parent.parent_parser.prefix_chars)
             ui.label(name).classes("font-bold")
             if self.action.help:
                 with ui.button(icon="question_mark").props("round padding=xs size=xs"):

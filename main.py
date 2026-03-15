@@ -14,7 +14,8 @@ def process(parser: argparse.ArgumentParser, args: argparse.Namespace):
 @nice_gooey_argparse_main(patch_argparse=False)
 def main1(*args, **kwargs):
     parser = NgArgumentParser()
-    parser.add_argument("--age", type=int, help="Your age", required=True)
+    parser.add_argument("--field-a", dest="shared", type=str, help="Field A")
+    parser.add_argument("--field-b", dest="shared", type=str, help="Field B")
     ns = parser.parse_args()
     print(ns)
 

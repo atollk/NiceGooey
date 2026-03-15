@@ -12,7 +12,7 @@ class StoreActionUiElement(ActionUiElement[argparse._StoreAction]):
         def _ui_state_to_value(self) -> Any:
             v = self.inner_elements.nargs_wrapper_element.value
             ns = argparse.Namespace()
-            ns.__setattr__(self.action.dest, getattr(self.namespace, self.action.dest))
+            ns.__setattr__(self.action.dest, getattr(self.namespace, self.action.dest, None))
             try:
                 action_info = ActionInfoHelper(action=self.action, parser=self.parser)
                 t = action_info.action_type_with_nargs()

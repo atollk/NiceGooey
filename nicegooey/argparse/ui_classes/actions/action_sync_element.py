@@ -62,7 +62,7 @@ class ActionSyncElement:
 
     def sync_from_namespace(self) -> None:
         assert self.inner_elements is not None
-        value = getattr(self.namespace, self.action.dest)
+        value = getattr(self.namespace, self.action.dest, None)
         self._ui_state_from_value(value)
 
     def _ui_state_from_value(self, value: Any) -> None:
@@ -85,14 +85,14 @@ class ActionSyncElement:
             self.inner_elements.enable_box_element is None or self.inner_elements.enable_box_element.value
         )
         if not is_enabled:
-            value = None
+            value = ActionInfoHelper(action=self.action, parser=self.parser).action_default()
         else:
             value = self.inner_elements.nargs_wrapper_element.value
         return value
 
     def validate(self) -> bool:
-        # TODO
-        pass
+        # TODO implement validation
+        return True
 
     def render(self) -> None:
         """Creates a ValueElement that represents the input of a single item matching the type of this action."""
@@ -129,12 +129,13 @@ class ActionSyncElement:
             el.error = None
 
         # Set default value
-        if not hasattr(self.namespace, self.action.dest):
-            setattr(self.namespace, self.action.dest, action_info.action_default())
+        if self.inner_elements.enable_box_element is None or self.inner_elements.enable_box_element.value:
+            if self.inner_elements.nargs_wrapper_element.value is None:
+                self.inner_elements.nargs_wrapper_element.value = action_info.action_default()
 
         # Bind the namespace value to the element which handles the value.
         self.namespace._nicegooey_state.events[self.action.dest].subscribe(callback=self.sync_from_namespace)
-        # TODO: do we want to sync in either direction here?
+        self.sync_to_namespace()
 
     def _render_inner_elements(self) -> InnerElements:
         action_info = ActionInfoHelper(action=self.action, parser=self.parser)
@@ -172,7 +173,7 @@ class ActionSyncElement:
         basic_element: ValueElement
         if action_info.action.choices is not None:
             choices = list(action_info.action.choices)
-            basic_element = MaxWidthSelect(options=choices)
+            basic_element = MaxWidthSelect(options=choices, value=action_info.action.const or choices[0])
         else:
             _, action_type = action_info.action_type()
             match action_type:

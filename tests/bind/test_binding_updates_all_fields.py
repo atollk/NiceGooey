@@ -20,6 +20,8 @@ async def test_binding_updates_all_fields(user: User) -> None:
 
     assert main_instance.namespace.name == "Alice"
 
+    # TODO: finish the test
+
 
 @nice_gooey_argparse_main(patch_argparse=False)
 def main():

@@ -11,7 +11,7 @@ async def test_append_const_action(user: User) -> None:
     """Test append_const action (button to append constant values)."""
 
     await user.open("/")
-    await user.should_see("flags")
+    await user.should_see("add-flag")
 
     assert main_instance.namespace.flags == []
 

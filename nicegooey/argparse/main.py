@@ -32,13 +32,20 @@ class NiceGooeyNamespace(argparse.Namespace):
     def __eq__(self, other):
         if not isinstance(other, argparse.Namespace):
             return NotImplemented
-        self_vars = {k: v for k, v in vars(self).items() if k != "__nicegooey_state"}
-        other_vars = {k: v for k, v in vars(other).items() if k != "__nicegooey_state"}
+        self_vars = {k: v for k, v in vars(self).items() if k != "_nicegooey_state"}
+        other_vars = {k: v for k, v in vars(other).items() if k != "_nicegooey_state"}
         return self_vars == other_vars
 
     def __setattr__(self, key: str, value: Any) -> None:
         super().__setattr__(key, value)
         self._nicegooey_state.events[key].emit()
+
+    def _nicegooey_to_argparse(self) -> argparse.Namespace:
+        ns = argparse.Namespace()
+        for k, v in vars(self).items():
+            if k != "_nicegooey_state":
+                setattr(ns, k, v)
+        return ns
 
 
 class NiceGooeyMain:
@@ -90,8 +97,7 @@ class NiceGooeyMain:
     def _get_namespace(self) -> argparse.Namespace:
         if self.parent_parser is None:
             raise RuntimeError("NiceGooeyMain has no parent parser set")
-        ns = self.namespace
-        return ns
+        return self.namespace._nicegooey_to_argparse()
 
     async def submit(self) -> None:
         # Validate

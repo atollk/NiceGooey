@@ -12,8 +12,8 @@ async def test_append_const_and_append_same_dest(user: User) -> None:
 
     await user.open("/")
 
-    await user.should_see("add_flag")
-    await user.should_see("add_item")
+    await user.should_see("add-flag")
+    await user.should_see("add-item")
 
     assert main_instance.namespace.items == []
 

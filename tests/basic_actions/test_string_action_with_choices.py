@@ -13,6 +13,8 @@ async def test_string_action_with_choices(user: User) -> None:
     await user.open("/")
     await user.should_see("fruit")
 
+    assert main_instance.namespace.fruit == "apple"
+
     select = user.find(ui.select)
     select.click()
     await user.should_see("banana")
