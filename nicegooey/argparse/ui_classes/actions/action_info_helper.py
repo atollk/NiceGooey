@@ -57,6 +57,9 @@ class ActionInfoHelper:
             case _:
                 raise ValueError(f"Invalid type count {type_count}")
 
+    def action_const(self) -> typing.Any:
+        return self.action.const
+
     def action_default(self) -> typing.Any:
         """Returns the default value for this action, or a reasonable default if no default is set."""
         type_count, type_base = self.action_type()

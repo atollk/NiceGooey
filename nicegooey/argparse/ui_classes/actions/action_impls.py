@@ -15,6 +15,8 @@ class StoreActionUiElement(ActionUiElement[argparse._StoreAction]):
     class _ActionSyncElement(ActionSyncElement):
         @override
         def _ui_state_to_value(self) -> Any:
+            if not self.is_enabled():
+                return ActionInfoHelper(action=self.action, parser=self.parser).action_default()
             v = self.inner_elements.nargs_wrapper_element.value
             ns = argparse.Namespace()
             ns.__setattr__(self.action.dest, getattr(self.namespace, self.action.dest, None))
@@ -52,13 +54,12 @@ class StoreConstActionUiElement(ActionUiElement[argparse._StoreConstAction]):
 
         @override
         def _ui_state_to_value(self) -> Any:
-            if self.inner_elements.enable_box_element is None or self.inner_elements.enable_box_element.value:
-                ns = argparse.Namespace()
-                assert self.parser is not None
-                self.action(self.parser, ns, None)
-                return getattr(ns, self.action.dest)
-            else:
+            if not self.is_enabled():
                 return ActionInfoHelper(action=self.action, parser=self.parser).action_default()
+            ns = argparse.Namespace()
+            assert self.parser is not None
+            self.action(self.parser, ns, None)
+            return getattr(ns, self.action.dest)
 
     @classmethod
     @override
@@ -98,6 +99,8 @@ class ListActionUiElement[ActionT: argparse.Action](ActionUiElement[ActionT], ab
                     return cls._list_element(nargs_wrapper_element, on_add_button_click=on_add_button_click)
 
         def _ui_state_to_value(self) -> Any:
+            if not self.is_enabled():
+                return ActionInfoHelper(action=self.action, parser=self.parser).action_default()
             v = self.inner_elements.nargs_wrapper_element.value
             assert isinstance(v, list) or v is None
             action_info = ActionInfoHelper(action=self.action, parser=self.parser)

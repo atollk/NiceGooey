@@ -36,6 +36,7 @@ class ActionSyncElement:
 
     action: argparse.Action
     parser: argparse.ArgumentParser
+    _disable_sync_to_namespace: bool
 
     @dataclasses.dataclass
     class InnerElements:
@@ -58,6 +59,7 @@ class ActionSyncElement:
         self.action = action
         self.parser = parser
         self.inner_elements = None
+        self._disable_sync_to_namespace = False
 
     @property
     def namespace(self) -> NiceGooeyNamespace:
@@ -66,7 +68,11 @@ class ActionSyncElement:
     def sync_from_namespace(self) -> None:
         assert self.inner_elements is not None
         value = getattr(self.namespace, self.action.dest, None)
-        self._ui_state_from_value(value)
+        try:
+            self._disable_sync_to_namespace = True
+            self._ui_state_from_value(value)
+        finally:
+            self._disable_sync_to_namespace = False
 
     def _ui_state_from_value(self, value: Any) -> None:
         if self.inner_elements.enable_box_element is not None:
@@ -75,19 +81,20 @@ class ActionSyncElement:
         if value is None:
             clear_value_element(self.inner_elements.nargs_wrapper_element)
         else:
-            # TODO: special cases for "default" and "const"
             self.inner_elements.nargs_wrapper_element.value = value
+            if value == self.action.default:
+                if self.inner_elements.enable_box_element is not None:
+                    self.inner_elements.enable_box_element.value = False
 
     def sync_to_namespace(self) -> None:
+        if self._disable_sync_to_namespace:
+            return
         assert self.inner_elements is not None
         value = self._ui_state_to_value()
         setattr(self.namespace, self.action.dest, value)
 
     def _ui_state_to_value(self) -> Any:
-        is_enabled = (
-            self.inner_elements.enable_box_element is None or self.inner_elements.enable_box_element.value
-        )
-        if not is_enabled:
+        if not self.is_enabled():
             value = ActionInfoHelper(action=self.action, parser=self.parser).action_default()
         else:
             value = self.inner_elements.nargs_wrapper_element.value
@@ -97,11 +104,13 @@ class ActionSyncElement:
         # TODO implement validation
         return True
 
+    def is_enabled(self) -> bool:
+        return self.inner_elements.enable_box_element is None or self.inner_elements.enable_box_element.value
+
     def render(self) -> None:
         """Creates a ValueElement that represents the input of a single item matching the type of this action."""
         assert self.inner_elements is None
         self.inner_elements = self._render_inner_elements()
-        # self.inner_elements.nargs_wrapper_element.set_value(value) TODO: needed or not?
 
         self.inner_elements.basic_element.on_value_change(self.sync_to_namespace)
         self.inner_elements.nargs_wrapper_element.on_value_change(self.sync_to_namespace)
@@ -131,10 +140,19 @@ class ActionSyncElement:
             el.validation = _input_element_validate
             el.error = None
 
-        # Set default value
-        if self.inner_elements.enable_box_element is None or self.inner_elements.enable_box_element.value:
-            if self.inner_elements.nargs_wrapper_element.value is None:
-                self.inner_elements.nargs_wrapper_element.value = action_info.action_default()
+        # Set default values
+        self.inner_elements.nargs_wrapper_element.value = (
+            action_info.action_const()
+            if action_info.action_nargs() == Nargs.OPTIONAL
+            else action_info.action_default()
+        )
+        if self.action.choices:
+            el = self.inner_elements.basic_element
+            if isinstance(el, ui.select):
+                el.value = action_info.action.const or next(iter(el.options))
+            else:
+                # TODO: basic_element_inner is ui.select and needs to get the logic
+                pass
 
         # Bind the namespace value to the element which handles the value.
         self.namespace._nicegooey_state.events[self.action.dest].subscribe(callback=self.sync_from_namespace)
@@ -190,7 +208,7 @@ class ActionSyncElement:
         basic_element: ValueElement
         if action_info.action.choices is not None:
             choices = list(action_info.action.choices)
-            basic_element = MaxWidthSelect(options=choices, value=action_info.action.const or choices[0])
+            basic_element = MaxWidthSelect(options=choices)
         else:
             _, action_type = action_info.action_type()
             match action_type:
@@ -301,12 +319,12 @@ class ActionSyncElement:
                 nargs_wrapper_element()
             else:
                 with ui.row():
-                    with ui.checkbox() as enable_box:
+                    with ui.checkbox(value=False) as enable_box:
                         ui.tooltip("Enable")
                     enable_box.mark(cls.ENABLE_PARAMETER_BOX_MARKER)
                     with DisableableDiv() as nargs_wrapper:
                         nargs_wrapper_element()
-                    nargs_wrapper.bind_enabled(enable_box, "value")
+                    nargs_wrapper.bind_enabled_from(enable_box, "value")
 
         required_wrapper.mark(cls.REQUIRED_WRAPPER_MARKER)
         return required_wrapper

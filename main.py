@@ -14,8 +14,7 @@ def process(parser: argparse.ArgumentParser, args: argparse.Namespace):
 @nice_gooey_argparse_main(patch_argparse=False)
 def main1(*args, **kwargs):
     parser = NgArgumentParser()
-    parser.add_argument("--name1", dest="name", type=str, default="default", help="Name field 1")
-    parser.add_argument("--name2", dest="name", type=str, help="Name field 2")
+    parser.add_argument("--colors", nargs="*", choices=["red", "green", "blue"], help="Select colors")
     ns = parser.parse_args()
     print(ns)
 
