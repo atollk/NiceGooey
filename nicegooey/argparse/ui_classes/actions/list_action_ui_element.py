@@ -6,10 +6,10 @@ from nicegui import ui
 from nicegui.elements.mixins import value_element, validation_element
 
 from .action_ui_element import ActionUiElement
-from .action_input_base import ActionInputBaseElement
+from .action_sync_element import ActionSyncElement
 
 
-class ListActionInputBaseElement(ActionInputBaseElement):
+class ListActionInputBaseElement(ActionSyncElement):
     @typing.override
     def _action_type_input_required_wrapper(
         self, nargs_wrapper_element: typing.Callable[[], value_element.ValueElement]
@@ -42,11 +42,11 @@ class ListActionUiElement[ActionT: argparse.Action](ActionUiElement[ActionT], ab
     add_element_default_value: typing.Any = None
 
     @typing.override
-    def _create_input_element(self) -> value_element.ValueElement:
-        return super()._create_input_element().classes("w-xl")
+    def _render_input_element(self) -> value_element.ValueElement:
+        return super()._render_input_element().classes("w-xl")
 
     @typing.override
-    def _input_element_init(self, default: typing.Any) -> ActionInputBaseElement:
+    def _input_element_init(self, default: typing.Any) -> ActionSyncElement:
         assert self.parent.parent_parser is not None
         input_base = ListActionInputBaseElement(
             action=self.action, parser=self.parent.parent_parser, init_value=default

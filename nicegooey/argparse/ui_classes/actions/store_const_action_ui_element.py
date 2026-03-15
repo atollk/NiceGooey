@@ -19,7 +19,7 @@ class StoreConstActionUiElement(ActionUiElement[argparse._StoreConstAction]):
         # This logic doesn't matter because the value isn't actually used, but it's fun to have here :)
         if v == self.action.const:
             return True
-        elif v == self._action_default():
+        elif v == self._action_info.action_default():
             return False
         else:
             return None

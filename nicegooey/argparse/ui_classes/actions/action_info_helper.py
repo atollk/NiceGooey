@@ -44,6 +44,19 @@ class ActionInfoHelper:
                 base_type = self.action.type
         return self._is_nargs_multiple(), base_type
 
+    def action_type_with_nargs(self) -> typing.Callable[[typing.Any], typing.Any]:
+        # TODO: should this be placed in this class?
+        type_count, type_base = self.action_type()
+        match type_count:
+            case ActionInfoHelper.TypeCount.Zero:
+                return lambda v: v
+            case ActionInfoHelper.TypeCount.One:
+                return type_base
+            case ActionInfoHelper.TypeCount.Many:
+                return lambda v: list(v)
+            case _:
+                raise ValueError(f"Invalid type count {type_count}")
+
     def action_default(self) -> typing.Any:
         """Returns the default value for this action, or a reasonable default if no default is set."""
         type_count, type_base = self.action_type()

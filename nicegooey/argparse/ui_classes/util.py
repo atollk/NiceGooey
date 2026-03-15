@@ -4,6 +4,7 @@ import typing
 
 from nicegui import ui
 from nicegui.elements.mixins.disableable_element import DisableableElement
+from nicegui.elements.mixins.value_element import ValueElement
 
 from ..argument_parser import ArgumentParserConfig
 
@@ -91,3 +92,7 @@ class DisableableDiv(DisableableElement):
             self.style(remove="filter: grayscale(0.7) opacity(0.5); cursor: not-allowed")
         else:
             self.style("filter: grayscale(0.7) opacity(0.5); cursor: not-allowed")
+
+
+def clear_value_element(e: ValueElement) -> None:
+    e.value = ""

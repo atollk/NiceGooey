@@ -1,8 +1,7 @@
 import argparse
 import typing
 
-
-from .action_input_base import ActionInputBaseElement
+from .action_sync_element import ActionSyncElement
 from .action_ui_element import ActionUiElement
 
 
@@ -25,9 +24,7 @@ class CountActionUiElement(ActionUiElement[argparse._CountAction]):
         )
 
     @typing.override
-    def _input_element_init(self, default: typing.Any) -> ActionInputBaseElement:
+    def _input_element_init(self) -> ActionSyncElement:
         assert self.parent.parent_parser is not None
-        input_base = ActionInputBaseElement(
-            action=self.__pseudo_action(), parser=self.parent.parent_parser, init_value=default
-        )
+        input_base = ActionSyncElement(action=self.__pseudo_action(), parser=self.parent.parent_parser)
         return input_base

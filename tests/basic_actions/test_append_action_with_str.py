@@ -3,7 +3,7 @@ from nicegui.testing import User
 
 from nicegooey.argparse import nice_gooey_argparse_main, NgArgumentParser
 from nicegooey.argparse.main import main_instance
-from nicegooey.argparse.ui_classes.actions.action_input_base import ActionInputBaseElement
+from nicegooey.argparse.ui_classes.actions.action_sync_element import ActionSyncElement
 
 
 @pytest.mark.nicegui_main_file(__file__)
@@ -16,11 +16,10 @@ async def test_append_action_with_str(user: User) -> None:
     assert main_instance.namespace.tags == []
 
     input_field = user.find(
-        marker=ActionInputBaseElement.BASIC_ELEMENT_MARKER
-        + ActionInputBaseElement.LIST_INNER_ELEMENT_MARKER_SUFFIX
+        marker=ActionSyncElement.BASIC_ELEMENT_MARKER + ActionSyncElement.LIST_INNER_ELEMENT_MARKER_SUFFIX
     )
     assert len(input_field.elements) == 1
-    add_button = user.find(marker=ActionInputBaseElement.ADD_BUTTON_MARKER)
+    add_button = user.find(marker=ActionSyncElement.ADD_BUTTON_MARKER)
     assert len(add_button.elements) == 1
 
     input_field.type("python")

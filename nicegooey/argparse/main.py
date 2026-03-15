@@ -1,6 +1,8 @@
 import argparse
 import contextlib
-import typing
+import dataclasses
+from collections import defaultdict
+from typing import Callable, Any, override, TYPE_CHECKING, Never, Final
 
 import nicegui.run
 import nicegui.helpers
@@ -10,19 +12,44 @@ from nicegui import ui
 from .util import logger, CallbackWriter
 from .argument_parser import ArgumentParserConfig, NgArgumentParser
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     from .ui_classes.root import RootUi
 
 
+class NiceGooeyNamespace(argparse.Namespace):
+    @dataclasses.dataclass
+    class NgState:
+        events: dict[str, nicegui.event.Event[[Any]]] = dataclasses.field(
+            default_factory=lambda: defaultdict(nicegui.event.Event)
+        )
+
+    @override
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._nicegooey_state = self.NgState()
+
+    @override
+    def __eq__(self, other):
+        if not isinstance(other, argparse.Namespace):
+            return NotImplemented
+        self_vars = {k: v for k, v in vars(self).items() if k != "__nicegooey_state"}
+        other_vars = {k: v for k, v in vars(other).items() if k != "__nicegooey_state"}
+        return self_vars == other_vars
+
+    def __setattr__(self, key: str, value: Any) -> None:
+        super().__setattr__(key, value)
+        self._nicegooey_state.events[key].emit()
+
+
 class NiceGooeyMain:
-    # State
+    # General State
     parent_parser: argparse.ArgumentParser | None
-    main_func: typing.Callable | None
+    main_func: Callable | None
     is_running: bool
     parser_config: ArgumentParserConfig | None
 
     # Argument values
-    namespace: argparse.Namespace
+    namespace: NiceGooeyNamespace
 
     # UI elements
     ui_root: "RootUi | None"
@@ -36,13 +63,13 @@ class NiceGooeyMain:
         self.main_func = None
         self.is_running = False
         self.parser_config = None
-        self.namespace = argparse.Namespace()
+        self.namespace = NiceGooeyNamespace()
         self.ui_root = None
 
     def parse_args(
         self,
         argument_parser: argparse.ArgumentParser,
-    ) -> argparse.Namespace | typing.Never:
+    ) -> argparse.Namespace | Never:
         if self.is_running:
             return self._get_namespace()
         else:
@@ -82,7 +109,7 @@ class NiceGooeyMain:
                 finish_button = ui.button("Close", on_click=dialog.close)
         finish_button.disable()
         dialog.open()
-        write_terminal: typing.Callable[[str], typing.Any] = terminal.write
+        write_terminal: Callable[[str], Any] = terminal.write
         file_buffer = CallbackWriter(write_terminal)
         with contextlib.redirect_stdout(file_buffer):
             await nicegui.run.io_bound(self.main_func)
@@ -179,4 +206,4 @@ class NiceGooeyMain:
         ui.sub_pages({"/": root, "/license": license})
 
 
-main_instance: typing.Final[NiceGooeyMain] = NiceGooeyMain()
+main_instance: Final[NiceGooeyMain] = NiceGooeyMain()
