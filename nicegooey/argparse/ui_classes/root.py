@@ -3,8 +3,8 @@ import typing
 
 from nicegui import ui
 
-from .argument_group_ui import ArgumentGroupUi
-from .subparser_ui import SubparserUi
+from .groupings.argument_group_ui import ArgumentGroupUi
+from .groupings.subparsers_ui import SubparsersUi
 from .util.ui_wrapper import UiWrapper
 
 if typing.TYPE_CHECKING:
@@ -14,7 +14,7 @@ if typing.TYPE_CHECKING:
 class RootUi(UiWrapper):
     action_groups: list[ArgumentGroupUi]
     subparsers_action: argparse._SubParsersAction | None
-    subparsers: list[SubparserUi]
+    subparsers: SubparsersUi | None
 
     def __init__(self, parent: "NiceGooeyMain") -> None:
         super().__init__(parent)
@@ -26,9 +26,8 @@ class RootUi(UiWrapper):
             ArgumentGroupUi(self.parent, action_group) for action_group in parent_parser._action_groups
         ]
         self.subparsers_action = None
-        self.subparsers = []
 
-        # Collect subparsers
+        # Find subparsers action
         subparser_group = parent_parser._subparsers
         if subparser_group is not None:
             assert len(subparser_group._group_actions) == 1
@@ -38,11 +37,7 @@ class RootUi(UiWrapper):
                     f"subparsers action must be of type argparse._SubParsersAction but is {type(subparsers_action)}"
                 )
             self.subparsers_action = subparsers_action
-            subparsers = self.subparsers_action.choices
-            assert isinstance(subparsers, dict)
-            self.subparsers = [
-                SubparserUi(self.parent, title, subparser) for title, subparser in subparsers.items()
-            ]
+            self.subparsers = SubparsersUi(parent=self.parent, subparsers_action=self.subparsers_action)
 
     @typing.override
     def render(self) -> ui.element:
@@ -66,7 +61,7 @@ class RootUi(UiWrapper):
                             child.render()
 
                         if self.subparsers:
-                            self._render_subparsers()
+                            self.subparsers.render()
 
                     # Submit button
                     on_submit = self.parent.submit
@@ -77,23 +72,8 @@ class RootUi(UiWrapper):
                 ui.link("License", "/license")
         return root
 
-    def _render_subparsers(self) -> None:
-        assert self.subparsers is not None
-        assert self.subparsers_action is not None
-        none_tab = None
-        with ui.tabs() as ui_tabs:
-            if not self.subparsers_action.required:
-                none_tab = ui.tab("-")
-            for child in self.subparsers:
-                child.render_tab()
-        with ui.tab_panels(ui_tabs, value=self.subparsers[0].tab if none_tab is None else none_tab):
-            if none_tab is not None:
-                ui.tab_panel(none_tab)
-            for child in self.subparsers:
-                child.render_tab_panel()
-
     @typing.override
     def validate(self) -> bool:
         group_validations = [group.validate() for group in self.action_groups]
-        subparser_validations = [subparser.validate() for subparser in self.subparsers]
-        return all(group_validations) and all(subparser_validations)
+        subparsers_validation = self.subparsers.validate() if self.subparsers is not None else True
+        return all(group_validations) and subparsers_validation

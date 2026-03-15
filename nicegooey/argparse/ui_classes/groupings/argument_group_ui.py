@@ -4,10 +4,10 @@ import typing
 from nicegui import ui
 
 from nicegooey.argparse.ui_classes.actions.action_ui_element import ActionUiElement
-from .util.ui_wrapper import UiWrapper
+from nicegooey.argparse.ui_classes.util.ui_wrapper import UiWrapper
 
 if typing.TYPE_CHECKING:
-    from ..main import NiceGooeyMain
+    from nicegooey.argparse.main import NiceGooeyMain
     from .mutually_exclusive_group_ui import MutuallyExclusiveGroupUi
 
 
@@ -46,6 +46,10 @@ class ArgumentGroupUi(UiWrapper):
     def validate(self) -> bool:
         child_validations = [child.validate() for child in self.children]
         return all(child_validations)
+
+    def deactivate(self) -> None:
+        for child in self.children:
+            child.deactivate()
 
     def _render_action(self, action: argparse.Action) -> ui.element:
         ui_container = ActionUiElement.from_action(self.parent, action)

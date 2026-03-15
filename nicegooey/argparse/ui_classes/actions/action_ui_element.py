@@ -62,9 +62,9 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, abc.ABC):
     def validate(self) -> bool:
         return self.element.validate()
 
-    def delete(self) -> None:
+    def deactivate(self) -> None:
         """Undoes any actions performed by this element and resets the namespace fields."""
-        self.element.delete()
+        self.element.deactivate()
 
     @property
     def _action_info(self) -> ActionInfoHelper:

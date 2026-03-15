@@ -4,11 +4,11 @@ import typing
 from nicegui import ui
 import nicegui.events
 
-from .actions.action_ui_element import ActionUiElement
-from .util.ui_wrapper import UiWrapper
+from nicegooey.argparse.ui_classes.actions.action_ui_element import ActionUiElement
+from nicegooey.argparse.ui_classes.util.ui_wrapper import UiWrapper
 
 if typing.TYPE_CHECKING:
-    from ..main import NiceGooeyMain
+    from nicegooey.argparse.main import NiceGooeyMain
 
 
 class MutuallyExclusiveGroupUi(UiWrapper):
@@ -62,7 +62,7 @@ class MutuallyExclusiveGroupUi(UiWrapper):
         def on_selector_change(ev: nicegui.events.ValueChangeEventArguments) -> None:
             # Undo the previous action
             if self.active_element is not None:
-                self.active_element.delete()
+                self.active_element.deactivate()
             # Render the next action
             render_action.refresh(ev.value)
 
@@ -80,3 +80,7 @@ class MutuallyExclusiveGroupUi(UiWrapper):
             )
             render_action(selector.value)
         return root
+
+    def deactivate(self) -> None:
+        if self.active_element is not None:
+            self.active_element.deactivate()

@@ -3,7 +3,7 @@ import builtins
 import dataclasses
 import typing
 import warnings
-from typing import Type, Any
+from typing import Type, Any, override
 
 from nicegui import ui, ElementFilter
 from nicegui.elements.mixins.value_element import ValueElement
@@ -12,6 +12,7 @@ from nicegui.elements.mixins.validation_element import ValidationElement
 from nicegooey.argparse.main import main_instance, NiceGooeyNamespace
 from nicegooey.argparse.ui_classes.actions.action_info_helper import ActionInfoHelper
 from nicegooey.argparse.ui_classes.util import clear_value_element
+from nicegooey.argparse.ui_classes.util.sync_element import SyncElement
 from nicegooey.argparse.ui_classes.util.disableable_div import DisableableDiv
 from nicegooey.argparse.ui_classes.util.max_width_select import MaxWidthSelect
 from nicegooey.argparse.ui_classes.util.nargs import Nargs
@@ -27,7 +28,7 @@ def _find_exactly_one_element[T](filter: ElementFilter, typ: Type[T]) -> T | Non
     return e
 
 
-class ActionSyncElement:
+class ActionSyncElement(SyncElement):
     """
     A group of UI elements that represent a single value of the argparse namespace.
 
@@ -36,7 +37,6 @@ class ActionSyncElement:
 
     action: argparse.Action
     parser: argparse.ArgumentParser
-    _disable_sync_to_namespace: bool
 
     @dataclasses.dataclass
     class InnerElements:
@@ -56,24 +56,22 @@ class ActionSyncElement:
     ADD_BUTTON_MARKER: typing.Final[str] = "ng-action-add-button"
 
     def __init__(self, action: argparse.Action, parser: argparse.ArgumentParser):
+        super().__init__()
         self.action = action
         self.parser = parser
         self.inner_elements = None
-        self._disable_sync_to_namespace = False
 
     @property
+    @override
     def namespace(self) -> NiceGooeyNamespace:
         return main_instance.namespace
 
-    def sync_from_namespace(self) -> None:
-        assert self.inner_elements is not None
-        value = getattr(self.namespace, self.action.dest, None)
-        try:
-            self._disable_sync_to_namespace = True
-            self._ui_state_from_value(value)
-        finally:
-            self._disable_sync_to_namespace = False
+    @property
+    @override
+    def dest(self) -> str:
+        return self.action.dest
 
+    @override
     def _ui_state_from_value(self, value: Any) -> None:
         if self.inner_elements.enable_box_element is not None:
             self.inner_elements.enable_box_element.value = value is not None
@@ -86,13 +84,7 @@ class ActionSyncElement:
                 if self.inner_elements.enable_box_element is not None:
                     self.inner_elements.enable_box_element.value = False
 
-    def sync_to_namespace(self) -> None:
-        if self._disable_sync_to_namespace:
-            return
-        assert self.inner_elements is not None
-        value = self._ui_state_to_value()
-        setattr(self.namespace, self.action.dest, value)
-
+    @override
     def _ui_state_to_value(self) -> Any:
         if not self.is_enabled():
             value = ActionInfoHelper(action=self.action, parser=self.parser).action_default()
@@ -155,7 +147,7 @@ class ActionSyncElement:
                 pass
 
         # Bind the namespace value to the element which handles the value.
-        self.namespace._nicegooey_state.events[self.action.dest].subscribe(callback=self.sync_from_namespace)
+        self.subscribe()
 
         # Sync the default value to the namespace, unless it was already set by an earlier action.
         if getattr(self.namespace, self.action.dest, None) is None:
@@ -163,7 +155,7 @@ class ActionSyncElement:
         else:
             self.sync_from_namespace()
 
-    def delete(self) -> None:
+    def deactivate(self) -> None:
         """Undoes any actions performed by this element and resets the namespace fields. Notably, this does not set the namespace field to the action's default but erases it completely."""
         setattr(self.namespace, self.action.dest, None)
 

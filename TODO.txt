@@ -1,12 +1,8 @@
 
-
-- action_input_base.py -> when "enabled" is clicked (i.e. state is changed), the action needs to be evaluated to set the namespace value
-
-
-- support "required" + tests
-- support nargs == 0
-- use Bindings instead of "active links" (https://nicegui.io/documentation/section_binding_properties#bindable_properties_for_maximum_performance)
-- keyboard controls (tab, enter)
-- add test that checks non-enabled (non-required) effects: disabled element; reset to default after
-- test that uses metavar to dispaly in UI (also tuple-variant of metavar)
-- test that switching subparsers immediately updates values in the namespace
+- add tests for:
+    - that checks non-enabled (non-required) effects: disabled element; reset to default after
+    - "required" actinos
+        - when "enabled" is clicked (i.e. state is changed), the action needs to be evaluated to set the namespace value
+    - keyboard controls (tab, enter)
+    - uses metavar to dispaly in UI (also tuple-variant of metavar)
+- switching subparsers immediately updates values in the namespace

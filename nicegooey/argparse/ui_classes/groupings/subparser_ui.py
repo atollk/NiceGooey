@@ -4,10 +4,10 @@ import typing
 from nicegui import ui
 
 from .argument_group_ui import ArgumentGroupUi
-from .util.ui_wrapper import UiWrapper
+from nicegooey.argparse.ui_classes.util.ui_wrapper import UiWrapper
 
 if typing.TYPE_CHECKING:
-    from ..main import NiceGooeyMain
+    from nicegooey.argparse.main import NiceGooeyMain
 
 
 class SubparserUi(UiWrapper):
@@ -26,7 +26,7 @@ class SubparserUi(UiWrapper):
         ]
 
     def render_tab(self) -> ui.tab:
-        self.tab = ui.tab(self.subparser.prog).mark(f"ng-subparser-tab-{self.title}")
+        self.tab = ui.tab(self.title).mark(f"ng-subparser-tab-{self.title}")
         return self.tab
 
     def render_tab_panel(self) -> ui.tab_panel:
@@ -40,6 +40,10 @@ class SubparserUi(UiWrapper):
     @typing.override
     def render(self) -> ui.element:
         raise NotImplementedError("use render_tab and render_tab_panel")
+
+    def deactivate(self) -> None:
+        for group in self.action_groups:
+            group.deactivate()
 
     @typing.override
     def validate(self) -> bool:

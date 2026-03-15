@@ -14,7 +14,17 @@ def process(parser: argparse.ArgumentParser, args: argparse.Namespace):
 @nice_gooey_argparse_main(patch_argparse=False)
 def main1(*args, **kwargs):
     parser = NgArgumentParser()
-    parser.add_argument("--colors", nargs="*", choices=["red", "green", "blue"], help="Select colors")
+    subparsers = parser.add_subparsers(dest="command", help="Commands", required=True)
+
+    parser_build = subparsers.add_parser("build", help="Build command")
+    parser_build.add_argument("--output", type=str, help="Output directory", default="/tmp/build")
+
+    parser_test = subparsers.add_parser("test", help="Test command")
+    parser_test.add_argument("--verbose", action="store_true", help="Verbose output")
+
+    parser_deploy = subparsers.add_parser("deploy", help="Deploy command")
+    parser_deploy.add_argument("--environment", choices=["dev", "prod"], help="Environment", default="dev")
+
     ns = parser.parse_args()
     print(ns)
 
