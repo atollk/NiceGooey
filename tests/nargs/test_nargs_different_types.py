@@ -4,7 +4,6 @@ from nicegui.testing import User
 from nicegooey.argparse import nice_gooey_argparse_main, NgArgumentParser
 
 
-@pytest.mark.skip(reason="nargs > 1 (specifically nargs=2 for 'strings') is not yet implemented")
 @pytest.mark.nicegui_main_file(__file__)
 async def test_nargs_different_types(user: User) -> None:
     """Test nargs with different type combinations."""

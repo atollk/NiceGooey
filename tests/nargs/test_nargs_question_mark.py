@@ -4,9 +4,10 @@ from nicegui.testing import User
 
 from nicegooey.argparse import nice_gooey_argparse_main, NgArgumentParser
 from nicegooey.argparse.main import main_instance
+from nicegooey.argparse.ui_classes.actions.action_sync_element import ActionSyncElement
+from tests.conftest import find_within
 
 
-@pytest.mark.skip(reason="nargs=? is not yet implemented properly")
 @pytest.mark.nicegui_main_file(__file__)
 async def test_nargs_question_mark(user: User) -> None:
     """Test nargs='?' - zero or one value (optional single value)."""
@@ -15,13 +16,31 @@ async def test_nargs_question_mark(user: User) -> None:
 
     await user.should_see("optional")
 
+    enable_arg_checkbox = user.find(marker=ActionSyncElement.ENABLE_PARAMETER_BOX_MARKER)
+    enable_value_checkbox = find_within(
+        user, kind=ui.checkbox, within_marker=ActionSyncElement.NARGS_WRAPPER_MARKER
+    )
+    value_input = find_within(user, kind=ui.input, within_marker=ActionSyncElement.NARGS_WRAPPER_MARKER)
+    assert (
+        len(enable_arg_checkbox.elements)
+        == len(enable_value_checkbox.elements)
+        == len(value_input.elements)
+        == 1
+    )
+
     assert main_instance.namespace.optional == "DEFAULT"
 
-    input_field = user.find(ui.input)
-    input_field.clear()
-    input_field.type("custom-value")
+    enable_arg_checkbox.click()
 
-    assert main_instance.namespace.optional == "custom-value"
+    assert main_instance.namespace.optional == "CONST"
+
+    enable_value_checkbox.click()
+
+    assert main_instance.namespace.optional == ""
+
+    value_input.type("foo")
+
+    assert main_instance.namespace.optional == "foo"
 
 
 @nice_gooey_argparse_main(patch_argparse=False)

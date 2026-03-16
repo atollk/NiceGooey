@@ -4,7 +4,6 @@ from nicegui.testing import User
 from nicegooey.argparse import nice_gooey_argparse_main, NgArgumentParser
 
 
-@pytest.mark.skip(reason="nargs > 1 is not yet implemented")
 @pytest.mark.nicegui_main_file(__file__)
 async def test_nargs_specific_number_validation(user: User) -> None:
     """Test that nargs with specific number enforces exactly that many values."""

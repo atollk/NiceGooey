@@ -1,25 +1,130 @@
-import argparse
-import time
+"""
+Comprehensive integration test for UV CLI interface.
+
+This test implements a representative subset of the `uv` tool interface to exercise
+many argparse features working together:
+- Root parser with multiple argument groups
+- 2 levels of nested subparsers (pip/python -> their subcommands)
+- All action types: store, store_true, store_false, append, count, choices
+- Various nargs: *, +, ?
+- Mutually exclusive groups at multiple levels
+- Both required and optional arguments
+- Positional and optional arguments
+- Default values
+- Argument groups for organization
+"""
+
+import pytest
+from nicegui import ui
+from nicegui.testing import User
+
+from nicegooey.argparse import nice_gooey_argparse_main, NgArgumentParser
+from nicegooey.argparse.main import main_instance
 
 
-from nicegooey.argparse import nice_gooey_argparse_main, ArgumentParserConfig, NgArgumentParser
+@pytest.mark.nicegui_main_file(__file__)
+async def test_uv_cli_interface(user: User) -> None:
+    """
+    Comprehensive integration test that verifies complex argparse structures work correctly in NiceGooey.
 
+    Tests a realistic CLI tool interface with nested subparsers, various action types,
+    mutually exclusive groups, and both required and optional arguments.
+    """
 
-def process(parser: argparse.ArgumentParser, args: argparse.Namespace):
-    print(args)
-    time.sleep(1)
-    print("wake up!")
+    await user.open("/")
 
+    # === PART 1: Verify root-level global options ===
 
-@nice_gooey_argparse_main(patch_argparse=False)
-def main1(*args, **kwargs):
-    parser = NgArgumentParser()
-    subparsers = parser.add_subparsers(dest="command", help="Commands", required=True)
-    parser_run = subparsers.add_parser("run", help="Run a command or script")
-    parser_run.add_argument("args", nargs="*", type=str, help="Arguments for the command")
-    # parser=uv_parser()
-    ns = parser.parse_args()
-    print(ns)
+    # Verify all argument groups are visible
+    await user.should_see("Cache Options")
+    await user.should_see("Python Options")
+    await user.should_see("Global Options")
+
+    # Verify initial namespace values for global options
+    assert main_instance.namespace.verbose == 0
+    assert main_instance.namespace.color == "auto"
+    assert main_instance.namespace.no_cache is False
+    assert main_instance.namespace.quiet is False
+    assert main_instance.namespace.offline is False
+    assert main_instance.namespace.native_tls is False
+
+    # Test count action (verbose)
+    verbose_input = user.find(ui.number)
+    verbose_input.type("3")
+    assert main_instance.namespace.verbose == 3
+
+    # Test boolean flags
+    no_cache_checkbox = user.find(ui.checkbox)
+    no_cache_checkbox.click()
+    assert main_instance.namespace.no_cache is True
+
+    # === PART 2: Verify top-level subparser tabs ===
+
+    # All top-level subparser tabs should be visible
+    await user.should_see("pip")
+    await user.should_see("python")
+    await user.should_see("venv")
+    await user.should_see("run")
+    await user.should_see("sync")
+
+    # === PART 3: Test nested pip subparsers ===
+
+    # Click on pip tab
+    pip_tab = user.find(marker="ng-subparser-tab-pip")
+    pip_tab.click()
+
+    # Verify nested pip subparser tabs are visible
+    await user.should_see("install")
+    await user.should_see("uninstall")
+    await user.should_see("freeze")
+    await user.should_see("list")
+
+    # === PART 4: Test nested python subparsers ===
+
+    # Click on python tab
+    python_tab = user.find(marker="ng-subparser-tab-python")
+    python_tab.click()
+
+    # Verify nested python subparser tabs
+    await user.should_see("list")
+    await user.should_see("install")
+    await user.should_see("find")
+    await user.should_see("pin")
+
+    # === PART 5: Test venv command ===
+
+    venv_tab = user.find(marker="ng-subparser-tab-venv")
+    venv_tab.click()
+
+    # Verify venv command is selected
+    assert main_instance.namespace.command == "venv"
+
+    # Verify venv-specific options are visible
+    await user.should_see("path")
+    await user.should_see("seed")
+    await user.should_see("system-site-packages")
+
+    # === PART 6: Test run command ===
+
+    run_tab = user.find(marker="ng-subparser-tab-run")
+    run_tab.click()
+
+    assert main_instance.namespace.command == "run"
+    await user.should_see("command")
+    await user.should_see("args")
+    await user.should_see("isolated")
+
+    # === PART 7: Test sync command ===
+
+    sync_tab = user.find(marker="ng-subparser-tab-sync")
+    sync_tab.click()
+
+    assert main_instance.namespace.command == "sync"
+
+    # Verify sync argument group
+    await user.should_see("Sync Options")
+    await user.should_see("dev")
+    await user.should_see("all-extras")
 
 
 def uv_parser() -> NgArgumentParser:
@@ -201,57 +306,11 @@ def uv_parser() -> NgArgumentParser:
 
 
 @nice_gooey_argparse_main(patch_argparse=False)
-def main2(required: bool = False, nargs: int | str | None = None):
-    config = ArgumentParserConfig(argument_vp_width="w-4xl")
-    parser = NgArgumentParser()
-    parser.nicegooey_config = config
-
-    parser.add_argument("--name", type=str, default="World", help="Your name", required=required, nargs=nargs)
-    parser.add_argument("--age", "-a", type=int, help="Your age", required=required, nargs=nargs)
-    parser.add_argument("--disable-meme", "-dm", action="store_true", help="Disable memes", required=required)
-    parser.add_argument("--favorite-food", choices=["banana", "apple"], required=required, nargs=nargs)
-    group1 = parser.add_argument_group(title="gruppo")
-    group1.add_argument(
-        "--level",
-        type=int,
-        choices=range(1, 6),
-        help="Pick a level from 1 to 5",
-        required=required,
-        nargs=nargs,
-    )
-    parser.add_argument(
-        "--append_const",
-        action="append_const",
-        const="NiceGooey",
-        help="Append a constant value",
-        required=required,
-    )
-    parser.add_argument(
-        "--append", action="append", type=str, help="Append multiple values", required=required, nargs=nargs
-    )
-    group2 = parser.add_mutually_exclusive_group(required=required)
-    group2.add_argument("--asdf", nargs=nargs)
-    group3 = group1.add_mutually_exclusive_group(required=required)
-
-    def validate_xxx(v: str) -> str:
-        if len(v) < 3:
-            raise ValueError()
-        else:
-            return v
-
-    group3.add_argument("--xxx", type=validate_xxx, nargs=nargs)
-    group3.add_argument("--yyy", nargs=nargs)
-
-    subps = parser.add_subparsers(required=required)
-    subp1 = subps.add_parser("sub1")
-    subp1.add_argument("--sub1a", required=required, nargs=nargs)
-    subp1.add_argument("--sub1b", type=float, required=required, nargs=nargs)
-    subp2 = subps.add_parser("sub2")
-    subp2.add_argument("--sub2a", type=str, required=required, nargs=nargs)
-
-    args = parser.parse_args()
-    process(parser, args)
+def main():
+    """Build the UV CLI interface using argparse."""
+    parser = uv_parser()
+    parser.parse_args()
 
 
-if __name__ in {"__main__", "__mp_main__"}:
-    main1(required=False, nargs="*")
+if __name__ == "__main__":
+    main()

@@ -2,7 +2,6 @@ import argparse
 import builtins
 import dataclasses
 import typing
-import warnings
 from typing import Type, Any, override
 
 from nicegui import ui, ElementFilter
@@ -12,6 +11,7 @@ from nicegui.elements.mixins.validation_element import ValidationElement
 from nicegooey.argparse.main import main_instance, NiceGooeyNamespace
 from nicegooey.argparse.ui_classes.actions.action_info_helper import ActionInfoHelper
 from nicegooey.argparse.ui_classes.util import clear_value_element
+from nicegooey.argparse.ui_classes.util.optional_value_element import OptionalValueElement
 from nicegooey.argparse.ui_classes.util.sync_element import SyncElement
 from nicegooey.argparse.ui_classes.util.disableable_div import DisableableDiv
 from nicegooey.argparse.ui_classes.util.max_width_select import MaxWidthSelect
@@ -41,6 +41,7 @@ class ActionSyncElement(SyncElement):
     @dataclasses.dataclass
     class InnerElements:
         basic_element: ValueElement
+        basic_element_inner: ValueElement | None
         nargs_wrapper_element: ValueElement
         enable_box_element: ui.checkbox | None
         required_wrapper_element: ui.element
@@ -51,7 +52,6 @@ class ActionSyncElement(SyncElement):
     BASIC_ELEMENT_MARKER: typing.Final[str] = "ng-action-type-input-basic"
     NARGS_WRAPPER_MARKER: typing.Final[str] = "ng-action-type-input-nargs-wrapper"
     ENABLE_PARAMETER_BOX_MARKER: typing.Final[str] = "ng-action-type-input-enable-parameter-box"
-    ENABLE_VALUE_BOX_MARKER: typing.Final[str] = "ng-action-type-input-enable-value-box"
     REQUIRED_WRAPPER_MARKER: typing.Final[str] = "ng-action-type-input-required-wrapper"
     ADD_BUTTON_MARKER: typing.Final[str] = "ng-action-add-button"
 
@@ -104,13 +104,13 @@ class ActionSyncElement(SyncElement):
         assert self.inner_elements is None
         self.inner_elements = self._render_inner_elements()
 
-        self.inner_elements.basic_element.on_value_change(self.sync_to_namespace)
-        self.inner_elements.nargs_wrapper_element.on_value_change(self.sync_to_namespace)
+        self.inner_elements.basic_element.on_value_change(lambda ev: self.sync_to_namespace())
+        self.inner_elements.nargs_wrapper_element.on_value_change(lambda ev: self.sync_to_namespace())
         if self.inner_elements.enable_box_element is not None:
-            self.inner_elements.enable_box_element.on_value_change(self.sync_to_namespace)
+            self.inner_elements.enable_box_element.on_value_change(lambda ev: self.sync_to_namespace())
 
     def configure(self) -> None:
-        """a"""
+        """After rendering, sets up callbacks, subscriptions, and other meta-config to work properly."""
         assert self.inner_elements is not None
         action_info = ActionInfoHelper(action=self.action, parser=self.parser)
 
@@ -140,11 +140,10 @@ class ActionSyncElement(SyncElement):
         )
         if self.action.choices:
             el = self.inner_elements.basic_element
-            if isinstance(el, ui.select):
-                el.value = action_info.action.const or next(iter(el.options))
-            else:
-                # TODO: basic_element_inner is ui.select and needs to get the logic
-                pass
+            if not isinstance(el, ui.select):
+                el = self.inner_elements.basic_element_inner
+            assert isinstance(el, ui.select)
+            el.value = action_info.action.const or next(iter(el.options))
 
         # Bind the namespace value to the element which handles the value.
         self.subscribe()
@@ -179,6 +178,12 @@ class ActionSyncElement(SyncElement):
             ElementFilter(marker=self.BASIC_ELEMENT_MARKER).within(instance=outmost), ValueElement
         )
         assert basic_element is not None
+        basic_element_inner = _find_exactly_one_element(
+            ElementFilter(marker=self.BASIC_ELEMENT_MARKER + self.LIST_INNER_ELEMENT_MARKER_SUFFIX).within(
+                instance=outmost
+            ),
+            ValueElement,
+        )
         nargs_wrapper_element = _find_exactly_one_element(
             ElementFilter(marker=self.NARGS_WRAPPER_MARKER).within(instance=outmost), ValueElement
         )
@@ -189,6 +194,7 @@ class ActionSyncElement(SyncElement):
 
         return self.InnerElements(
             basic_element=basic_element,
+            basic_element_inner=basic_element_inner,
             nargs_wrapper_element=nargs_wrapper_element,
             enable_box_element=enable_box_element,
             required_wrapper_element=required_wrapper_element,
@@ -279,12 +285,9 @@ class ActionSyncElement(SyncElement):
             case Nargs.SINGLE_ELEMENT:
                 nargs_value_element = basic_element()
             case Nargs.OPTIONAL:
-                nargs_value_element = basic_element()
-                warnings.warn(
-                    "nargs=? is not well supported by nicegooey at the moment and will behave like nargs=None."
+                nargs_value_element = OptionalValueElement(
+                    inner=basic_element, none_value=action_info.action_const()
                 )
-                # TODO: this doesn't work and I don't know why :(
-                #  nargs_value_element = OptionalValueElement(inner=basic_element)
             case Nargs.ZERO_OR_MORE | Nargs.ONE_OR_MORE:
                 nargs_value_element = cls._list_element(basic_element)
             case Nargs.PARSER | Nargs.REMAINDER | Nargs.SUPPRESS:
@@ -292,10 +295,9 @@ class ActionSyncElement(SyncElement):
             case int(n):
                 if n == 0:
                     nargs_value_element = ValueElement(value=None).mark(cls.BASIC_ELEMENT_MARKER)
-                elif n == 1:
-                    nargs_value_element = basic_element()
                 else:
-                    raise NotImplementedError("Only nargs 0 or 1 is supported in _action_type_input")
+                    nargs_value_element = cls._list_element(basic_element)
+                    # TODO: validation for the exact number of elements
             case _:
                 raise ValueError(f"Invalid nargs value: {nargs}")
         nargs_value_element.mark(cls.NARGS_WRAPPER_MARKER, *nargs_value_element._markers)

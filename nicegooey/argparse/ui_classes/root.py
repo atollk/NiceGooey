@@ -26,6 +26,7 @@ class RootUi(UiWrapper):
             ArgumentGroupUi(self.parent, action_group) for action_group in parent_parser._action_groups
         ]
         self.subparsers_action = None
+        self.subparsers = None
 
         # Find subparsers action
         subparser_group = parent_parser._subparsers

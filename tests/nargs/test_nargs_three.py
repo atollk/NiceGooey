@@ -5,7 +5,6 @@ from nicegooey.argparse import nice_gooey_argparse_main, NgArgumentParser
 from nicegooey.argparse.main import main_instance
 
 
-@pytest.mark.skip(reason="nargs > 1 is not yet implemented")
 @pytest.mark.nicegui_main_file(__file__)
 async def test_nargs_three(user: User) -> None:
     """Test nargs=3 - exactly three values expected."""
@@ -15,6 +14,8 @@ async def test_nargs_three(user: User) -> None:
     await user.should_see("coords")
 
     assert main_instance.namespace.coords in (None, [], [0, 0, 0])
+
+    # TODO: actually add some stuff
 
 
 @nice_gooey_argparse_main(patch_argparse=False)

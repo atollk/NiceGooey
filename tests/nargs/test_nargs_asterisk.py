@@ -15,6 +15,8 @@ async def test_nargs_asterisk(user: User) -> None:
 
     assert main_instance.namespace.items in (None, [])
 
+    # TODO
+
 
 @nice_gooey_argparse_main(patch_argparse=False)
 def main():

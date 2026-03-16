@@ -4,6 +4,7 @@ from nicegui.testing import User
 
 from nicegooey.argparse import nice_gooey_argparse_main, NgArgumentParser
 from nicegooey.argparse.main import main_instance
+from nicegooey.argparse.ui_classes.actions.action_sync_element import ActionSyncElement
 
 
 @pytest.mark.nicegui_main_file(__file__)
@@ -14,16 +15,18 @@ async def test_nargs_one(user: User) -> None:
 
     await user.should_see("item")
 
-    assert main_instance.namespace.item in (None, [], [""])
+    assert main_instance.namespace.item == []
 
-    input_field = user.find(ui.input)
-    input_field.type("single-value")
+    user.find(ui.input).type("single-value")
+    user.find(marker=ActionSyncElement.ADD_BUTTON_MARKER).click()
+
+    assert main_instance.namespace.item == ["single-value"]
 
 
 @nice_gooey_argparse_main(patch_argparse=False)
 def main():
     parser = NgArgumentParser()
-    parser.add_argument("--item", nargs=1, type=str, help="One item")
+    parser.add_argument("--item", nargs=1, type=str, help="One item", required=True)
     parser.parse_args()
 
 

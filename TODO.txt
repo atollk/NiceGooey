@@ -1,8 +1,5 @@
 
-- add tests for:
-    - that checks non-enabled (non-required) effects: disabled element; reset to default after
-    - "required" actinos
-        - when "enabled" is clicked (i.e. state is changed), the action needs to be evaluated to set the namespace value
-    - keyboard controls (tab, enter)
-    - uses metavar to dispaly in UI (also tuple-variant of metavar)
-- switching subparsers immediately updates values in the namespace
+add tests for validation checks
+    - nargs
+    - types
+    - required/optional
