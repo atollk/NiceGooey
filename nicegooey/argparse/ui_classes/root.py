@@ -1,11 +1,9 @@
-import argparse
 from typing import TYPE_CHECKING, override
 
 import nicegui.html
 from nicegui import ui
 
-from .groupings.argument_group_ui import ArgumentGroupUi
-from .groupings.subparsers_ui import SubparsersUi
+from .groupings.parser_ui import ParserUi
 from .util.ui_wrapper import UiWrapper
 
 if TYPE_CHECKING:
@@ -13,33 +11,11 @@ if TYPE_CHECKING:
 
 
 class RootUi(UiWrapper):
-    action_groups: list[ArgumentGroupUi]
-    subparsers_action: argparse._SubParsersAction | None
-    subparsers: SubparsersUi | None
+    parser: ParserUi
 
     def __init__(self, parent: "NiceGooeyMain") -> None:
         super().__init__(parent)
-
-        parent_parser = self.parent.parent_parser
-        assert parent_parser is not None
-
-        self.action_groups = [
-            ArgumentGroupUi(self.parent, action_group) for action_group in parent_parser._action_groups
-        ]
-        self.subparsers_action = None
-        self.subparsers = None
-
-        # Find subparsers action
-        subparser_group = parent_parser._subparsers
-        if subparser_group is not None:
-            assert len(subparser_group._group_actions) == 1
-            subparsers_action = subparser_group._group_actions[0]
-            if not isinstance(subparsers_action, argparse._SubParsersAction):
-                raise TypeError(
-                    f"subparsers action must be of type argparse._SubParsersAction but is {type(subparsers_action)}"
-                )
-            self.subparsers_action = subparsers_action
-            self.subparsers = SubparsersUi(parent=self.parent, subparsers_action=self.subparsers_action)
+        self.parser = ParserUi(parent, self.parent.parent_parser)
 
     @override
     def render(self) -> ui.element:
@@ -60,12 +36,8 @@ class RootUi(UiWrapper):
                 with ui.card():
                     # Use a form to enable submit keyboard controls, but prevent page redirect on Submit.
                     with nicegui.html.form().props("onsubmit='return false;'"):
-                        with ui.column().classes(width):
-                            for child in self.action_groups:
-                                child.render()
-
-                            if self.subparsers:
-                                self.subparsers.render()
+                        with ui.element().classes(width):
+                            self.parser.render()
 
                         # Submit button
                         on_submit = self.parent.submit
@@ -78,6 +50,4 @@ class RootUi(UiWrapper):
 
     @override
     def validate(self) -> bool:
-        group_validations = [group.validate() for group in self.action_groups]
-        subparsers_validation = self.subparsers.validate() if self.subparsers is not None else True
-        return all(group_validations) and subparsers_validation
+        return self.parser.validate()
