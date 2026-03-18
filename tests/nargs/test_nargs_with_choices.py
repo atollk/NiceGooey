@@ -1,8 +1,10 @@
 import pytest
+from nicegui import ui
 from nicegui.testing import User
 
-from nicegooey.argparse import nice_gooey_argparse_main, NgArgumentParser
+from nicegooey.argparse import NgArgumentParser, nice_gooey_argparse_main
 from nicegooey.argparse.main import main_instance
+from nicegooey.argparse.ui_classes.actions.action_sync_element import ActionSyncElement
 
 
 @pytest.mark.nicegui_main_file(__file__)
@@ -15,13 +17,35 @@ async def test_nargs_with_choices(user: User) -> None:
 
     assert main_instance.namespace.colors in (None, [])
 
-    # TODO
+    # Find the select element and add button
+    select = user.find(ui.select)
+    add_button = user.find(marker=ActionSyncElement.ADD_BUTTON_MARKER)
+
+    # Select "red" and add it
+    select.click()
+    await user.should_see("red")
+    user.find("red").click()
+    add_button.click()
+
+    # Verify namespace contains ["red"]
+    assert main_instance.namespace.colors == ["red"]
+
+    # Select "blue" and add it
+    select.click()
+    await user.should_see("blue")
+    user.find("blue").click()
+    add_button.click()
+
+    # Verify namespace contains both values
+    assert main_instance.namespace.colors == ["red", "blue"]
 
 
 @nice_gooey_argparse_main(patch_argparse=False)
 def main():
     parser = NgArgumentParser()
-    parser.add_argument("--colors", nargs="*", choices=["red", "green", "blue"], help="Select colors")
+    parser.add_argument(
+        "--colors", nargs="*", choices=["red", "green", "blue"], help="Select colors", required=True
+    )
     parser.parse_args()
 
 

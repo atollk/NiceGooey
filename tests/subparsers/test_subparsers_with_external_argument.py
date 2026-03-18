@@ -1,7 +1,8 @@
 import pytest
 from nicegui.testing import User
 
-from nicegooey.argparse import nice_gooey_argparse_main, NgArgumentParser
+from nicegooey.argparse import NgArgumentParser, nice_gooey_argparse_main
+from nicegooey.argparse.ui_classes.groupings.subparser_ui import SubparserUi
 
 
 @pytest.mark.nicegui_main_file(__file__)
@@ -15,7 +16,16 @@ async def test_subparsers_with_external_argument(user: User) -> None:
     await user.should_see("cmd1")
     await user.should_see("cmd2")
 
-    # TODO
+    # Click "cmd1" tab and verify its option is visible
+    cmd1_tab = user.find(marker=f"{SubparserUi.TAB_MARKER_PREFIX}cmd1")
+    cmd1_tab.click()
+    await user.should_see("cmd1-option")
+
+    # Click "cmd2" tab and verify both global-option and cmd2-option are visible
+    cmd2_tab = user.find(marker=f"{SubparserUi.TAB_MARKER_PREFIX}cmd2")
+    cmd2_tab.click()
+    await user.should_see("global-option")
+    await user.should_see("cmd2-option")
 
 
 @nice_gooey_argparse_main(patch_argparse=False)

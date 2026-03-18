@@ -1,7 +1,7 @@
-from nicegui.elements.mixins.value_element import ValueElement
-from nicegui import ui
 from typing import Any, Callable, Self
 
+from nicegui import ui
+from nicegui.elements.mixins.value_element import ValueElement
 from nicegui.events import Handler, ValueChangeEventArguments
 
 from nicegooey.argparse.ui_classes.util import clear_value_element

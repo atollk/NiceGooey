@@ -4,10 +4,10 @@ from typing import Type, override
 
 from nicegui import ui
 
+from ...main import NiceGooeyMain
+from ..util.ui_wrapper import UiWrapper
 from .action_info_helper import ActionInfoHelper
 from .action_sync_element import ActionSyncElement
-from ..util.ui_wrapper import UiWrapper
-from ...main import NiceGooeyMain
 
 
 class ActionUiElement[ActionT: argparse.Action](UiWrapper, abc.ABC):
@@ -19,12 +19,12 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, abc.ABC):
     @staticmethod
     def from_action(parent: NiceGooeyMain, action: argparse.Action) -> "ActionUiElement | None":
         from .action_impls import (
-            StoreActionUiElement,
-            StoreConstActionUiElement,
-            ExtendActionUiElement,
             AppendActionUiElement,
             AppendConstActionUiElement,
             CountActionUiElement,
+            ExtendActionUiElement,
+            StoreActionUiElement,
+            StoreConstActionUiElement,
         )
 
         match action:
@@ -79,7 +79,7 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, abc.ABC):
             elif isinstance(self.action.metavar, tuple):
                 name = self.action.metavar[0]
             elif self.action.option_strings:
-                name = self.action.option_strings[0].lstrip(self.parent.parent_parser.prefix_chars)
+                name = max(self.action.option_strings, key=len).lstrip(self.parent.parent_parser.prefix_chars)
             else:
                 name = self.action.dest
             ui.label(name).classes("font-bold")

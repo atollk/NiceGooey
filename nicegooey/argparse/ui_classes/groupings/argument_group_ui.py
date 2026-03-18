@@ -1,13 +1,14 @@
 import argparse
-import typing
+from typing import TYPE_CHECKING, override
 
 from nicegui import ui
 
 from nicegooey.argparse.ui_classes.actions.action_ui_element import ActionUiElement
 from nicegooey.argparse.ui_classes.util.ui_wrapper import UiWrapper
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     from nicegooey.argparse.main import NiceGooeyMain
+
     from .mutually_exclusive_group_ui import MutuallyExclusiveGroupUi
 
 
@@ -42,7 +43,7 @@ class ArgumentGroupUi(UiWrapper):
             if ui_container is not None:
                 self.children.append(ui_container)
 
-    @typing.override
+    @override
     def validate(self) -> bool:
         child_validations = [child.validate() for child in self.children]
         return all(child_validations)
@@ -60,7 +61,7 @@ class ArgumentGroupUi(UiWrapper):
         else:
             return ui.element()
 
-    @typing.override
+    @override
     def render(self) -> ui.element:
         if not self.children:
             return ui.element()

@@ -1,6 +1,6 @@
 import abc
 import argparse
-from typing import Any, override, Type, Callable
+from typing import Any, Callable, Type, override
 
 from nicegui import ui
 from nicegui.elements.mixins.validation_element import ValidationElement

@@ -1,10 +1,13 @@
 import pytest
 from nicegui.testing import User
 
-from nicegooey.argparse import nice_gooey_argparse_main, NgArgumentParser
+from nicegooey.argparse import NgArgumentParser, nice_gooey_argparse_main
+from nicegooey.argparse.main import main_instance
+from nicegooey.argparse.ui_classes.groupings.subparser_ui import SubparserUi
 
 
 @pytest.mark.nicegui_main_file(__file__)
+@pytest.mark.skip("Fails due to a bug in nicegui: https://github.com/zauberzeug/nicegui/issues/5885")
 async def test_three_subparsers_basic(user: User) -> None:
     """Test three subparsers: empty, simple (2 args), and complex (with group)."""
 
@@ -14,7 +17,24 @@ async def test_three_subparsers_basic(user: User) -> None:
     await user.should_see("simple")
     await user.should_see("complex")
 
-    # TODO
+    # Click "empty" tab
+    empty_tab = user.find(marker=f"{SubparserUi.TAB_MARKER_PREFIX}empty")
+    empty_tab.click()
+    assert main_instance.namespace.command == "empty"
+
+    # Click "simple" tab and verify its arguments are visible
+    simple_tab = user.find(marker=f"{SubparserUi.TAB_MARKER_PREFIX}simple")
+    simple_tab.click()
+    assert main_instance.namespace.command == "simple"
+    await user.should_see("arg1")
+    await user.should_see("arg2")
+
+    # Click "complex" tab and verify its arguments are visible
+    complex_tab = user.find(marker=f"{SubparserUi.TAB_MARKER_PREFIX}complex")
+    complex_tab.click()
+    assert main_instance.namespace.command == "complex"
+    await user.should_see("option-a")
+    await user.should_see("option-b")
 
 
 @nice_gooey_argparse_main(patch_argparse=False)

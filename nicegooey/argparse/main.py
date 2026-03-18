@@ -2,15 +2,15 @@ import argparse
 import contextlib
 import dataclasses
 from collections import defaultdict
-from typing import Callable, Any, override, TYPE_CHECKING, Never, Final
+from typing import TYPE_CHECKING, Any, Callable, Final, Never, override
 
-import nicegui.run
-import nicegui.helpers
 import nicegui.binding
+import nicegui.helpers
+import nicegui.run
 from nicegui import ui
 
-from .util import logger, CallbackWriter
 from .argument_parser import ArgumentParserConfig, NgArgumentParser
+from .util import CallbackWriter, logger
 
 if TYPE_CHECKING:
     from .ui_classes.root import RootUi

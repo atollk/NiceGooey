@@ -1,16 +1,20 @@
 import argparse
-import typing
+from typing import TYPE_CHECKING, Final, override
 
 from nicegui import ui
 
-from .argument_group_ui import ArgumentGroupUi
 from nicegooey.argparse.ui_classes.util.ui_wrapper import UiWrapper
 
-if typing.TYPE_CHECKING:
+from .argument_group_ui import ArgumentGroupUi
+
+if TYPE_CHECKING:
     from nicegooey.argparse.main import NiceGooeyMain
 
 
 class SubparserUi(UiWrapper):
+    TAB_MARKER_PREFIX: Final[str] = "ng-subparser-tab-"
+    TABPANEL_MARKER_PREFIX: Final[str] = "ng-subparser-tabpanel-"
+
     title: str
     subparser: argparse.ArgumentParser
     tab: ui.tab | None
@@ -26,18 +30,18 @@ class SubparserUi(UiWrapper):
         ]
 
     def render_tab(self) -> ui.tab:
-        self.tab = ui.tab(self.title).mark(f"ng-subparser-tab-{self.title}")
+        self.tab = ui.tab(self.title).mark(f"{SubparserUi.TAB_MARKER_PREFIX}{self.title}")
         return self.tab
 
     def render_tab_panel(self) -> ui.tab_panel:
         assert self.tab is not None
-        panel = ui.tab_panel(self.tab).mark(f"ng-subparser-tabpanel-{self.title}")
+        panel = ui.tab_panel(self.tab).mark(f"{SubparserUi.TABPANEL_MARKER_PREFIX}{self.title}")
         with panel:
             for group in self.action_groups:
                 group.render()
         return panel
 
-    @typing.override
+    @override
     def render(self) -> ui.element:
         raise NotImplementedError("use render_tab and render_tab_panel")
 
@@ -45,7 +49,7 @@ class SubparserUi(UiWrapper):
         for group in self.action_groups:
             group.deactivate()
 
-    @typing.override
+    @override
     def validate(self) -> bool:
         assert self.tab is not None
         assert self.tab.parent_slot is not None

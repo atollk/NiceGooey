@@ -1,10 +1,13 @@
 import pytest
 from nicegui.testing import User
 
-from nicegooey.argparse import nice_gooey_argparse_main, NgArgumentParser
+from nicegooey.argparse import NgArgumentParser, nice_gooey_argparse_main
+from nicegooey.argparse.main import main_instance
+from nicegooey.argparse.ui_classes.groupings.subparser_ui import SubparserUi
 
 
 @pytest.mark.nicegui_main_file(__file__)
+@pytest.mark.skip("Fails due to a bug in nicegui: https://github.com/zauberzeug/nicegui/issues/5885")
 async def test_subparser_tab_switching(user: User) -> None:
     """Test switching between subparser tabs and verifying correct content."""
 
@@ -14,7 +17,23 @@ async def test_subparser_tab_switching(user: User) -> None:
     await user.should_see("test")
     await user.should_see("deploy")
 
-    # TODO
+    # Click "build" tab and verify its content
+    build_tab = user.find(marker=f"{SubparserUi.TAB_MARKER_PREFIX}build")
+    build_tab.click()
+    assert main_instance.namespace.command == "build"
+    await user.should_see("output")
+
+    # Click "test" tab and verify its content
+    test_tab = user.find(marker=f"{SubparserUi.TAB_MARKER_PREFIX}test")
+    test_tab.click()
+    assert main_instance.namespace.command == "test"
+    await user.should_see("verbose")
+
+    # Click "deploy" tab and verify its content
+    deploy_tab = user.find(marker=f"{SubparserUi.TAB_MARKER_PREFIX}deploy")
+    deploy_tab.click()
+    assert main_instance.namespace.command == "deploy"
+    await user.should_see("environment")
 
 
 @nice_gooey_argparse_main(patch_argparse=False)

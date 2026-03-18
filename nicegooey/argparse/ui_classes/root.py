@@ -1,5 +1,5 @@
 import argparse
-import typing
+from typing import TYPE_CHECKING, override
 
 import nicegui.html
 from nicegui import ui
@@ -8,7 +8,7 @@ from .groupings.argument_group_ui import ArgumentGroupUi
 from .groupings.subparsers_ui import SubparsersUi
 from .util.ui_wrapper import UiWrapper
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     from ..main import NiceGooeyMain
 
 
@@ -41,7 +41,7 @@ class RootUi(UiWrapper):
             self.subparsers_action = subparsers_action
             self.subparsers = SubparsersUi(parent=self.parent, subparsers_action=self.subparsers_action)
 
-    @typing.override
+    @override
     def render(self) -> ui.element:
         with ui.column().mark("ng-root") as root:
             with ui.column(align_items="center"):
@@ -76,7 +76,7 @@ class RootUi(UiWrapper):
                 ui.link("License", "/license")
         return root
 
-    @typing.override
+    @override
     def validate(self) -> bool:
         group_validations = [group.validate() for group in self.action_groups]
         subparsers_validation = self.subparsers.validate() if self.subparsers is not None else True

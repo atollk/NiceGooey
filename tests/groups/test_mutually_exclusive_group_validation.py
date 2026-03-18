@@ -2,7 +2,7 @@ import pytest
 from nicegui import ui
 from nicegui.testing import User
 
-from nicegooey.argparse import nice_gooey_argparse_main, NgArgumentParser
+from nicegooey.argparse import NgArgumentParser, nice_gooey_argparse_main
 
 
 @pytest.mark.nicegui_main_file(__file__)

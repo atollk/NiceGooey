@@ -1,15 +1,15 @@
 import argparse
-import typing
-from typing import Any, override
+from typing import TYPE_CHECKING, Any, override
 
 import nicegui.events
 from nicegui import ui
 
-from .subparser_ui import SubparserUi
 from nicegooey.argparse.ui_classes.util.sync_element import SyncElement
 from nicegooey.argparse.ui_classes.util.ui_wrapper import UiWrapper
 
-if typing.TYPE_CHECKING:
+from .subparser_ui import SubparserUi
+
+if TYPE_CHECKING:
     from nicegooey.argparse.main import NiceGooeyMain, NiceGooeyNamespace
 
 
@@ -52,7 +52,7 @@ class SubparsersUi(UiWrapper, SyncElement):
     def _ui_state_to_value(self) -> Any:
         return self.active_tab_title
 
-    @typing.override
+    @override
     def render(self) -> ui.element:
         assert self.subparsers is not None
         assert self.subparsers_action is not None
@@ -94,7 +94,7 @@ class SubparsersUi(UiWrapper, SyncElement):
         for group in self.action_groups:
             group.deactivate()
 
-    @typing.override
+    @override
     def validate(self) -> bool:
         return True  # TODO
         return all(subparser.validate() for subparser in self.subparsers)

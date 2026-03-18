@@ -1,7 +1,7 @@
 import pytest
 from nicegui.testing import User
 
-from nicegooey.argparse import nice_gooey_argparse_main, NgArgumentParser
+from nicegooey.argparse import NgArgumentParser, nice_gooey_argparse_main
 from nicegooey.argparse.main import main_instance
 from nicegooey.argparse.ui_classes.actions.action_sync_element import ActionSyncElement
 from tests.conftest import find_within

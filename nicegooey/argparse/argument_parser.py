@@ -1,7 +1,8 @@
 import argparse
+import copy
 import dataclasses
 from argparse import Namespace
-from typing import overload, Sequence
+from typing import Sequence, overload
 
 
 @dataclasses.dataclass
@@ -11,6 +12,14 @@ class ArgumentParserConfig:
 
 class NgArgumentParser(argparse.ArgumentParser):
     nicegooey_config: ArgumentParserConfig = ArgumentParserConfig()
+
+    @staticmethod
+    def from_argparse(parser: argparse.ArgumentParser) -> "NgArgumentParser":
+        clone = copy.copy(parser)
+        clone.__class__ = NgArgumentParser
+        assert isinstance(clone, NgArgumentParser)
+        clone.nicegooey_config = ArgumentParserConfig()
+        return clone
 
     @overload
     def parse_args(self, args: Sequence[str] | None = None, namespace: None = None) -> Namespace: ...

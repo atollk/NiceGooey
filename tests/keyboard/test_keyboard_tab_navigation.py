@@ -3,7 +3,7 @@ from nicegui.testing import Screen
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 
-from nicegooey.argparse import nice_gooey_argparse_main, NgArgumentParser
+from nicegooey.argparse import NgArgumentParser, nice_gooey_argparse_main
 
 
 @pytest.mark.nicegui_main_file(__file__)

@@ -1,21 +1,20 @@
 import argparse
 import builtins
 import dataclasses
-import typing
-from typing import Type, Any, override
+from typing import Any, Callable, Final, Type, override
 
-from nicegui import ui, ElementFilter
-from nicegui.elements.mixins.value_element import ValueElement
+from nicegui import ElementFilter, ui
 from nicegui.elements.mixins.validation_element import ValidationElement
+from nicegui.elements.mixins.value_element import ValueElement
 
-from nicegooey.argparse.main import main_instance, NiceGooeyNamespace
+from nicegooey.argparse.main import NiceGooeyNamespace, main_instance
 from nicegooey.argparse.ui_classes.actions.action_info_helper import ActionInfoHelper
 from nicegooey.argparse.ui_classes.util import clear_value_element
-from nicegooey.argparse.ui_classes.util.optional_value_element import OptionalValueElement
-from nicegooey.argparse.ui_classes.util.sync_element import SyncElement
 from nicegooey.argparse.ui_classes.util.disableable_div import DisableableDiv
 from nicegooey.argparse.ui_classes.util.max_width_select import MaxWidthSelect
 from nicegooey.argparse.ui_classes.util.nargs import Nargs
+from nicegooey.argparse.ui_classes.util.optional_value_element import OptionalValueElement
+from nicegooey.argparse.ui_classes.util.sync_element import SyncElement
 
 
 def _find_exactly_one_element[T](filter: ElementFilter, typ: Type[T]) -> T | None:
@@ -48,12 +47,12 @@ class ActionSyncElement(SyncElement):
 
     inner_elements: InnerElements | None
 
-    LIST_INNER_ELEMENT_MARKER_SUFFIX: typing.Final[str] = "-inner"
-    BASIC_ELEMENT_MARKER: typing.Final[str] = "ng-action-type-input-basic"
-    NARGS_WRAPPER_MARKER: typing.Final[str] = "ng-action-type-input-nargs-wrapper"
-    ENABLE_PARAMETER_BOX_MARKER: typing.Final[str] = "ng-action-type-input-enable-parameter-box"
-    REQUIRED_WRAPPER_MARKER: typing.Final[str] = "ng-action-type-input-required-wrapper"
-    ADD_BUTTON_MARKER: typing.Final[str] = "ng-action-add-button"
+    LIST_INNER_ELEMENT_MARKER_SUFFIX: Final[str] = "-inner"
+    BASIC_ELEMENT_MARKER: Final[str] = "ng-action-type-input-basic"
+    NARGS_WRAPPER_MARKER: Final[str] = "ng-action-type-input-nargs-wrapper"
+    ENABLE_PARAMETER_BOX_MARKER: Final[str] = "ng-action-type-input-enable-parameter-box"
+    REQUIRED_WRAPPER_MARKER: Final[str] = "ng-action-type-input-required-wrapper"
+    ADD_BUTTON_MARKER: Final[str] = "ng-action-add-button"
 
     def __init__(self, action: argparse.Action, parser: argparse.ArgumentParser):
         super().__init__()
@@ -118,7 +117,7 @@ class ActionSyncElement(SyncElement):
         el = self.inner_elements.basic_element
         if isinstance(el, ValidationElement):
             # TODO: clean up
-            def _input_element_validate(value: typing.Any) -> str | None:
+            def _input_element_validate(value: Any) -> str | None:
                 """Used by `_create_input_element_generic` as the validation function for the input element. Validates the value by trying to cast it to the action's type by default."""
                 if action_info.action_nargs() == Nargs.OPTIONAL and value is None:
                     return "Value is required"
@@ -162,7 +161,7 @@ class ActionSyncElement(SyncElement):
         action_info = ActionInfoHelper(action=self.action, parser=self.parser)
 
         if self.action.option_strings:
-            action_marker = self.action.option_strings[0].lstrip(self.parser.prefix_chars)
+            action_marker = max(self.action.option_strings, key=len).lstrip(self.parser.prefix_chars)
         else:
             action_marker = self.action.dest
 
@@ -228,15 +227,15 @@ class ActionSyncElement(SyncElement):
     @classmethod
     def _list_element(
         cls,
-        inner_element_f: typing.Callable[[], ValueElement],
-        on_add_button_click: typing.Callable[[ValueElement, ValueElement, typing.Any], None] | None = None,
+        inner_element_f: Callable[[], ValueElement],
+        on_add_button_click: Callable[[ValueElement, ValueElement, Any], None] | None = None,
     ) -> ValueElement:
         """Creates and returns an element for inputting multiple items of the given inner element."""
 
         def on_add_button_click_default(
             list_element: ValueElement,
             inner_element: ValueElement,
-            inner_element_default_value: typing.Any,
+            inner_element_default_value: Any,
         ) -> None:
             if isinstance(inner_element, ValidationElement):
                 if not inner_element.validate():
@@ -276,7 +275,7 @@ class ActionSyncElement(SyncElement):
 
     @classmethod
     def _action_type_input_nargs_wrapper(
-        cls, action_info: ActionInfoHelper, basic_element: typing.Callable[[], ValueElement]
+        cls, action_info: ActionInfoHelper, basic_element: Callable[[], ValueElement]
     ) -> ValueElement:
         """Creates and returns an element that wraps the basic element depending on the nargs of this action."""
         nargs = action_info.action_nargs()
@@ -305,7 +304,7 @@ class ActionSyncElement(SyncElement):
 
     @classmethod
     def _action_type_input_required_wrapper(
-        cls, action_info: ActionInfoHelper, nargs_wrapper_element: typing.Callable[[], ValueElement]
+        cls, action_info: ActionInfoHelper, nargs_wrapper_element: Callable[[], ValueElement]
     ) -> ui.element:
         """Creates and returns an element that wraps the nargs wrapper element depending on whether this action is required or optional."""
         with ui.element() as required_wrapper:

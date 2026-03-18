@@ -1,7 +1,8 @@
 import pytest
 from nicegui.testing import User
 
-from nicegooey.argparse import nice_gooey_argparse_main, NgArgumentParser
+from nicegooey.argparse import NgArgumentParser, nice_gooey_argparse_main
+from nicegooey.argparse.ui_classes.groupings.subparser_ui import SubparserUi
 
 
 @pytest.mark.nicegui_main_file(__file__)
@@ -12,7 +13,19 @@ async def test_subparser_with_groups(user: User) -> None:
 
     await user.should_see("config")
 
-    # TODO
+    # Click "config" tab
+    config_tab = user.find(marker=f"{SubparserUi.TAB_MARKER_PREFIX}config")
+    config_tab.click()
+
+    # Verify "Database Config" group is visible with its fields
+    await user.should_see("Database Config")
+    await user.should_see("db-host")
+    await user.should_see("db-port")
+
+    # Verify "Cache Config" group is visible with its fields
+    await user.should_see("Cache Config")
+    await user.should_see("cache-size")
+    await user.should_see("cache-ttl")
 
 
 @nice_gooey_argparse_main(patch_argparse=False)

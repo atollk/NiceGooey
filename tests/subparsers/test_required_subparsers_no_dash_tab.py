@@ -1,7 +1,9 @@
 import pytest
+from nicegui import ui
 from nicegui.testing import User
 
-from nicegooey.argparse import nice_gooey_argparse_main, NgArgumentParser
+from nicegooey.argparse import NgArgumentParser, nice_gooey_argparse_main
+from nicegooey.argparse.ui_classes.groupings.subparser_ui import SubparserUi
 
 
 @pytest.mark.nicegui_main_file(__file__)
@@ -13,7 +15,15 @@ async def test_required_subparsers_no_dash_tab(user: User) -> None:
     await user.should_see("cmd1")
     await user.should_see("cmd2")
 
-    # TODO
+    # Verify that cmd1 and cmd2 tabs exist
+    cmd1_tab = user.find(marker=f"{SubparserUi.TAB_MARKER_PREFIX}cmd1")
+    cmd2_tab = user.find(marker=f"{SubparserUi.TAB_MARKER_PREFIX}cmd2")
+    assert len(cmd1_tab.elements) > 0
+    assert len(cmd2_tab.elements) > 0
+
+    # Verify that '-' tab does NOT exist (for required subparsers)
+    dash_tabs = user.find(kind=ui.tab)
+    assert all(tab.label != "-" for tab in dash_tabs.elements)
 
 
 @nice_gooey_argparse_main(patch_argparse=False)

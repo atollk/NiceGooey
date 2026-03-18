@@ -1,13 +1,13 @@
 import argparse
-import typing
+from typing import TYPE_CHECKING, Literal, override
 
-from nicegui import ui
 import nicegui.events
+from nicegui import ui
 
 from nicegooey.argparse.ui_classes.actions.action_ui_element import ActionUiElement
 from nicegooey.argparse.ui_classes.util.ui_wrapper import UiWrapper
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     from nicegooey.argparse.main import NiceGooeyMain
 
 
@@ -20,11 +20,11 @@ class MutuallyExclusiveGroupUi(UiWrapper):
         self.group = group
         self.active_element = None
 
-    @typing.override
+    @override
     def validate(self) -> bool:
         return self.active_element is None or self.active_element.validate()
 
-    def _render_action(self, action: argparse.Action | typing.Literal[""]) -> ui.element:
+    def _render_action(self, action: argparse.Action | Literal[""]) -> ui.element:
         if action == "":
             return ui.element()
 
@@ -48,13 +48,13 @@ class MutuallyExclusiveGroupUi(UiWrapper):
             elif isinstance(action.metavar, tuple):
                 action_name = action.metavar[0]
             elif len(action.option_strings) > 0:
-                action_name = action.option_strings[0]
+                action_name = max(action.option_strings, key=len)
             else:
                 action_name = action.dest
             choices[action] = action_name
         return choices
 
-    @typing.override
+    @override
     def render(self) -> ui.element:
         render_action = ui.refreshable(self._render_action)
         choices = self._build_action_choice_names()

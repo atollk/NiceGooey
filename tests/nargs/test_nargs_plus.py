@@ -1,8 +1,9 @@
 import pytest
 from nicegui.testing import User
 
-from nicegooey.argparse import nice_gooey_argparse_main, NgArgumentParser
+from nicegooey.argparse import NgArgumentParser, nice_gooey_argparse_main
 from nicegooey.argparse.main import main_instance
+from nicegooey.argparse.ui_classes.actions.action_sync_element import ActionSyncElement
 
 
 @pytest.mark.nicegui_main_file(__file__)
@@ -15,13 +16,31 @@ async def test_nargs_plus(user: User) -> None:
 
     assert main_instance.namespace.required_items in (None, [])
 
-    # TODO
+    # Add first item
+    basic_element = user.find(
+        marker=ActionSyncElement.BASIC_ELEMENT_MARKER + ActionSyncElement.LIST_INNER_ELEMENT_MARKER_SUFFIX
+    )
+    add_button = user.find(marker=ActionSyncElement.ADD_BUTTON_MARKER)
+    basic_element.type("required_item1")
+    add_button.click()
+
+    # Verify namespace is updated correctly
+    assert main_instance.namespace.required_items == ["required_item1"]
+
+    # Add a second item
+    basic_element.type("required_item2")
+    add_button.click()
+
+    # Verify namespace now contains both values
+    assert main_instance.namespace.required_items == ["required_item1", "required_item2"]
 
 
 @nice_gooey_argparse_main(patch_argparse=False)
 def main():
     parser = NgArgumentParser()
-    parser.add_argument("--required-items", nargs="+", type=str, help="One or more items (required)")
+    parser.add_argument(
+        "--required-items", nargs="+", type=str, help="One or more items (required)", required=True
+    )
     parser.parse_args()
 
 

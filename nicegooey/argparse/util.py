@@ -1,7 +1,7 @@
 import argparse
 import io
 import logging
-import typing
+from typing import Any, Callable, Iterable
 
 from nicegui import binding
 
@@ -11,11 +11,11 @@ logger = logging.getLogger("nicegooey.argparse")
 class BindingNamespace(argparse.Namespace):
     _bindings: dict[str, binding.BindableProperty]
 
-    def __init__(self, **kwargs: typing.Any) -> None:
+    def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
         super().__setattr__("_bindings", {})
 
-    def __setattr__(self, key: str, value: typing.Any) -> None:
+    def __setattr__(self, key: str, value: Any) -> None:
         if isinstance(value, binding.BindableProperty):
             self._bindings[key] = value
         elif not key.startswith("___"):
@@ -26,7 +26,7 @@ class BindingNamespace(argparse.Namespace):
         else:
             super().__setattr__(key, value)
 
-    def __getattr__(self, name: str) -> typing.Any:
+    def __getattr__(self, name: str) -> Any:
         _bindings = super().__getattribute__("_bindings")
         if name in _bindings:
             return _bindings[name]
@@ -45,7 +45,7 @@ class BindingNamespace(argparse.Namespace):
 class CallbackWriter(io.StringIO):
     """a StringIO-based object that calls a function on every write."""
 
-    def __init__(self, callback: typing.Callable[[str], ...], *args, **kwargs) -> None:
+    def __init__(self, callback: Callable[[str], ...], *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.callback = callback
 
@@ -54,6 +54,6 @@ class CallbackWriter(io.StringIO):
         self.callback(s)
         return result
 
-    def writelines(self, lines: typing.Iterable[str]) -> None:
+    def writelines(self, lines: Iterable[str]) -> None:
         for line in lines:
             self.write(line)

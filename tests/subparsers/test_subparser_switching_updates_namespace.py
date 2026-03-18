@@ -1,8 +1,9 @@
 import pytest
 from nicegui.testing import User
 
-from nicegooey.argparse import nice_gooey_argparse_main, NgArgumentParser
+from nicegooey.argparse import NgArgumentParser, nice_gooey_argparse_main
 from nicegooey.argparse.main import main_instance
+from nicegooey.argparse.ui_classes.groupings.subparser_ui import SubparserUi
 
 
 @pytest.mark.nicegui_main_file(__file__)
@@ -18,9 +19,9 @@ async def test_subparser_switching_updates_namespace(user: User) -> None:
     await user.should_see("deploy")
 
     # Find the tabs
-    build_tab = user.find(marker="ng-subparser-tab-build")
-    test_tab = user.find(marker="ng-subparser-tab-test")
-    deploy_tab = user.find(marker="ng-subparser-tab-deploy")
+    build_tab = user.find(marker=f"{SubparserUi.TAB_MARKER_PREFIX}build")
+    test_tab = user.find(marker=f"{SubparserUi.TAB_MARKER_PREFIX}test")
+    deploy_tab = user.find(marker=f"{SubparserUi.TAB_MARKER_PREFIX}deploy")
 
     # The namespace should have command set to "build"
     assert main_instance.namespace.command == "build"

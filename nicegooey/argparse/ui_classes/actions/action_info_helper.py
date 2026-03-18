@@ -2,8 +2,8 @@ import argparse
 import builtins
 import dataclasses
 import enum
-import typing
 import warnings
+from typing import Any, Callable
 
 from nicegooey.argparse.ui_classes.util.nargs import Nargs
 
@@ -30,7 +30,7 @@ class ActionInfoHelper:
         else:
             return self.TypeCount.One
 
-    def action_type(self) -> tuple[TypeCount, typing.Callable[[str], typing.Any]]:
+    def action_type(self) -> tuple[TypeCount, Callable[[str], Any]]:
         """Returns the type of this action, or a reasonable default if no type is set."""
         base_type = None
         match self.action.type:
@@ -44,7 +44,7 @@ class ActionInfoHelper:
                 base_type = self.action.type
         return self._is_nargs_multiple(), base_type
 
-    def action_type_with_nargs(self) -> typing.Callable[[typing.Any], typing.Any]:
+    def action_type_with_nargs(self) -> Callable[[Any], Any]:
         # TODO: should this be placed in this class?
         type_count, type_base = self.action_type()
         match type_count:
@@ -57,10 +57,10 @@ class ActionInfoHelper:
             case _:
                 raise ValueError(f"Invalid type count {type_count}")
 
-    def action_const(self) -> typing.Any:
+    def action_const(self) -> Any:
         return self.action.const
 
-    def action_default(self) -> typing.Any:
+    def action_default(self) -> Any:
         """Returns the default value for this action, or a reasonable default if no default is set."""
         type_count, type_base = self.action_type()
 
