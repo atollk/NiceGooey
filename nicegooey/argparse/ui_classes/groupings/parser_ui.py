@@ -1,18 +1,17 @@
 import argparse
-from typing import TYPE_CHECKING, override
+from typing import TYPE_CHECKING, override, Iterable
 
 from nicegui import ui
 
-from nicegooey.argparse.ui_classes.util.ui_wrapper import UiWrapper
-
 from .argument_group_ui import ArgumentGroupUi
+from nicegooey.argparse.ui_classes.util.grouping_sync_ui import GroupingSyncUi, UiWrapperSyncElement
 from .subparsers_ui import SubparsersUi
 
 if TYPE_CHECKING:
     from nicegooey.argparse.main import NiceGooeyMain
 
 
-class ParserUi(UiWrapper):
+class ParserUi(GroupingSyncUi):
     action_groups: list[ArgumentGroupUi]
     subparsers_action: argparse._SubParsersAction | None
     subparsers: SubparsersUi | None
@@ -49,12 +48,8 @@ class ParserUi(UiWrapper):
                 self.subparsers.render()
         return root
 
-    def deactivate(self) -> None:
-        # TODO: implement
-        pass
-
     @override
-    def validate(self) -> bool:
-        group_validations = [group.validate() for group in self.action_groups]
-        subparsers_validation = self.subparsers.validate() if self.subparsers is not None else True
-        return all(group_validations) and subparsers_validation
+    def get_children(self) -> Iterable[UiWrapperSyncElement]:
+        yield from self.action_groups
+        if self.subparsers:
+            yield self.subparsers

@@ -1,17 +1,17 @@
 import argparse
-from typing import TYPE_CHECKING, Literal, override
+from typing import TYPE_CHECKING, Literal, override, Iterable
 
 import nicegui.events
 from nicegui import ui
 
 from nicegooey.argparse.ui_classes.actions.action_ui_element import ActionUiElement
-from nicegooey.argparse.ui_classes.util.ui_wrapper import UiWrapper
+from nicegooey.argparse.ui_classes.util.grouping_sync_ui import UiWrapperSyncElement, GroupingSyncUi
 
 if TYPE_CHECKING:
     from nicegooey.argparse.main import NiceGooeyMain
 
 
-class MutuallyExclusiveGroupUi(UiWrapper):
+class MutuallyExclusiveGroupUi(GroupingSyncUi):
     group: argparse._MutuallyExclusiveGroup
     active_element: ActionUiElement | None
 
@@ -19,10 +19,6 @@ class MutuallyExclusiveGroupUi(UiWrapper):
         super().__init__(parent)
         self.group = group
         self.active_element = None
-
-    @override
-    def validate(self) -> bool:
-        return self.active_element is None or self.active_element.validate()
 
     def _render_action(self, action: argparse.Action | Literal[""]) -> ui.element:
         if action == "":
@@ -81,6 +77,7 @@ class MutuallyExclusiveGroupUi(UiWrapper):
             render_action(selector.value)
         return root
 
-    def deactivate(self) -> None:
-        if self.active_element is not None:
-            self.active_element.deactivate()
+    @override
+    def get_children(self) -> Iterable[UiWrapperSyncElement]:
+        if self.active_element:
+            yield self.active_element

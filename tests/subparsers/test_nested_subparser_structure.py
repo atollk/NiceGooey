@@ -1,9 +1,11 @@
 import pytest
-from nicegui.testing import User
+from nicegui.testing import User, UserInteraction
 
 from nicegooey.argparse import NgArgumentParser, nice_gooey_argparse_main
 from nicegooey.argparse.main import main_instance
 from nicegooey.argparse.ui_classes.groupings.subparser_ui import SubparserUi
+
+from nicegui import ui, ElementFilter
 
 
 @pytest.mark.nicegui_main_file(__file__)
@@ -38,12 +40,19 @@ async def test_nested_subparser_structure(user: User) -> None:
     await user.should_see("url")
 
     # Fill in the fields
-    from nicegui import ui
-
-    from tests.conftest import find_within
-
-    name_input = find_within(user, kind=ui.input, within_marker="ng-action-name")
-    url_input = find_within(user, kind=ui.input, within_marker="ng-action-url")
+    with user:
+        name_input_filter = (
+            ElementFilter(kind=ui.input)
+            .within(marker="ng-action-name")
+            .within(marker=f"{SubparserUi.TABPANEL_MARKER_PREFIX}add")
+        )
+        name_input = UserInteraction(user=user, elements=set(name_input_filter), target=None)
+        url_input_filter = (
+            ElementFilter(kind=ui.input)
+            .within(marker="ng-action-url")
+            .within(marker=f"{SubparserUi.TABPANEL_MARKER_PREFIX}add")
+        )
+        url_input = UserInteraction(user=user, elements=set(url_input_filter), target=None)
 
     name_input.type("origin")
     url_input.type("https://github.com")
@@ -65,11 +74,11 @@ def main():
     remote_subparsers = parser_remote.add_subparsers(dest="remote_command", help="Remote commands")
 
     parser_remote_add = remote_subparsers.add_parser("add", help="Add remote")
-    parser_remote_add.add_argument("--name", type=str, help="Remote name")
-    parser_remote_add.add_argument("--url", type=str, help="Remote URL")
+    parser_remote_add.add_argument("--name", type=str, help="Remote name", required=True)
+    parser_remote_add.add_argument("--url", type=str, help="Remote URL", required=True)
 
     parser_remote_remove = remote_subparsers.add_parser("remove", help="Remove remote")
-    parser_remote_remove.add_argument("--name", type=str, help="Remote name to remove")
+    parser_remote_remove.add_argument("--name", type=str, help="Remote name to remove", required=True)
 
     parser.parse_args()
 

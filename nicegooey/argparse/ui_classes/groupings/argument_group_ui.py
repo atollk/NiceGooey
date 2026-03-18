@@ -1,10 +1,10 @@
 import argparse
-from typing import TYPE_CHECKING, override
+from typing import TYPE_CHECKING, override, Iterable
 
 from nicegui import ui
 
 from nicegooey.argparse.ui_classes.actions.action_ui_element import ActionUiElement
-from nicegooey.argparse.ui_classes.util.ui_wrapper import UiWrapper
+from nicegooey.argparse.ui_classes.util.grouping_sync_ui import GroupingSyncUi, UiWrapperSyncElement
 
 if TYPE_CHECKING:
     from nicegooey.argparse.main import NiceGooeyMain
@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from .mutually_exclusive_group_ui import MutuallyExclusiveGroupUi
 
 
-class ArgumentGroupUi(UiWrapper):
+class ArgumentGroupUi(GroupingSyncUi):
     children: list["ActionUiElement | MutuallyExclusiveGroupUi"]
     group: argparse._ArgumentGroup
 
@@ -43,15 +43,6 @@ class ArgumentGroupUi(UiWrapper):
             if ui_container is not None:
                 self.children.append(ui_container)
 
-    @override
-    def validate(self) -> bool:
-        child_validations = [child.validate() for child in self.children]
-        return all(child_validations)
-
-    def deactivate(self) -> None:
-        for child in self.children:
-            child.deactivate()
-
     def _render_action(self, action: argparse.Action) -> ui.element:
         ui_container = ActionUiElement.from_action(self.parent, action)
         if ui_container is not None:
@@ -76,3 +67,7 @@ class ArgumentGroupUi(UiWrapper):
                         with ui.card():
                             child.render()
         return root
+
+    @override
+    def get_children(self) -> Iterable[UiWrapperSyncElement]:
+        return self.children

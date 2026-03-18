@@ -1,4 +1,6 @@
 
+In the uv test, when selecting nested subparsers "pip" > "install", several of the optional arguments are already enabled, which seems like a bug.
+
 add tests for validation checks
     - nargs
     - types

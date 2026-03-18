@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING
 
 from nicegui import ui
 
@@ -8,11 +8,7 @@ if TYPE_CHECKING:
     from nicegooey.argparse.main import NiceGooeyMain
 
 
-class Validator(Protocol):
-    def validate(self) -> bool: ...
-
-
-class UiWrapper(Validator):
+class UiWrapper:
     """Generic base class for most UI elements."""
 
     parent: "NiceGooeyMain"

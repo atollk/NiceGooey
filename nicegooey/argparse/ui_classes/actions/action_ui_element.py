@@ -1,16 +1,16 @@
 import abc
 import argparse
-from typing import Type, override
+from typing import Type, override, Iterable
 
 from nicegui import ui
 
+from ..util.grouping_sync_ui import UiWrapperSyncElement, GroupingSyncUi
 from ...main import NiceGooeyMain
-from ..util.ui_wrapper import UiWrapper
 from .action_info_helper import ActionInfoHelper
 from .action_sync_element import ActionSyncElement
 
 
-class ActionUiElement[ActionT: argparse.Action](UiWrapper, abc.ABC):
+class ActionUiElement[ActionT: argparse.Action](GroupingSyncUi, abc.ABC):
     _UNSET = object()
 
     action: ActionT
@@ -59,12 +59,8 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, abc.ABC):
         return c
 
     @override
-    def validate(self) -> bool:
-        return self.element.validate()
-
-    def deactivate(self) -> None:
-        """Undoes any actions performed by this element and resets the namespace fields."""
-        self.element.deactivate()
+    def get_children(self) -> Iterable[UiWrapperSyncElement]:
+        yield self.element
 
     @property
     def _action_info(self) -> ActionInfoHelper:

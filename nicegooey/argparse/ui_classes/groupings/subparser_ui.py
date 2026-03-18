@@ -1,33 +1,35 @@
 import argparse
-from typing import TYPE_CHECKING, Final, override
+from typing import TYPE_CHECKING, Final, override, Iterable
 
 from nicegui import ui
 
-from nicegooey.argparse.ui_classes.util.ui_wrapper import UiWrapper
 
 from .argument_group_ui import ArgumentGroupUi
+from ..util.grouping_sync_ui import UiWrapperSyncElement, GroupingSyncUi
 
 if TYPE_CHECKING:
     from nicegooey.argparse.main import NiceGooeyMain
+    from .parser_ui import ParserUi
 
 
-class SubparserUi(UiWrapper):
+class SubparserUi(GroupingSyncUi):
     TAB_MARKER_PREFIX: Final[str] = "ng-subparser-tab-"
     TABPANEL_MARKER_PREFIX: Final[str] = "ng-subparser-tabpanel-"
 
     title: str
     subparser: argparse.ArgumentParser
     tab: ui.tab | None
+    parser_ui: "ParserUi"
     action_groups: list[ArgumentGroupUi]
 
     def __init__(self, parent: "NiceGooeyMain", title: str, subparser: argparse.ArgumentParser) -> None:
+        from .parser_ui import ParserUi
+
         super().__init__(parent)
         self.title = title
         self.subparser = subparser
         self.tab = None
-        self.action_groups = [
-            ArgumentGroupUi(self.parent, action_group) for action_group in self.subparser._action_groups
-        ]
+        self.parser_ui = ParserUi(parent=parent, parser=self.subparser)
 
     def render_tab(self) -> ui.tab:
         self.tab = ui.tab(self.title).mark(f"{SubparserUi.TAB_MARKER_PREFIX}{self.title}")
@@ -37,17 +39,12 @@ class SubparserUi(UiWrapper):
         assert self.tab is not None
         panel = ui.tab_panel(self.tab).mark(f"{SubparserUi.TABPANEL_MARKER_PREFIX}{self.title}")
         with panel:
-            for group in self.action_groups:
-                group.render()
+            self.parser_ui.render()
         return panel
 
     @override
     def render(self) -> ui.element:
         raise NotImplementedError("use render_tab and render_tab_panel")
-
-    def deactivate(self) -> None:
-        for group in self.action_groups:
-            group.deactivate()
 
     @override
     def validate(self) -> bool:
@@ -59,7 +56,8 @@ class SubparserUi(UiWrapper):
         if tabs.value != self.tab:
             return True
 
-        validation_failed = False
-        for group in self.action_groups:
-            validation_failed = group.validate() or validation_failed
-        return not validation_failed
+        return self.parser_ui.validate()
+
+    @override
+    def get_children(self) -> Iterable[UiWrapperSyncElement]:
+        yield self.parser_ui

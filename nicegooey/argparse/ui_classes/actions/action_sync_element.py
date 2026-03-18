@@ -11,6 +11,7 @@ from nicegooey.argparse.main import NiceGooeyNamespace, main_instance
 from nicegooey.argparse.ui_classes.actions.action_info_helper import ActionInfoHelper
 from nicegooey.argparse.ui_classes.util import clear_value_element
 from nicegooey.argparse.ui_classes.util.disableable_div import DisableableDiv
+from nicegooey.argparse.ui_classes.util.grouping_sync_ui import UiWrapperSyncElement
 from nicegooey.argparse.ui_classes.util.max_width_select import MaxWidthSelect
 from nicegooey.argparse.ui_classes.util.nargs import Nargs
 from nicegooey.argparse.ui_classes.util.optional_value_element import OptionalValueElement
@@ -27,7 +28,7 @@ def _find_exactly_one_element[T](filter: ElementFilter, typ: Type[T]) -> T | Non
     return e
 
 
-class ActionSyncElement(SyncElement):
+class ActionSyncElement(SyncElement, UiWrapperSyncElement):
     """
     A group of UI elements that represent a single value of the argparse namespace.
 
@@ -240,7 +241,8 @@ class ActionSyncElement(SyncElement):
             if isinstance(inner_element, ValidationElement):
                 if not inner_element.validate():
                     return
-            list_element.set_value(list_element.value + [inner_element.value])
+            # sometimes, list_element.value is "" here and I couldn't find out why, so I just did a defensive `or []`
+            list_element.set_value((list_element.value or []) + [inner_element.value])
             inner_element.set_value(inner_element_default_value)
 
         with ui.column():

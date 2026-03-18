@@ -61,7 +61,12 @@ async def test_uv_cli_interface(user: User) -> None:
 
     # Navigate to "install" subparser (second level nested under pip)
     await user.should_see("install")
-    install_tab = user.find(marker=f"{SubparserUi.TAB_MARKER_PREFIX}install")
+    install_tab = find_within(
+        user,
+        marker=f"{SubparserUi.TAB_MARKER_PREFIX}install",
+        within_marker=f"{SubparserUi.TABPANEL_MARKER_PREFIX}pip",
+    )
+    assert len(install_tab.elements) == 1
     install_tab.click()
     assert main_instance.namespace.pip_command == "install"
 

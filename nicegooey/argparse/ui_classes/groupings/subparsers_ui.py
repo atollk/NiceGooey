@@ -65,6 +65,7 @@ class SubparsersUi(UiWrapper, SyncElement):
 
         def on_tab_change(ev: nicegui.events.ValueChangeEventArguments) -> None:
             # Deactivate the previous tab
+            child: SubparserUi | None = None
             if self.active_tab_title is not None:
                 child = next(p for p in self.subparsers if p.title == self.active_tab_title)
                 child.deactivate()
@@ -73,6 +74,8 @@ class SubparsersUi(UiWrapper, SyncElement):
             self.active_tab_title = ev.value
             # Store in namespace
             self.sync_to_namespace()
+            if child is not None:
+                child.sync_to_namespace()
 
         if none_tab is not None:
             self.active_tab_title = None
@@ -91,10 +94,10 @@ class SubparsersUi(UiWrapper, SyncElement):
         self.sync_to_namespace()
 
     def deactivate(self) -> None:
-        for group in self.action_groups:
-            group.deactivate()
+        for subp in self.subparsers:
+            subp.deactivate()
 
     @override
     def validate(self) -> bool:
-        return True  # TODO
-        return all(subparser.validate() for subparser in self.subparsers)
+        # Use a list rather than a generator to prevent lazy evaluation.
+        return all([subparser.validate() for subparser in self.subparsers])
