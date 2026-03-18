@@ -12,6 +12,8 @@ async def test_subparser_with_groups(user: User) -> None:
 
     await user.should_see("config")
 
+    # TODO
+
 
 @nice_gooey_argparse_main(patch_argparse=False)
 def main():

@@ -14,7 +14,7 @@ async def test_optional_disabled_when_not_enabled(user: User) -> None:
     await user.should_see("name")
 
     # Find the enable checkbox and input field
-    enable_checkbox = user.find(ui.checkbox, marker="ng-action-type-input-enable-parameter-box")
+    enable_checkbox = user.find(kind=ui.checkbox, marker="ng-action-type-input-enable-parameter-box")
     input_field = user.find(ui.input)
 
     # Initially, the namespace value should be empty string (checkbox is unchecked by default)

@@ -15,7 +15,7 @@ async def test_required_no_enable_checkbox(user: User) -> None:
 
     # Verify there's no enable checkbox for required actions
     with pytest.raises(AssertionError):
-        user.find(ui.checkbox, marker="ng-action-type-input-enable-parameter-box")
+        user.find(kind=ui.checkbox, marker="ng-action-type-input-enable-parameter-box")
 
     # The namespace should initially be empty string (no default provided)
     assert main_instance.namespace.name == ""

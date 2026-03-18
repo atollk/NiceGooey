@@ -14,9 +14,9 @@ def process(parser: argparse.ArgumentParser, args: argparse.Namespace):
 @nice_gooey_argparse_main(patch_argparse=False)
 def main1(*args, **kwargs):
     parser = NgArgumentParser()
-    subparsers = parser.add_subparsers(dest="command", help="Commands", required=True)
-    parser_run = subparsers.add_parser("run", help="Run a command or script")
-    parser_run.add_argument("args", nargs="*", type=str, help="Arguments for the command")
+    parser.add_argument("--name", type=str, help="Your name", required=True)
+    parser.add_argument("--email", type=str, help="Your email", required=True)
+    parser.add_argument("--age", type=int, help="Your age", required=True)
     # parser=uv_parser()
     ns = parser.parse_args()
     print(ns)

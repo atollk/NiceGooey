@@ -13,6 +13,8 @@ async def test_required_subparsers_no_dash_tab(user: User) -> None:
     await user.should_see("cmd1")
     await user.should_see("cmd2")
 
+    # TODO
+
 
 @nice_gooey_argparse_main(patch_argparse=False)
 def main():

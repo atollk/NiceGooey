@@ -15,6 +15,8 @@ async def test_nargs_with_choices(user: User) -> None:
 
     assert main_instance.namespace.colors in (None, [])
 
+    # TODO
+
 
 @nice_gooey_argparse_main(patch_argparse=False)
 def main():

@@ -13,6 +13,8 @@ async def test_nested_subparser_structure(user: User) -> None:
     await user.should_see("verbose")
     await user.should_see("remote")
 
+    # TODO
+
 
 @nice_gooey_argparse_main(patch_argparse=False)
 def main():

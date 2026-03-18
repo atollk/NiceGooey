@@ -27,6 +27,7 @@ async def test_subparser_with_nargs(user: User) -> None:
         marker=ActionSyncElement.BASIC_ELEMENT_MARKER + ActionSyncElement.LIST_INNER_ELEMENT_MARKER_SUFFIX
     )
     add_button = user.find(marker=ActionSyncElement.ADD_BUTTON_MARKER)
+    assert len(basic_element.elements) == len(add_button.elements) == 1
     basic_element.type("value_1")
     add_button.click()
 
@@ -46,7 +47,7 @@ def main():
     parser = NgArgumentParser()
     subparsers = parser.add_subparsers(dest="command", help="Commands", required=True)
     parser_run = subparsers.add_parser("run", help="Run a command or script")
-    parser_run.add_argument("args", nargs="*", type=str, help="Arguments for the command")
+    parser_run.add_argument("--args", nargs="*", type=str, help="Arguments for the command", required=True)
     parser.parse_args()
 
 

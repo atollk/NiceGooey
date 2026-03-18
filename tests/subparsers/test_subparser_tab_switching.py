@@ -14,6 +14,8 @@ async def test_subparser_tab_switching(user: User) -> None:
     await user.should_see("test")
     await user.should_see("deploy")
 
+    # TODO
+
 
 @nice_gooey_argparse_main(patch_argparse=False)
 def main():

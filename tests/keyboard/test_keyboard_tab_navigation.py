@@ -1,40 +1,52 @@
 import pytest
-from nicegui.testing import User
+from nicegui.testing import Screen
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 
 from nicegooey.argparse import nice_gooey_argparse_main, NgArgumentParser
 
 
 @pytest.mark.nicegui_main_file(__file__)
-@pytest.mark.skip(
-    reason="Keyboard event testing not yet implemented - need to investigate NiceGUI keyboard API"
-)
-async def test_keyboard_tab_navigation(user: User) -> None:
+async def test_keyboard_tab_navigation(screen: Screen) -> None:
     """Test that tab key navigates between input fields."""
+    screen.open("/")
 
-    await user.open("/")
+    # Wait for page to load
+    screen.should_contain("name")
+    screen.should_contain("email")
+    screen.should_contain("age")
 
-    # Find the input fields
-    # name_input = user.find(ui.input, marker="ng-action-name")
-    # email_input = user.find(ui.input, marker="ng-action-email")
-    # age_input = user.find(ui.number, marker="ng-action-age")
+    # Get the Selenium driver
+    driver = screen.selenium
 
-    # TODO: Implement keyboard event testing
-    # Expected behavior:
-    # 1. Focus on name_input
-    # 2. Press Tab key -> should focus email_input
-    # 3. Press Tab key -> should focus age_input
-    # 4. Press Shift+Tab -> should focus email_input
+    # Find all input elements on the page (we have 3: name, email, age)
+    # They should be in order
+    inputs = driver.find_elements(By.TAG_NAME, "input")
 
-    # Placeholder for keyboard event API:
-    # name_input.focus()
-    # user.keyboard.press("Tab")
-    # assert email_input.is_focused()
-    # user.keyboard.press("Tab")
-    # assert age_input.is_focused()
-    # user.keyboard.press("Shift+Tab")
-    # assert email_input.is_focused()
+    # Filter to get text/number inputs (exclude checkboxes, etc.)
+    text_inputs = [inp for inp in inputs if inp.get_attribute("type") in ("text", "number", None)]
 
-    pytest.fail("Keyboard event testing needs to be implemented")
+    assert len(text_inputs) >= 3, f"Expected at least 3 text inputs, found {len(text_inputs)}"
+
+    name_input = text_inputs[0]
+    email_input = text_inputs[1]
+    age_input = text_inputs[2]
+
+    # Click on the name input to focus it
+    name_input.click()
+    assert driver.switch_to.active_element == name_input
+
+    # Press Tab to navigate to email input
+    name_input.send_keys(Keys.TAB)
+    assert driver.switch_to.active_element == email_input
+
+    # Press Tab to navigate to age input
+    email_input.send_keys(Keys.TAB)
+    assert driver.switch_to.active_element == age_input
+
+    # Press Shift+Tab to navigate back to email input
+    age_input.send_keys(Keys.SHIFT, Keys.TAB)
+    assert driver.switch_to.active_element == email_input
 
 
 @nice_gooey_argparse_main(patch_argparse=False)

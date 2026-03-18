@@ -1,6 +1,7 @@
 import argparse
 import typing
 
+import nicegui.html
 from nicegui import ui
 
 from .groupings.argument_group_ui import ArgumentGroupUi
@@ -57,16 +58,18 @@ class RootUi(UiWrapper):
                     else f"w-{self.parser_config.argument_vp_width}"
                 )
                 with ui.card():
-                    with ui.column().classes(width):
-                        for child in self.action_groups:
-                            child.render()
+                    # Use a form to enable submit keyboard controls, but prevent page redirect on Submit.
+                    with nicegui.html.form().props("onsubmit='return false;'"):
+                        with ui.column().classes(width):
+                            for child in self.action_groups:
+                                child.render()
 
-                        if self.subparsers:
-                            self.subparsers.render()
+                            if self.subparsers:
+                                self.subparsers.render()
 
-                    # Submit button
-                    on_submit = self.parent.submit
-                    ui.button("Submit").on_click(on_submit)
+                        # Submit button
+                        on_submit = self.parent.submit
+                        ui.button("Submit").on_click(on_submit).props("type=submit")
 
             with ui.column(align_items="end"):
                 # TODO: nicer license info

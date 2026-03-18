@@ -15,7 +15,7 @@ async def test_nargs_three(user: User) -> None:
 
     assert main_instance.namespace.coords in (None, [], [0, 0, 0])
 
-    # TODO: actually add some stuff
+    # TODO
 
 
 @nice_gooey_argparse_main(patch_argparse=False)
