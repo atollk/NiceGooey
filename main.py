@@ -13,18 +13,17 @@ def process(parser: argparse.ArgumentParser, args: argparse.Namespace):
 @nice_gooey_argparse_main(patch_argparse=False)
 def main1(*args, **kwargs):
     parser = NgArgumentParser()
-    subparsers = parser.add_subparsers(dest="command", help="Commands")
+    outer_subparsers = parser.add_subparsers(dest="outer_command")
 
-    parser_build = subparsers.add_parser("build", help="Build command")
-    parser_build.add_argument("--output", type=str, help="Output directory")
+    parser_a = outer_subparsers.add_parser("a")
+    inner_subparsesr = parser_a.add_subparsers(dest="inner_command")
 
-    parser_test = subparsers.add_parser("test", help="Test command")
-    parser_test.add_argument("--verbose", action="store_true", help="Verbose output")
+    parser_a1 = inner_subparsesr.add_parser("a1")
+    parser_a1.add_argument("--foo")
 
-    parser_deploy = subparsers.add_parser("deploy", help="Deploy command")
-    parser_deploy.add_argument("--environment", choices=["dev", "prod"], help="Environment")
+    outer_subparsers.add_parser("b")
 
-    parser = uv_parser()
+    # parser = uv_parser()
     ns = parser.parse_args()
     print(ns)
 

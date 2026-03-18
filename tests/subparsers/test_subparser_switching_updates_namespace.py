@@ -7,7 +7,6 @@ from nicegooey.argparse.ui_classes.groupings.subparser_ui import SubparserUi
 
 
 @pytest.mark.nicegui_main_file(__file__)
-@pytest.mark.skip("Fails due to a bug in nicegui: https://github.com/zauberzeug/nicegui/issues/5885")
 async def test_subparser_switching_updates_namespace(user: User) -> None:
     """Test that switching between subparser tabs immediately updates the namespace with correct values."""
 

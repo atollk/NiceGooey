@@ -57,15 +57,13 @@ async def test_uv_cli_interface(user: User) -> None:
     await user.should_see("pip")
     pip_tab = user.find(marker=f"{SubparserUi.TAB_MARKER_PREFIX}pip")
     pip_tab.click()
-    # TODO: Fails due to a bug in nicegui: https://github.com/zauberzeug/nicegui/issues/5885
-    # assert main_instance.namespace.subcommand == "pip"
+    assert main_instance.namespace.subcommand == "pip"
 
     # Navigate to "install" subparser (second level nested under pip)
     await user.should_see("install")
     install_tab = user.find(marker=f"{SubparserUi.TAB_MARKER_PREFIX}install")
     install_tab.click()
-    # TODO: Fails due to a bug in nicegui: https://github.com/zauberzeug/nicegui/issues/5885
-    # assert main_instance.namespace.pip_command == "install"
+    assert main_instance.namespace.pip_command == "install"
 
     # Verify install-specific options are visible
     await user.should_see("packages")

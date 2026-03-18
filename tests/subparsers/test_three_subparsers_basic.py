@@ -7,7 +7,6 @@ from nicegooey.argparse.ui_classes.groupings.subparser_ui import SubparserUi
 
 
 @pytest.mark.nicegui_main_file(__file__)
-@pytest.mark.skip("Fails due to a bug in nicegui: https://github.com/zauberzeug/nicegui/issues/5885")
 async def test_three_subparsers_basic(user: User) -> None:
     """Test three subparsers: empty, simple (2 args), and complex (with group)."""
 

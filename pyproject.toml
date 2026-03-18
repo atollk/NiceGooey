@@ -4,8 +4,9 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
+# TODO: upgrade nicegui to 3.9.0 when released
 dependencies = [
-    "nicegui>=3.8.0",
+    "nicegui",
 ]
 
 [dependency-groups]
@@ -32,3 +33,6 @@ commands = [["pytest"]]
 description = "run type check on code base"
 deps = ["mypy==1.18.2", "types-cachetools>=5.5.0.20240820", "types-chardet>=5.0.4.6"]
 commands = [["mypy", "src{/}tox"], ["mypy", "tests"]]
+
+[tool.uv.sources]
+nicegui = { git = "https://github.com/zauberzeug/nicegui", rev="0eed6ac54d6379a593f7fb255653c2ce2ae569ff" }
