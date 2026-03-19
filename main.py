@@ -13,13 +13,51 @@ def process(parser: argparse.ArgumentParser, args: argparse.Namespace):
 @nice_gooey_argparse_main(patch_argparse=False)
 def main1(*args, **kwargs):
     parser = NgArgumentParser()
-    subparsers = parser.add_subparsers(dest="command", help="Commands", required=True)
-    parser_run = subparsers.add_parser("run", help="Run a command or script")
-    parser_run.add_argument("--args", nargs="*", type=str, help="Arguments for the command", required=True)
 
-    parser = uv_parser()
+    # Case 1: required=True, nargs="*" -> no enable checkbox
+    parser.add_argument(
+        "--packages-star-required", type=str, nargs="*", required=True, help="Required packages (nargs='*')"
+    )
+
+    # Case 2: required=True, nargs="+" -> no enable checkbox
+    parser.add_argument(
+        "--packages-plus-required", type=str, nargs="+", required=True, help="Required packages (nargs='+')"
+    )
+
+    # Case 3: required=False, nargs="*" -> has enable checkbox
+    parser.add_argument(
+        "--packages-star-optional", type=str, nargs="*", required=False, help="Optional packages (nargs='*')"
+    )
+
+    # Case 4: required=False, nargs="+" -> has enable checkbox
+    parser.add_argument(
+        "--packages-plus-optional", type=str, nargs="+", required=False, help="Optional packages (nargs='+')"
+    )
+
+    # parser = uv_parser()
+    # parser = uv_parser_mre()
     ns = parser.parse_args()
     print(ns)
+
+
+def uv_parser_mre() -> NgArgumentParser:
+    parser = NgArgumentParser()
+
+    subparsers = parser.add_subparsers(dest="subcommand")
+
+    # tool command
+    tool_parser = subparsers.add_parser("tool")
+    tool_subparsers = tool_parser.add_subparsers(dest="tool_command")
+    tool_install = tool_subparsers.add_parser("install")
+    tool_install.add_argument("packages", type=str, nargs="+")
+
+    # pip command
+    pip_parser = subparsers.add_parser("pip")
+    pip_subparsers = pip_parser.add_subparsers(dest="pip_command")
+    pip_install = pip_subparsers.add_parser("install")
+    pip_install.add_argument("packages", type=str, nargs="*")
+
+    return parser
 
 
 def uv_parser() -> NgArgumentParser:

@@ -103,5 +103,4 @@ class ActionUiElement[ActionT: argparse.Action](GroupingSyncUi, abc.ABC):
             parser=self.parent.parent_parser,
         )
         self.element.render()
-        self.element.configure()
         return self.element

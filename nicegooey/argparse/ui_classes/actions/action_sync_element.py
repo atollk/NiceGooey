@@ -104,14 +104,6 @@ class ActionSyncElement(SyncElement, UiWrapperSyncElement):
         assert self.inner_elements is None
         self.inner_elements = self._render_inner_elements()
 
-        self.inner_elements.basic_element.on_value_change(lambda ev: self.sync_to_namespace())
-        self.inner_elements.nargs_wrapper_element.on_value_change(lambda ev: self.sync_to_namespace())
-        if self.inner_elements.enable_box_element is not None:
-            self.inner_elements.enable_box_element.on_value_change(lambda ev: self.sync_to_namespace())
-
-    def configure(self) -> None:
-        """After rendering, sets up callbacks, subscriptions, and other meta-config to work properly."""
-        assert self.inner_elements is not None
         action_info = ActionInfoHelper(action=self.action, parser=self.parser)
 
         # Configure validation
@@ -153,6 +145,12 @@ class ActionSyncElement(SyncElement, UiWrapperSyncElement):
             self.sync_to_namespace()
         else:
             self.sync_from_namespace()
+
+        # Subscribe to propagate future changes from the elements to the namespace.
+        self.inner_elements.basic_element.on_value_change(lambda ev: self.sync_to_namespace())
+        self.inner_elements.nargs_wrapper_element.on_value_change(lambda ev: self.sync_to_namespace())
+        if self.inner_elements.enable_box_element is not None:
+            self.inner_elements.enable_box_element.on_value_change(lambda ev: self.sync_to_namespace())
 
     def deactivate(self) -> None:
         """Undoes any actions performed by this element and resets the namespace fields. Notably, this does not set the namespace field to the action's default but erases it completely."""
