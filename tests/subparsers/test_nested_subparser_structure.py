@@ -1,11 +1,13 @@
 import pytest
-from nicegui.testing import User, UserInteraction
+from nicegui.testing import User
 
 from nicegooey.argparse import NgArgumentParser, nice_gooey_argparse_main
 from nicegooey.argparse.main import main_instance
 from nicegooey.argparse.ui_classes.groupings.subparser_ui import SubparserUi
 
-from nicegui import ui, ElementFilter
+from nicegui import ui
+
+from tests.conftest import find_within
 
 
 @pytest.mark.nicegui_main_file(__file__)
@@ -40,19 +42,18 @@ async def test_nested_subparser_structure(user: User) -> None:
     await user.should_see("url")
 
     # Fill in the fields
-    with user:
-        name_input_filter = (
-            ElementFilter(kind=ui.input)
-            .within(marker="ng-action-name")
-            .within(marker=f"{SubparserUi.TABPANEL_MARKER_PREFIX}add")
-        )
-        name_input = UserInteraction(user=user, elements=set(name_input_filter), target=None)
-        url_input_filter = (
-            ElementFilter(kind=ui.input)
-            .within(marker="ng-action-url")
-            .within(marker=f"{SubparserUi.TABPANEL_MARKER_PREFIX}add")
-        )
-        url_input = UserInteraction(user=user, elements=set(url_input_filter), target=None)
+    name_input = find_within(
+        user,
+        kind=ui.input,
+        within_marker="ng-action-name",
+        within_outer_marker=f"{SubparserUi.TABPANEL_MARKER_PREFIX}add",
+    )
+    url_input = find_within(
+        user,
+        kind=ui.input,
+        within_marker="ng-action-url",
+        within_outer_marker=f"{SubparserUi.TABPANEL_MARKER_PREFIX}add",
+    )
 
     name_input.type("origin")
     url_input.type("https://github.com")

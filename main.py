@@ -13,29 +13,12 @@ def process(parser: argparse.ArgumentParser, args: argparse.Namespace):
 @nice_gooey_argparse_main(patch_argparse=False)
 def main1(*args, **kwargs):
     parser = NgArgumentParser()
-
-    # Case 1: required=True, nargs="*" -> no enable checkbox
     parser.add_argument(
-        "--packages-star-required", type=str, nargs="*", required=True, help="Required packages (nargs='*')"
+        "--add-flag", action="append_const", const="FLAG", dest="items", help="Add flag constant"
     )
-
-    # Case 2: required=True, nargs="+" -> no enable checkbox
-    parser.add_argument(
-        "--packages-plus-required", type=str, nargs="+", required=True, help="Required packages (nargs='+')"
-    )
-
-    # Case 3: required=False, nargs="*" -> has enable checkbox
-    parser.add_argument(
-        "--packages-star-optional", type=str, nargs="*", required=False, help="Optional packages (nargs='*')"
-    )
-
-    # Case 4: required=False, nargs="+" -> has enable checkbox
-    parser.add_argument(
-        "--packages-plus-optional", type=str, nargs="+", required=False, help="Optional packages (nargs='+')"
-    )
-
+    parser.add_argument("--add-item", action="append", type=str, dest="items", help="Add custom item")
     # parser = uv_parser()
-    # parser = uv_parser_mre()
+    parser = uv_parser_mre()
     ns = parser.parse_args()
     print(ns)
 
@@ -45,17 +28,14 @@ def uv_parser_mre() -> NgArgumentParser:
 
     subparsers = parser.add_subparsers(dest="subcommand")
 
-    # tool command
-    tool_parser = subparsers.add_parser("tool")
-    tool_subparsers = tool_parser.add_subparsers(dest="tool_command")
-    tool_install = tool_subparsers.add_parser("install")
-    tool_install.add_argument("packages", type=str, nargs="+")
-
-    # pip command
     pip_parser = subparsers.add_parser("pip")
-    pip_subparsers = pip_parser.add_subparsers(dest="pip_command")
+    pip_subparsers = pip_parser.add_subparsers(dest="pip_command", help="Pip commands")
+
+    pip_sync = pip_subparsers.add_parser("sync")
+    pip_sync.add_argument("--index-url", "-i")
+
     pip_install = pip_subparsers.add_parser("install")
-    pip_install.add_argument("packages", type=str, nargs="*")
+    pip_install.add_argument("--index-url", "-i", type=str)
 
     return parser
 

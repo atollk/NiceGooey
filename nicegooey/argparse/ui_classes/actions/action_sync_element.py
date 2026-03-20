@@ -73,10 +73,19 @@ class ActionSyncElement(SyncElement, UiWrapperSyncElement):
 
     @override
     def _ui_state_from_value(self, value: Any) -> None:
-        if self.inner_elements.enable_box_element is not None:
-            self.inner_elements.enable_box_element.value = value is not None
+        typ = ActionInfoHelper(action=self.action, parser=self.parser).action_type()[1]
+        try:
+            typ(value)
+        except Exception:
+            value_is_valid = False
+        else:
+            value_is_valid = True
+        disable = value is None or not value_is_valid
 
-        if value is None:
+        if self.inner_elements.enable_box_element is not None:
+            self.inner_elements.enable_box_element.value = not disable
+
+        if disable:
             clear_value_element(self.inner_elements.nargs_wrapper_element)
         else:
             self.inner_elements.nargs_wrapper_element.value = value
@@ -308,7 +317,9 @@ class ActionSyncElement(SyncElement, UiWrapperSyncElement):
     ) -> ui.element:
         """Creates and returns an element that wraps the nargs wrapper element depending on whether this action is required or optional."""
         with ui.element() as required_wrapper:
-            if action_info.action.required:
+            # Unlike the vanilla argparse, we consider positional arguments to be required in all cases.
+            is_required = action_info.action.required or len(action_info.action.option_strings) == 0
+            if is_required:
                 nargs_wrapper_element()
             else:
                 with ui.row():
