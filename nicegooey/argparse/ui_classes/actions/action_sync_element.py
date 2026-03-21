@@ -14,8 +14,9 @@ from nicegooey.argparse.ui_classes.util.disableable_div import DisableableDiv
 from nicegooey.argparse.ui_classes.util.grouping_sync_ui import UiWrapperSyncElement
 from nicegooey.argparse.ui_classes.util.max_width_select import MaxWidthSelect
 from nicegooey.argparse.ui_classes.util.nargs import Nargs
-from nicegooey.argparse.ui_classes.util.optional_value_element import OptionalValueElement
+from nicegooey.argparse.ui_classes.util.optional_value_element import OptionalValidationElement
 from nicegooey.argparse.ui_classes.util.sync_element import SyncElement
+from nicegooey.argparse.ui_classes.util.validation_checkbox import ValidationCheckbox
 
 
 def _find_exactly_one_element[T](filter: ElementFilter, typ: Type[T]) -> T | None:
@@ -62,6 +63,10 @@ class ActionSyncElement(SyncElement, UiWrapperSyncElement):
         self.inner_elements = None
 
     @property
+    def action_info(self) -> ActionInfoHelper:
+        return ActionInfoHelper(action=self.action, parser=self.parser)
+
+    @property
     @override
     def namespace(self) -> NiceGooeyNamespace:
         return main_instance.namespace
@@ -76,15 +81,14 @@ class ActionSyncElement(SyncElement, UiWrapperSyncElement):
         assert self.inner_elements is not None
 
         # Evaluate whether the element should be disabled or enabled (if non-required).
-        action_info = ActionInfoHelper(action=self.action, parser=self.parser)
-        typ = action_info.action_type()[1]
+        typ = self.action_info.action_type()[1]
         try:
             typ(value)
         except Exception:
             value_is_valid = False
         else:
             value_is_valid = True
-        disable = value is None or not value_is_valid or value == action_info.action_default()
+        disable = value is None or not value_is_valid or value == self.action_info.action_default()
 
         # Set the values of the UI elements.
         if self.inner_elements.enable_box_element is not None:
@@ -99,13 +103,23 @@ class ActionSyncElement(SyncElement, UiWrapperSyncElement):
         assert self.inner_elements is not None
 
         if not self.is_enabled():
-            value = ActionInfoHelper(action=self.action, parser=self.parser).action_default()
+            value = self.action_info.action_default()
         else:
             value = self.inner_elements.nargs_wrapper_element.value
         return value
 
     def validate(self) -> bool:
-        # TODO implement validation
+        if not self.is_enabled():
+            return True
+        for el in [
+            self.inner_elements.basic_element,
+            self.inner_elements.nargs_wrapper_element,
+            self.inner_elements.basic_element_inner,
+            self.inner_elements.required_wrapper_element,
+        ]:
+            if isinstance(el, ValidationElement):
+                if not el.validate():
+                    return False
         return True
 
     def is_enabled(self) -> bool:
@@ -120,12 +134,12 @@ class ActionSyncElement(SyncElement, UiWrapperSyncElement):
         assert self.inner_elements is None
         self.inner_elements = self._render_inner_elements()
 
-        action_info = ActionInfoHelper(action=self.action, parser=self.parser)
+        action_info = self.action_info
 
         # Configure validation
         el = self.inner_elements.basic_element
         if isinstance(el, ValidationElement):
-            # TODO: clean up
+
             def _input_element_validate(value: Any) -> str | None:
                 """Used by `_create_input_element_generic` as the validation function for the input element. Validates the value by trying to cast it to the action's type by default."""
                 if action_info.action_nargs() == Nargs.OPTIONAL and value is None:
@@ -136,6 +150,7 @@ class ActionSyncElement(SyncElement, UiWrapperSyncElement):
                 except Exception as e:
                     return str(e)
 
+            # TODO: make sure that el.validation is not overwritten at a later point
             el.without_auto_validation()
             el.validation = _input_element_validate
             el.error = None
@@ -173,7 +188,7 @@ class ActionSyncElement(SyncElement, UiWrapperSyncElement):
         setattr(self.namespace, self.action.dest, None)
 
     def _render_inner_elements(self) -> InnerElements:
-        action_info = ActionInfoHelper(action=self.action, parser=self.parser)
+        action_info = self.action_info
 
         if self.action.option_strings:
             action_marker = max(self.action.option_strings, key=len).lstrip(self.parser.prefix_chars)
@@ -215,9 +230,9 @@ class ActionSyncElement(SyncElement, UiWrapperSyncElement):
         )
 
     @classmethod
-    def _action_type_input_basic_element(cls, action_info: ActionInfoHelper) -> ValueElement:
+    def _action_type_input_basic_element(cls, action_info: ActionInfoHelper) -> ValidationElement:
         """Creates and returns an input element depending on just the type of this action."""
-        basic_element: ValueElement
+        basic_element: ValidationElement
         if action_info.action.choices is not None:
             choices = list(action_info.action.choices)
             basic_element = MaxWidthSelect(options=choices)
@@ -225,7 +240,7 @@ class ActionSyncElement(SyncElement, UiWrapperSyncElement):
             _, action_type = action_info.action_type()
             match action_type:
                 case builtins.bool:
-                    basic_element = ui.checkbox()
+                    basic_element = ValidationCheckbox()
                 case builtins.int:
                     basic_element = ui.number(format="%d").props("dense")
                 case builtins.float:
@@ -244,7 +259,7 @@ class ActionSyncElement(SyncElement, UiWrapperSyncElement):
         cls,
         inner_element_f: Callable[[], ValueElement],
         on_add_button_click: Callable[[ValueElement, ValueElement, Any], None] | None = None,
-    ) -> ValueElement:
+    ) -> ValidationElement:
         """Creates and returns an element for inputting multiple items of the given inner element."""
 
         def on_add_button_click_default(
@@ -291,30 +306,42 @@ class ActionSyncElement(SyncElement, UiWrapperSyncElement):
 
     @classmethod
     def _action_type_input_nargs_wrapper(
-        cls, action_info: ActionInfoHelper, basic_element: Callable[[], ValueElement]
-    ) -> ValueElement:
+        cls, action_info: ActionInfoHelper, basic_element: Callable[[], ValidationElement]
+    ) -> ValidationElement:
         """Creates and returns an element that wraps the basic element depending on the nargs of this action."""
         nargs = action_info.action_nargs()
-        nargs_value_element: ValueElement
+        nargs_value_element: ValidationElement
         match nargs:
             case Nargs.SINGLE_ELEMENT:
                 nargs_value_element = basic_element()
             case Nargs.OPTIONAL:
-                nargs_value_element = OptionalValueElement(
+                nargs_value_element = OptionalValidationElement(
                     inner=basic_element, none_value=action_info.action_const()
                 )
-            case Nargs.ZERO_OR_MORE | Nargs.ONE_OR_MORE:
+            case Nargs.ZERO_OR_MORE:
                 nargs_value_element = cls._list_element(basic_element)
+            case Nargs.ONE_OR_MORE:
+                nargs_value_element = cls._list_element(basic_element)
+                nargs_value_element.validation = {
+                    "Must enter at least one value": lambda v: isinstance(v, list) and len(v) > 0
+                }
             case Nargs.PARSER | Nargs.REMAINDER | Nargs.SUPPRESS:
                 raise NotImplementedError(f"nargs value {nargs} are not supported in _action_type_input")
             case int(n):
                 if n == 0:
-                    nargs_value_element = ValueElement(value=None).mark(cls.BASIC_ELEMENT_MARKER)
+                    nargs_value_element = ValidationElement(validation=None, value=None).mark(
+                        cls.BASIC_ELEMENT_MARKER
+                    )
                 else:
                     nargs_value_element = cls._list_element(basic_element)
-                    # TODO: validation for the exact number of elements
+                    nargs_value_element.validation = {
+                        "Must enter at least one value": lambda v: isinstance(v, list) and len(v) == n
+                    }
             case _:
                 raise ValueError(f"Invalid nargs value: {nargs}")
+
+        nargs_value_element.without_auto_validation()
+        nargs_value_element.error = None
         nargs_value_element.mark(cls.NARGS_WRAPPER_MARKER, *nargs_value_element._markers)
         return nargs_value_element
 

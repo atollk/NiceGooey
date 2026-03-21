@@ -1,6 +1,7 @@
 from typing import Any, Callable, Self
 
 from nicegui import ui
+from nicegui.elements.mixins.validation_element import ValidationElement
 from nicegui.elements.mixins.value_element import ValueElement
 from nicegui.events import Handler, ValueChangeEventArguments
 
@@ -8,7 +9,7 @@ from nicegooey.argparse.ui_classes.util import clear_value_element
 from nicegooey.argparse.ui_classes.util.disableable_div import DisableableDiv
 
 
-class OptionalValueElement(ValueElement):
+class OptionalValidationElement(ValidationElement):
     """An element that can either have a value of a certain type or be None, with a checkbox to toggle between the two states."""
 
     none_value: Any
@@ -22,7 +23,7 @@ class OptionalValueElement(ValueElement):
                 self.inner_element = inner()
             self.checkbox = ui.checkbox().props("dense")
         disableable_div.bind_enabled_from(self.checkbox, "value")
-        super().__init__(value=none_value)
+        super().__init__(value=none_value, validation=None)
         row.move(self)
 
     @property

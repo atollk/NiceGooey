@@ -45,7 +45,6 @@ class ActionInfoHelper:
         return self._is_nargs_multiple(), base_type
 
     def action_type_with_nargs(self) -> Callable[[Any], Any]:
-        # TODO: should this be placed in this class?
         type_count, type_base = self.action_type()
         match type_count:
             case ActionInfoHelper.TypeCount.Zero:

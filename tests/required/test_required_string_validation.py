@@ -1,7 +1,6 @@
-"""Test that required string arguments fail validation when empty.
-
-This test verifies TODO at action_sync_element.py:108 - validation should fail
-when required fields are empty.
+"""
+Test that required string arguments fail validation when empty.
+This test verifies validation should fail when required fields are empty.
 """
 
 import os

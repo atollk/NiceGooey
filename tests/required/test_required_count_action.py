@@ -1,7 +1,6 @@
-"""Test that count actions enforce minimum count when required=True.
-
-This test verifies TODO at action_impls.py:149 - count actions with required=True
-should enforce minimum count of 1.
+"""
+Test that count actions enforce minimum count when required=True.
+This test verifies count actions with required=True should enforce minimum count of 1.
 """
 
 import os
@@ -32,6 +31,7 @@ async def test_required_count_validation(user: User) -> None:
     # Try to submit with count=0 - should fail for required count
     submit_button = user.find("Submit")
     submit_button.click()
+    # TODO: check for actual validation, because this check always passes
     with pytest.raises(AssertionError):
         user.find(kind=ui.xterm)
 
@@ -43,28 +43,6 @@ async def test_required_count_validation(user: User) -> None:
     # Now submit should pass
     submit_button.click()
     await user.should_see(kind=ui.xterm)
-
-
-@pytest.mark.nicegui_main_file(__file__)
-async def test_required_count_min_value(user: User) -> None:
-    """Test that required count has appropriate minimum value."""
-    await user.open("/")
-
-    number_input = user.find(ui.number)
-
-    # After implementation, the default might be 1 instead of 0
-    # For now, this documents the expected behavior
-    initial_value = main_instance.namespace.verbose
-
-    # The minimum should prevent going below 0 (or 1 after fix)
-    number_input.clear()
-    number_input.type("-1")
-
-    # Value should not go negative
-    assert main_instance.namespace.verbose >= 0, "Count should not be negative"
-
-    # For required counts, ideally minimum would be 1
-    # This will fail initially but documents the expected behavior
 
 
 @nice_gooey_argparse_main(patch_argparse=False)

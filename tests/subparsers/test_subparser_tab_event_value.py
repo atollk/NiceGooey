@@ -1,7 +1,6 @@
-"""Test that subparser tab change events use correct value type.
-
-This test verifies TODO at subparsers_ui.py:64 - confirms that ev.value
-is a string (tab name) and not a Tab object.
+"""
+Test that subparser tab change events use correct value type.
+This test verifies confirms that ev.value is a string (tab name) and not a Tab object.
 """
 
 import os

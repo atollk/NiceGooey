@@ -61,7 +61,6 @@ async def test_mutually_exclusive_group_switching(user: User) -> None:
     assert main_instance.namespace.mode == "fast"
 
     # Switch to empty/none option to test deselection
-    # TODO: make MRE and debug that or report it to Github
     select.click()
     await user.should_see("-")
     user.find("-").click()

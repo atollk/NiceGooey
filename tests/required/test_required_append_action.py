@@ -1,7 +1,6 @@
-"""Test that append actions work with required=True.
-
-This test verifies TODO at action_impls.py:80 - required list actions should
-work without raising NotImplementedError.
+"""
+Test that append actions work with required=True.
+This test verifies required list actions should work without raising NotImplementedError.
 """
 
 import os

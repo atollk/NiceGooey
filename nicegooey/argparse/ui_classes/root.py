@@ -45,7 +45,6 @@ class RootUi(UiWrapper):
                         ui.button("Submit").on_click(on_submit).props("type=submit")
 
             with ui.column(align_items="end"):
-                # TODO: nicer license info
                 ui.link("License", "/license")
         return root
 

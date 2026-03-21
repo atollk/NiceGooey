@@ -132,7 +132,6 @@ async def test_uv_cli_interface(user: User) -> None:
     assert main_instance.namespace.extra_index_url == ["https://test.pypi.org", "https://backup.pypi.org"]
 
     # Test choices field: --resolution
-    # TODO: need to enable 'resolution' first
     await user.should_see("resolution")
     resolution_enable_box = find_within(
         user,

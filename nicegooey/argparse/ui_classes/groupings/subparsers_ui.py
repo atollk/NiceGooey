@@ -61,7 +61,6 @@ class SubparsersUi(UiWrapper, SyncElement):
                 child = next(p for p in self.subparsers if p.title == self.active_tab_title)
                 child.deactivate()
             # Memorize the next tab
-            # TODO: is ev.value the correct object?
             self.active_tab_title = ev.value
             # Store in namespace
             self.sync_to_namespace()

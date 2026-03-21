@@ -76,29 +76,33 @@ class ListActionUiElement[ActionT: argparse.Action](ActionUiElement[ActionT], ab
         def _action_type_input_required_wrapper(
             cls, action_info: ActionInfoHelper, nargs_wrapper_element: Callable[[], ValueElement]
         ) -> ui.element:
+            def on_add_button_click(
+                list_element: ValueElement,
+                inner_element: ValueElement,
+                inner_element_default_value: Any,
+            ) -> None:
+                """Override the on_click function to call the action instead of just appending to the list."""
+                if isinstance(inner_element, ValidationElement):
+                    if not inner_element.validate():
+                        return
+                ns = argparse.Namespace()
+                ns.__setattr__(action_info.action.dest, list_element.value)
+                action_info.action(action_info.parser, ns, inner_element.value)
+                list_element.value = getattr(ns, action_info.action.dest)
+                inner_element.set_value(inner_element_default_value)
+
+            with ui.element() as required_wrapper:
+                required_wrapper.mark(cls.REQUIRED_WRAPPER_MARKER)
+                list_element = cls._list_element(
+                    nargs_wrapper_element, on_add_button_click=on_add_button_click
+                )
+
             if action_info.action.required:
-                # TODO
-                raise NotImplementedError("Required list actions are not supported yet")
-            else:
-
-                def on_add_button_click(
-                    list_element: ValueElement,
-                    inner_element: ValueElement,
-                    inner_element_default_value: Any,
-                ) -> None:
-                    """Override the on_click function to call the action instead of just appending to the list."""
-                    if isinstance(inner_element, ValidationElement):
-                        if not inner_element.validate():
-                            return
-                    ns = argparse.Namespace()
-                    ns.__setattr__(action_info.action.dest, list_element.value)
-                    action_info.action(action_info.parser, ns, inner_element.value)
-                    list_element.value = getattr(ns, action_info.action.dest)
-                    inner_element.set_value(inner_element_default_value)
-
-                with ui.element() as required_wrapper:
-                    required_wrapper.mark(cls.REQUIRED_WRAPPER_MARKER)
-                    return cls._list_element(nargs_wrapper_element, on_add_button_click=on_add_button_click)
+                list_element.validation = {
+                    "At least one element is required": lambda v: isinstance(v, list) and len(v) > 0
+                }
+                list_element.without_auto_validation()
+                list_element.error = None
 
         def _ui_state_to_value(self) -> Any:
             assert self.inner_elements is not None
