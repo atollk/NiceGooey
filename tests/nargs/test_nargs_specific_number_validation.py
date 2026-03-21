@@ -1,4 +1,7 @@
+import os
+
 import pytest
+from nicegui import ui
 from nicegui.testing import User
 
 from nicegooey.argparse import NgArgumentParser, nice_gooey_argparse_main
@@ -23,22 +26,67 @@ async def test_nargs_specific_number_validation(user: User) -> None:
     )
     add_button = user.find(marker=ActionSyncElement.ADD_BUTTON_MARKER)
 
+    # Get submit button for validation tests
+    submit_button = user.find("Submit")
+
     # Add first value (R)
     basic_element.type("255")
     add_button.click()
-    # TODO: verify validation failure
+    # Verify validation failure - need exactly 3 values
+    submit_button.click()
+    with pytest.raises(AssertionError):
+        user.find(kind=ui.xterm)
 
     # Add second value (G)
     basic_element.type("128")
     add_button.click()
-    # TODO: verify validation failure
+    # Verify validation failure - still need 3 values
+    submit_button.click()
+    with pytest.raises(AssertionError):
+        user.find(kind=ui.xterm)
 
     # Add third value (B)
     basic_element.type("64")
     add_button.click()
-    # TODO: verify validation pass
+    # Verify validation pass - now we have exactly 3 values
+    submit_button.click()
+    await user.should_see(kind=ui.xterm)
 
     # Verify namespace contains all three values
+    assert main_instance.namespace.rgb == [255, 128, 64]
+
+
+@pytest.mark.nicegui_main_file(__file__)
+async def test_nargs_three_submit_validation(user: User) -> None:
+    """Test that submitting with wrong count fails validation for nargs=3."""
+    await user.open("/")
+
+    basic_element = user.find(
+        marker=ActionSyncElement.BASIC_ELEMENT_MARKER + ActionSyncElement.LIST_INNER_ELEMENT_MARKER_SUFFIX
+    )
+    add_button = user.find(marker=ActionSyncElement.ADD_BUTTON_MARKER)
+    submit_button = user.find("Submit")
+
+    # Add only 2 items
+    basic_element.type("255")
+    add_button.click()
+    basic_element.type("128")
+    add_button.click()
+
+    # Should fail validation (need exactly 3)
+    submit_button.click()
+    with pytest.raises(AssertionError):
+        user.find(kind=ui.xterm)
+
+    # Add third item
+    basic_element.type("64")
+    add_button.click()
+
+    # Should pass validation
+    submit_button.click()
+    await user.should_see(kind=ui.xterm)
+
+    # Verify namespace
     assert main_instance.namespace.rgb == [255, 128, 64]
 
 
@@ -46,7 +94,10 @@ async def test_nargs_specific_number_validation(user: User) -> None:
 def main():
     parser = NgArgumentParser()
     parser.add_argument("--rgb", nargs=3, type=int, help="RGB color (3 integers)", required=True)
-    parser.parse_args()
+    args = parser.parse_args()
+
+    if not os.environ["PYTEST_CURRENT_TEST"].endswith("(setup)"):
+        print(f"RGB: {args.rgb}")
 
 
 if __name__ == "__main__":
