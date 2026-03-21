@@ -14,7 +14,7 @@ class SyncElement(abc.ABC):
         self._disable_sync_to_namespace = False
         self._disable_sync_from_namespace = False
 
-    def subscribe(self):
+    def subscribe(self) -> None:
         self.namespace._nicegooey_state.events[self.dest].subscribe(callback=self.sync_from_namespace)
 
     @property

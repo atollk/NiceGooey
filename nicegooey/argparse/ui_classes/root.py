@@ -15,6 +15,7 @@ class RootUi(UiWrapper):
 
     def __init__(self, parent: "NiceGooeyMain") -> None:
         super().__init__(parent)
+        assert self.parent.parent_parser is not None
         self.parser = ParserUi(parent, self.parent.parent_parser)
 
     @override

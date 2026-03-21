@@ -38,7 +38,9 @@ class NiceGooeyNamespace(argparse.Namespace):
 
     def __setattr__(self, key: str, value: Any) -> None:
         super().__setattr__(key, value)
-        self._nicegooey_state.events[key].emit()
+        ev = self._nicegooey_state.events[key]
+        # pyrefly: ignore[bad-argument-count]
+        ev.emit()
 
     def _nicegooey_to_argparse(self) -> argparse.Namespace:
         ns = argparse.Namespace()

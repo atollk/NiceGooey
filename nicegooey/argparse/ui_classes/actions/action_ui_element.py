@@ -14,7 +14,7 @@ class ActionUiElement[ActionT: argparse.Action](GroupingSyncUi, abc.ABC):
     _UNSET = object()
 
     action: ActionT
-    element: ActionSyncElement | None = None
+    element: ActionSyncElement
 
     @staticmethod
     def from_action(parent: NiceGooeyMain, action: argparse.Action) -> "ActionUiElement | None":
@@ -49,6 +49,11 @@ class ActionUiElement[ActionT: argparse.Action](GroupingSyncUi, abc.ABC):
     def __init__(self, parent: NiceGooeyMain, action: ActionT) -> None:
         super().__init__(parent)
         self.action = action
+        assert self.parent.parent_parser is not None
+        self.element = self._action_sync_element()(
+            action=self.action,
+            parser=self.parent.parent_parser,
+        )
 
     @override
     def render(self) -> ui.element:
@@ -75,6 +80,7 @@ class ActionUiElement[ActionT: argparse.Action](GroupingSyncUi, abc.ABC):
             elif isinstance(self.action.metavar, tuple):
                 name = self.action.metavar[0]
             elif self.action.option_strings:
+                assert self.parent.parent_parser is not None
                 name = max(self.action.option_strings, key=len).lstrip(self.parent.parent_parser.prefix_chars)
             else:
                 name = self.action.dest
@@ -98,9 +104,5 @@ class ActionUiElement[ActionT: argparse.Action](GroupingSyncUi, abc.ABC):
         :return `self.element`
         """
         assert self.parent.parent_parser is not None
-        self.element = self._action_sync_element()(
-            action=self.action,
-            parser=self.parent.parent_parser,
-        )
         self.element.render()
         return self.element

@@ -46,23 +46,14 @@ class SubparsersUi(UiWrapper, SyncElement):
 
     @override
     def _ui_state_from_value(self, value: Any) -> None:
+        assert self.ui_tab_panels is not None
         self.ui_tab_panels.value = value
 
     @override
     def _ui_state_to_value(self) -> Any:
         return self.active_tab_title
 
-    @override
-    def render(self) -> ui.element:
-        assert self.subparsers is not None
-        assert self.subparsers_action is not None
-        none_tab = None
-        with ui.tabs() as self.ui_tabs:
-            if not self.subparsers_action.required:
-                none_tab = ui.tab("-")
-            for child in self.subparsers:
-                child.render_tab()
-
+    def _render_tab_panels(self, none_tab: ui.tab | None):
         def on_tab_change(ev: nicegui.events.ValueChangeEventArguments) -> None:
             # Deactivate the previous tab
             child: SubparserUi | None = None
@@ -90,8 +81,23 @@ class SubparsersUi(UiWrapper, SyncElement):
                 child.render_tab_panel()
         self.ui_tab_panels.on_value_change(callback=on_tab_change)
 
+    @override
+    def render(self) -> ui.element:
+        assert self.subparsers is not None
+        assert self.subparsers_action is not None
+
+        none_tab = None
+        with ui.element() as root:
+            with ui.tabs() as self.ui_tabs:
+                if not self.subparsers_action.required:
+                    none_tab = ui.tab("-")
+                for child in self.subparsers:
+                    child.render_tab()
+            self._render_tab_panels(none_tab)
+
         self.subscribe()
         self.sync_to_namespace()
+        return root
 
     def deactivate(self) -> None:
         for subp in self.subparsers:

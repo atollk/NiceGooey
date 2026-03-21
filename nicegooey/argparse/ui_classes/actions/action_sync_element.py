@@ -73,6 +73,8 @@ class ActionSyncElement(SyncElement, UiWrapperSyncElement):
 
     @override
     def _ui_state_from_value(self, value: Any) -> None:
+        assert self.inner_elements is not None
+
         # Evaluate whether the element should be disabled or enabled (if non-required).
         action_info = ActionInfoHelper(action=self.action, parser=self.parser)
         typ = action_info.action_type()[1]
@@ -94,6 +96,8 @@ class ActionSyncElement(SyncElement, UiWrapperSyncElement):
 
     @override
     def _ui_state_to_value(self) -> Any:
+        assert self.inner_elements is not None
+
         if not self.is_enabled():
             value = ActionInfoHelper(action=self.action, parser=self.parser).action_default()
         else:
@@ -105,7 +109,11 @@ class ActionSyncElement(SyncElement, UiWrapperSyncElement):
         return True
 
     def is_enabled(self) -> bool:
-        return self.inner_elements.enable_box_element is None or self.inner_elements.enable_box_element.value
+        if self.inner_elements is None:
+            return False
+        if self.inner_elements.enable_box_element is None:
+            return False
+        return self.inner_elements.enable_box_element.value
 
     def render(self) -> None:
         """Creates a ValueElement that represents the input of a single item matching the type of this action."""

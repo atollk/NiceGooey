@@ -48,7 +48,7 @@ def create_uv_parser() -> argparse.ArgumentParser:
     auth_token = auth_subparsers.add_parser("token", help="Show the authentication token for a service")
     auth_token.add_argument("service", type=str, help="Service to show token for")
 
-    auth_dir = auth_subparsers.add_parser("dir", help="Show the path to the uv credentials directory")
+    auth_subparsers.add_parser("dir", help="Show the path to the uv credentials directory")
 
     # run command
     run_parser = subparsers.add_parser("run", help="Run a command or script")
@@ -177,7 +177,7 @@ def create_uv_parser() -> argparse.ArgumentParser:
     )
     tool_update_shell.add_argument("--shell", type=str, help="Shell to update")
 
-    tool_dir = tool_subparsers.add_parser("dir", help="Show path to uv tools directory")
+    tool_subparsers.add_parser("dir", help="Show path to uv tools directory")
 
     # python command
     python_parser = subparsers.add_parser("python", help="Python version management")
@@ -202,7 +202,7 @@ def create_uv_parser() -> argparse.ArgumentParser:
     python_pin.add_argument("version", type=str, help="Python version to pin")
     python_pin.add_argument("--resolved", action="store_true", help="Write resolved version")
 
-    python_dir = python_subparsers.add_parser("dir", help="Show uv Python installation directory")
+    python_subparsers.add_parser("dir", help="Show uv Python installation directory")
 
     python_uninstall = python_subparsers.add_parser("uninstall", help="Uninstall Python versions")
     python_uninstall.add_argument("versions", type=str, nargs="+", help="Python versions to uninstall")
@@ -386,9 +386,9 @@ def create_uv_parser() -> argparse.ArgumentParser:
     cache_prune = cache_subparsers.add_parser("prune", help="Prune unreachable objects from cache")
     cache_prune.add_argument("--ci", action="store_true", help="Optimize for CI environments")
 
-    cache_dir = cache_subparsers.add_parser("dir", help="Show cache directory")
+    cache_subparsers.add_parser("dir", help="Show cache directory")
 
-    cache_size = cache_subparsers.add_parser("size", help="Show cache size")
+    cache_subparsers.add_parser("size", help="Show cache size")
 
     # self command
     self_parser = subparsers.add_parser("self", help="Self-management")
@@ -397,7 +397,7 @@ def create_uv_parser() -> argparse.ArgumentParser:
     self_update = self_subparsers.add_parser("update", help="Update uv")
     self_update.add_argument("--version", type=str, help="Version to update to")
 
-    self_version = self_subparsers.add_parser("version", help="Display uv's version")
+    self_subparsers.add_parser("version", help="Display uv's version")
 
     # generate-shell-completion command
     completion_parser = subparsers.add_parser(

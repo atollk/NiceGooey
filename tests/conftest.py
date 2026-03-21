@@ -1,4 +1,4 @@
-from typing import Iterable
+from typing import Iterable, overload, Any
 
 import pytest
 from nicegui import ElementFilter
@@ -27,6 +27,29 @@ def exactly_one[T](iterable: Iterable[T]) -> T:
         return x
     else:
         raise AssertionError("Iterable contains more than one element.")
+
+
+@overload
+def find_within(
+    user: User,
+    marker: str | list[str] | None = None,
+    content: str | list[str] | None = None,
+    within_marker: str | list[str] | None = None,
+    within_outer_marker: str | list[str] | None = None,
+    within_outest_marker: str | list[str] | None = None,
+) -> UserInteraction[Any]: ...
+
+
+@overload
+def find_within[T](
+    user: User,
+    kind: type[T] | None = None,
+    marker: str | list[str] | None = None,
+    content: str | list[str] | None = None,
+    within_marker: str | list[str] | None = None,
+    within_outer_marker: str | list[str] | None = None,
+    within_outest_marker: str | list[str] | None = None,
+) -> UserInteraction[Any]: ...
 
 
 def find_within[T](

@@ -26,6 +26,7 @@ class OptionalValueElement(ValueElement):
         row.move(self)
 
     @property
+    # pyrefly: ignore[bad-override]
     def value(self) -> Any:
         if self.checkbox.value:
             return self.inner_element.value

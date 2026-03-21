@@ -15,6 +15,7 @@ class StoreActionUiElement(ActionUiElement[argparse._StoreAction]):
     class _ActionSyncElement(ActionSyncElement):
         @override
         def _ui_state_to_value(self) -> Any:
+            assert self.inner_elements is not None
             if not self.is_enabled():
                 return ActionInfoHelper(action=self.action, parser=self.parser).action_default()
             v = self.inner_elements.nargs_wrapper_element.value
@@ -40,6 +41,7 @@ class StoreConstActionUiElement(ActionUiElement[argparse._StoreConstAction]):
     class _ActionSyncElement(ActionSyncElement):
         @override
         def _ui_state_from_value(self, value: Any) -> None:
+            assert self.inner_elements is not None
             el = self.inner_elements.enable_box_element
             if el is None:
                 # The element is required, so we can't do anything.
@@ -99,6 +101,7 @@ class ListActionUiElement[ActionT: argparse.Action](ActionUiElement[ActionT], ab
                     return cls._list_element(nargs_wrapper_element, on_add_button_click=on_add_button_click)
 
         def _ui_state_to_value(self) -> Any:
+            assert self.inner_elements is not None
             if not self.is_enabled():
                 return ActionInfoHelper(action=self.action, parser=self.parser).action_default()
             v = self.inner_elements.nargs_wrapper_element.value
@@ -111,6 +114,7 @@ class ListActionUiElement[ActionT: argparse.Action](ActionUiElement[ActionT], ab
     @override
     def _render_input_element(self) -> ActionSyncElement:
         super()._render_input_element()
+        assert self.element is not None and self.element.inner_elements is not None
         self.element.inner_elements.nargs_wrapper_element.classes("w-xl")
         return self.element
 
