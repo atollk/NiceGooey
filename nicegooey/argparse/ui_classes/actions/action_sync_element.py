@@ -112,7 +112,7 @@ class ActionSyncElement(SyncElement, UiWrapperSyncElement):
         if self.inner_elements is None:
             return False
         if self.inner_elements.enable_box_element is None:
-            return False
+            return True
         return self.inner_elements.enable_box_element.value
 
     def render(self) -> None:

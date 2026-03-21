@@ -44,10 +44,9 @@ async def test_uv_cli_interface(user: User) -> None:
     await user.should_see("offline")
 
     # Test global options: --verbose (count action) and --offline (store_true)
-    # TODO: verbose is not a checkbox but a number input
-    # verbose_checkbox = find_within(user, kind=ui.checkbox, within_marker="ng-action-verbose")
-    # verbose_checkbox.click()
-    # assert main_instance.namespace.verbose == 1
+    verbose_checkbox = find_within(user, kind=ui.number, within_marker="ng-action-verbose")
+    verbose_checkbox.type("1")
+    assert main_instance.namespace.verbose == 1
 
     offline_checkbox = find_within(user, kind=ui.checkbox, within_marker="ng-action-offline")
     offline_checkbox.click()
@@ -135,6 +134,13 @@ async def test_uv_cli_interface(user: User) -> None:
     # Test choices field: --resolution
     # TODO: need to enable 'resolution' first
     await user.should_see("resolution")
+    resolution_enable_box = find_within(
+        user,
+        marker=ActionSyncElement.ENABLE_PARAMETER_BOX_MARKER,
+        within_marker="ng-action-resolution",
+        within_outer_marker=f"{SubparserUi.TABPANEL_MARKER_PREFIX}install",
+        within_outest_marker=f"{SubparserUi.TABPANEL_MARKER_PREFIX}pip",
+    )
     resolution_select = find_within(
         user,
         kind=ui.select,
@@ -142,22 +148,21 @@ async def test_uv_cli_interface(user: User) -> None:
         within_outer_marker=f"{SubparserUi.TABPANEL_MARKER_PREFIX}install",
         within_outest_marker=f"{SubparserUi.TABPANEL_MARKER_PREFIX}pip",
     )
+    resolution_enable_box.click()
     resolution_select.click()
     await user.should_see("highest")
     await user.should_see("lowest")
     user.find("highest").click()
 
     # Verify final namespace state
-    # TODO: see above
-    # assert main_instance.namespace.verbose == 1
+    assert main_instance.namespace.verbose == 1
     assert main_instance.namespace.offline is True
     assert main_instance.namespace.subcommand == "pip"
     assert main_instance.namespace.pip_command == "install"
     assert main_instance.namespace.packages == ["numpy"]
     assert main_instance.namespace.upgrade is True
     assert main_instance.namespace.extra_index_url == ["https://test.pypi.org", "https://backup.pypi.org"]
-    # TODO: see above
-    # assert main_instance.namespace.resolution == "highest"
+    assert main_instance.namespace.resolution == "highest"
 
 
 @nice_gooey_argparse_main(patch_argparse=False)

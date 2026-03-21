@@ -13,11 +13,8 @@ def process(parser: argparse.ArgumentParser, args: argparse.Namespace):
 @nice_gooey_argparse_main(patch_argparse=False)
 def main1(*args, **kwargs):
     parser = NgArgumentParser()
-    parser.add_argument(
-        "--add-flag", action="append_const", const="FLAG", dest="items", help="Add flag constant"
-    )
-    parser.add_argument("--add-item", action="append", type=str, dest="items", help="Add custom item")
-    parser = uv_parser()
+    parser.add_argument("--age", type=int, help="Your age", required=True)
+    # parser = uv_parser()
     ns = parser.parse_args()
     print(ns)
 
