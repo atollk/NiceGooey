@@ -36,15 +36,18 @@ def find_within[T](
     content: str | list[str] | None = None,
     within_marker: str | list[str] | None = None,
     within_outer_marker: str | list[str] | None = None,
+    within_outest_marker: str | list[str] | None = None,
 ) -> UserInteraction[T]:
     with user:
         filter = ElementFilter(kind=kind, marker=marker, content=content)
         if within_marker:
             filter = filter.within(marker=within_marker)
-        if within_outer_marker:
-            filter = filter.within(marker=within_outer_marker)
+            if within_outer_marker:
+                filter = filter.within(marker=within_outer_marker)
+                if within_outest_marker:
+                    filter = filter.within(marker=within_outest_marker)
         interaction = UserInteraction(user=user, elements=set(filter), target=None)
     assert len(interaction.elements) == 1, (
-        f"More/Less than one element found matching: kind={kind}, marker={marker}, content={content}, within_marker={within_marker}, within_outer_marker={within_outer_marker}"
+        f"More/Less than one element found matching: kind={kind}, marker={marker}, content={content}, within_marker={within_marker}, within_outer_marker={within_outer_marker}, within_outest_marker={within_outest_marker}",
     )
     return interaction

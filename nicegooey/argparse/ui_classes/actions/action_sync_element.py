@@ -73,25 +73,24 @@ class ActionSyncElement(SyncElement, UiWrapperSyncElement):
 
     @override
     def _ui_state_from_value(self, value: Any) -> None:
-        typ = ActionInfoHelper(action=self.action, parser=self.parser).action_type()[1]
+        # Evaluate whether the element should be disabled or enabled (if non-required).
+        action_info = ActionInfoHelper(action=self.action, parser=self.parser)
+        typ = action_info.action_type()[1]
         try:
             typ(value)
         except Exception:
             value_is_valid = False
         else:
             value_is_valid = True
-        disable = value is None or not value_is_valid
+        disable = value is None or not value_is_valid or value == action_info.action_default()
 
+        # Set the values of the UI elements.
         if self.inner_elements.enable_box_element is not None:
             self.inner_elements.enable_box_element.value = not disable
-
-        if disable:
-            clear_value_element(self.inner_elements.nargs_wrapper_element)
-        else:
+        if value_is_valid and value is not None:
             self.inner_elements.nargs_wrapper_element.value = value
-            if value == self.action.default:
-                if self.inner_elements.enable_box_element is not None:
-                    self.inner_elements.enable_box_element.value = False
+        else:
+            clear_value_element(self.inner_elements.nargs_wrapper_element)
 
     @override
     def _ui_state_to_value(self) -> Any:

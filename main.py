@@ -17,27 +17,9 @@ def main1(*args, **kwargs):
         "--add-flag", action="append_const", const="FLAG", dest="items", help="Add flag constant"
     )
     parser.add_argument("--add-item", action="append", type=str, dest="items", help="Add custom item")
-    # parser = uv_parser()
-    parser = uv_parser_mre()
+    parser = uv_parser()
     ns = parser.parse_args()
     print(ns)
-
-
-def uv_parser_mre() -> NgArgumentParser:
-    parser = NgArgumentParser()
-
-    subparsers = parser.add_subparsers(dest="subcommand")
-
-    pip_parser = subparsers.add_parser("pip")
-    pip_subparsers = pip_parser.add_subparsers(dest="pip_command", help="Pip commands")
-
-    pip_sync = pip_subparsers.add_parser("sync")
-    pip_sync.add_argument("--index-url", "-i")
-
-    pip_install = pip_subparsers.add_parser("install")
-    pip_install.add_argument("--index-url", "-i", type=str)
-
-    return parser
 
 
 def uv_parser() -> NgArgumentParser:
