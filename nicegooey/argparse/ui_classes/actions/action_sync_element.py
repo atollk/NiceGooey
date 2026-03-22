@@ -5,7 +5,6 @@ from typing import Any, Callable, Final, Type, override
 
 from nicegui import ElementFilter, ui
 from nicegui.elements.mixins.validation_element import ValidationElement
-from nicegui.elements.mixins.value_element import ValueElement
 
 from nicegooey.argparse.main import NiceGooeyNamespace, main_instance
 from nicegooey.argparse.ui_classes.actions.action_info_helper import ActionInfoHelper
@@ -40,11 +39,11 @@ class ActionSyncElement(SyncElement, UiWrapperSyncElement):
 
     @dataclasses.dataclass
     class InnerElements:
-        basic_element: ValueElement
-        basic_element_inner: ValueElement | None
-        nargs_wrapper_element: ValueElement
+        basic_element: ValidationElement
+        basic_element_inner: ValidationElement | None
+        nargs_wrapper_element: ValidationElement
         enable_box_element: ui.checkbox | None
-        required_wrapper_element: ui.element
+        required_wrapper_element: ValidationElement
 
     inner_elements: InnerElements | None
 
@@ -116,9 +115,8 @@ class ActionSyncElement(SyncElement, UiWrapperSyncElement):
             self.inner_elements.basic_element_inner,
             self.inner_elements.required_wrapper_element,
         ]:
-            if isinstance(el, ValidationElement):
-                if not el.validate():
-                    return False
+            if el is not None and not el.validate():
+                return False
         return True
 
     def is_enabled(self) -> bool:
@@ -136,21 +134,19 @@ class ActionSyncElement(SyncElement, UiWrapperSyncElement):
         action_info = self.action_info
 
         # Configure validation
+        def _input_element_validate(value: Any) -> str | None:
+            """Used by `_create_input_element_generic` as the validation function for the input element. Validates the value by trying to cast it to the action's type by default."""
+            if action_info.action_nargs() == Nargs.OPTIONAL and value is None:
+                return "Value is required"
+            try:
+                action_info.action_type_with_nargs()(value)
+                return None
+            except Exception as e:
+                return str(e)
+
         el = self.inner_elements.basic_element
-        if isinstance(el, ValidationElement):
-
-            def _input_element_validate(value: Any) -> str | None:
-                """Used by `_create_input_element_generic` as the validation function for the input element. Validates the value by trying to cast it to the action's type by default."""
-                if action_info.action_nargs() == Nargs.OPTIONAL and value is None:
-                    return "Value is required"
-                try:
-                    action_info.action_type_with_nargs()(value)
-                    return None
-                except Exception as e:
-                    return str(e)
-
-            el.without_auto_validation()
-            add_validation(el, _input_element_validate)
+        el.without_auto_validation()
+        add_validation(el, _input_element_validate)
 
         # Set default values
         self.inner_elements.nargs_wrapper_element.value = (
@@ -201,17 +197,17 @@ class ActionSyncElement(SyncElement, UiWrapperSyncElement):
             )
 
         basic_element = _find_exactly_one_element(
-            ElementFilter(marker=self.BASIC_ELEMENT_MARKER).within(instance=outmost), ValueElement
+            ElementFilter(marker=self.BASIC_ELEMENT_MARKER).within(instance=outmost), ValidationElement
         )
         assert basic_element is not None
         basic_element_inner = _find_exactly_one_element(
             ElementFilter(marker=self.BASIC_ELEMENT_MARKER + self.LIST_INNER_ELEMENT_MARKER_SUFFIX).within(
                 instance=outmost
             ),
-            ValueElement,
+            ValidationElement,
         )
         nargs_wrapper_element = _find_exactly_one_element(
-            ElementFilter(marker=self.NARGS_WRAPPER_MARKER).within(instance=outmost), ValueElement
+            ElementFilter(marker=self.NARGS_WRAPPER_MARKER).within(instance=outmost), ValidationElement
         )
         assert nargs_wrapper_element is not None
         enable_box_element = _find_exactly_one_element(
@@ -254,19 +250,18 @@ class ActionSyncElement(SyncElement, UiWrapperSyncElement):
     @classmethod
     def _list_element(
         cls,
-        inner_element_f: Callable[[], ValueElement],
-        on_add_button_click: Callable[[ValueElement, ValueElement, Any], None] | None = None,
+        inner_element_f: Callable[[], ValidationElement],
+        on_add_button_click: Callable[[ValidationElement, ValidationElement, Any], None] | None = None,
     ) -> ValidationElement:
         """Creates and returns an element for inputting multiple items of the given inner element."""
 
         def on_add_button_click_default(
-            list_element: ValueElement,
-            inner_element: ValueElement,
+            list_element: ValidationElement,
+            inner_element: ValidationElement,
             inner_element_default_value: Any,
         ) -> None:
-            if isinstance(inner_element, ValidationElement):
-                if not inner_element.validate():
-                    return
+            if not inner_element.validate():
+                return
             # sometimes, list_element.value is "" here and I couldn't find out why, so I just did a defensive `or []`
             list_element.set_value((list_element.value or []) + [inner_element.value])
             inner_element.set_value(inner_element_default_value)
@@ -342,10 +337,10 @@ class ActionSyncElement(SyncElement, UiWrapperSyncElement):
 
     @classmethod
     def _action_type_input_required_wrapper(
-        cls, action_info: ActionInfoHelper, nargs_wrapper_element: Callable[[], ValueElement]
-    ) -> ui.element:
+        cls, action_info: ActionInfoHelper, nargs_wrapper_element: Callable[[], ValidationElement]
+    ) -> ValidationElement:
         """Creates and returns an element that wraps the nargs wrapper element depending on whether this action is required or optional."""
-        with ui.element() as required_wrapper:
+        with ValidationElement(validation=None, value=None, tag="q-field") as required_wrapper:
             # Unlike the vanilla argparse, we consider positional arguments to be required in all cases.
             is_required = action_info.action.required or len(action_info.action.option_strings) == 0
             if is_required:

@@ -4,7 +4,6 @@ from typing import Any, Callable, Type, override
 
 from nicegui import ui
 from nicegui.elements.mixins.validation_element import ValidationElement
-from nicegui.elements.mixins.value_element import ValueElement
 
 from nicegooey.argparse.ui_classes.actions.action_info_helper import ActionInfoHelper
 from nicegooey.argparse.ui_classes.actions.action_sync_element import ActionSyncElement
@@ -75,24 +74,23 @@ class ListActionUiElement[ActionT: argparse.Action](ActionUiElement[ActionT], ab
         @override
         @classmethod
         def _action_type_input_required_wrapper(
-            cls, action_info: ActionInfoHelper, nargs_wrapper_element: Callable[[], ValueElement]
+            cls, action_info: ActionInfoHelper, nargs_wrapper_element: Callable[[], ValidationElement]
         ) -> ui.element:
             def on_add_button_click(
-                list_element: ValueElement,
-                inner_element: ValueElement,
+                list_element: ValidationElement,
+                inner_element: ValidationElement,
                 inner_element_default_value: Any,
             ) -> None:
                 """Override the on_click function to call the action instead of just appending to the list."""
-                if isinstance(inner_element, ValidationElement):
-                    if not inner_element.validate():
-                        return
+                if not inner_element.validate():
+                    return
                 ns = argparse.Namespace()
                 ns.__setattr__(action_info.action.dest, list_element.value)
                 action_info.action(action_info.parser, ns, inner_element.value)
                 list_element.value = getattr(ns, action_info.action.dest)
                 inner_element.set_value(inner_element_default_value)
 
-            with ui.element() as required_wrapper:
+            with ValidationElement(validation=None, value=None, tag="q-field") as required_wrapper:
                 required_wrapper.mark(cls.REQUIRED_WRAPPER_MARKER)
                 list_element = cls._list_element(
                     nargs_wrapper_element, on_add_button_click=on_add_button_click
@@ -100,11 +98,12 @@ class ListActionUiElement[ActionT: argparse.Action](ActionUiElement[ActionT], ab
 
             if action_info.action.required:
                 list_element.without_auto_validation()
+                add_validation(
+                    list_element,
+                    {"At least one element is required": lambda v: isinstance(v, list) and len(v) > 0},
+                )
 
-                def asdf(v):
-                    return isinstance(v, list) and len(v) > 0
-
-                add_validation(list_element, {"At least one element is required": asdf})
+            return required_wrapper
 
         def _ui_state_to_value(self) -> Any:
             assert self.inner_elements is not None
@@ -159,14 +158,16 @@ class CountActionUiElement(ActionUiElement[argparse._CountAction]):
     """Count actions are a special case because they differ very much between UI and CLI usage. In the UI, they are just a number widget."""
 
     class _ActionSyncElement(ActionSyncElement):
+        _original_action: argparse.Action
+
         @override
         def __init__(self, action: argparse.Action, parser: argparse.ArgumentParser):
+            self._original_action = action
             super().__init__(self._create_pseudo_action(action), parser)
 
         @staticmethod
         def _create_pseudo_action(action: argparse.Action) -> argparse.Action:
             """Create a pseudo action that behaves like the count action but can be used to initialize the input element."""
-            # TODO: if the original is required, the min count should be 1
             return argparse._StoreAction(
                 option_strings=action.option_strings,
                 dest=action.dest,
@@ -178,6 +179,22 @@ class CountActionUiElement(ActionUiElement[argparse._CountAction]):
                 metavar=action.metavar,
                 deprecated=action.deprecated if hasattr(action, "deprecated") else False,
             )
+
+        @override
+        def validate(self) -> bool:
+            if not super().validate():
+                return False
+            if self._original_action.required:
+                # if the original is required, the min count should be 1
+                if self._ui_state_to_value() < 1:
+                    el = self.inner_elements.required_wrapper_element
+                    # Custom errors only work if validation is not None.
+                    # https://github.com/zauberzeug/nicegui/issues/5895
+                    if el.validation is None:
+                        el.validation = {}
+                    el.error = "Value needs to be at least 1"
+                    return False
+            return True
 
     @override
     @classmethod
