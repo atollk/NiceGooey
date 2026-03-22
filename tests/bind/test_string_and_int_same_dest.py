@@ -3,7 +3,7 @@ from nicegui.testing import User
 
 from nicegooey.argparse import NgArgumentParser, nice_gooey_argparse_main
 from nicegooey.argparse.main import main_instance
-from nicegooey.argparse.ui_classes.actions.action_sync_element import ActionSyncElement
+from nicegooey.argparse.ui_classes.actions.action_ui_element import ActionUiElement
 from tests.conftest import find_within, exactly_one
 
 
@@ -16,13 +16,13 @@ async def test_string_and_int_same_dest(user: User) -> None:
     await user.should_see("value")
 
     value_str_input = find_within(
-        user, marker=ActionSyncElement.BASIC_ELEMENT_MARKER, within_marker="ng-action-value-str"
+        user, marker=ActionUiElement.BASIC_ELEMENT_MARKER, within_marker="ng-action-value-str"
     )
     value_str_enable = find_within(
-        user, marker=ActionSyncElement.ENABLE_PARAMETER_BOX_MARKER, within_marker="ng-action-value-str"
+        user, marker=ActionUiElement.ENABLE_PARAMETER_BOX_MARKER, within_marker="ng-action-value-str"
     )
     value_int_enable = find_within(
-        user, marker=ActionSyncElement.ENABLE_PARAMETER_BOX_MARKER, within_marker="ng-action-value-int"
+        user, marker=ActionUiElement.ENABLE_PARAMETER_BOX_MARKER, within_marker="ng-action-value-int"
     )
 
     assert main_instance.namespace.value in ("", 0)

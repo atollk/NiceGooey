@@ -1,4 +1,5 @@
 import argparse
+from collections.abc import Callable
 from typing import TYPE_CHECKING, Final, override, Iterable
 
 from nicegui import ui
@@ -21,14 +22,22 @@ class SubparserUi(GroupingSyncUi):
     tab: ui.tab | None
     parser_ui: "ParserUi"
     action_groups: list[ArgumentGroupUi]
+    get_parent_tabs: Callable[[], ui.tabs]
 
-    def __init__(self, parent: "NiceGooeyMain", title: str, subparser: argparse.ArgumentParser) -> None:
+    def __init__(
+        self,
+        parent: "NiceGooeyMain",
+        title: str,
+        get_parent_tabs: Callable[[], ui.tabs],
+        subparser: argparse.ArgumentParser,
+    ) -> None:
         from .parser_ui import ParserUi
 
         super().__init__(parent)
         self.title = title
         self.subparser = subparser
         self.tab = None
+        self.get_parent_tabs = get_parent_tabs
         self.parser_ui = ParserUi(parent=parent, parser=self.subparser)
 
     def render_tab(self) -> ui.tab:
@@ -48,12 +57,7 @@ class SubparserUi(GroupingSyncUi):
 
     @override
     def validate(self) -> bool:
-        assert self.tab is not None
-        assert self.tab.parent_slot is not None
-        tabs = self.tab.parent_slot.parent
-        if not isinstance(tabs, ui.tabs):
-            raise TypeError(f"expected tabs to be of type ui.tabs but is {type(tabs)}")
-        if tabs.value != self.tab:
+        if self.get_parent_tabs().value != self.tab:
             return True
 
         return self.parser_ui.validate()

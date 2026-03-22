@@ -2,7 +2,7 @@ import pytest
 from nicegui.testing import User
 
 from nicegooey.argparse import NgArgumentParser, nice_gooey_argparse_main
-from nicegooey.argparse.ui_classes.actions.action_sync_element import ActionSyncElement
+from nicegooey.argparse.ui_classes.actions.action_ui_element import ActionUiElement
 from nicegooey.argparse.ui_classes.groupings.subparser_ui import SubparserUi
 
 from tests.conftest import exactly_one, find_within
@@ -21,37 +21,37 @@ async def test_subparsers_with_different_nargs_same_dest(user: User) -> None:
     # Find the relevant elements
     chips_element_a = find_within(
         user,
-        marker=ActionSyncElement.NARGS_WRAPPER_MARKER,
+        marker=ActionUiElement.NARGS_WRAPPER_MARKER,
         within_marker="ng-action-packages",
         within_outer_marker=f"{SubparserUi.TABPANEL_MARKER_PREFIX}{'a'}",
     )
     chips_element_b = find_within(
         user,
-        marker=ActionSyncElement.NARGS_WRAPPER_MARKER,
+        marker=ActionUiElement.NARGS_WRAPPER_MARKER,
         within_marker="ng-action-packages",
         within_outer_marker=f"{SubparserUi.TABPANEL_MARKER_PREFIX}{'b'}",
     )
     packages_element_a = find_within(
         user,
-        marker=(ActionSyncElement.BASIC_ELEMENT_MARKER + ActionSyncElement.LIST_INNER_ELEMENT_MARKER_SUFFIX),
+        marker=(ActionUiElement.BASIC_ELEMENT_MARKER + ActionUiElement.LIST_INNER_ELEMENT_MARKER_SUFFIX),
         within_marker="ng-action-packages",
         within_outer_marker=f"{SubparserUi.TABPANEL_MARKER_PREFIX}{'a'}",
     )
     packages_element_b = find_within(
         user,
-        marker=(ActionSyncElement.BASIC_ELEMENT_MARKER + ActionSyncElement.LIST_INNER_ELEMENT_MARKER_SUFFIX),
+        marker=(ActionUiElement.BASIC_ELEMENT_MARKER + ActionUiElement.LIST_INNER_ELEMENT_MARKER_SUFFIX),
         within_marker="ng-action-packages",
         within_outer_marker=f"{SubparserUi.TABPANEL_MARKER_PREFIX}{'b'}",
     )
     packages_add_button_a = find_within(
         user,
-        marker=ActionSyncElement.ADD_BUTTON_MARKER,
+        marker=ActionUiElement.ADD_BUTTON_MARKER,
         within_marker="ng-action-packages",
         within_outer_marker=f"{SubparserUi.TABPANEL_MARKER_PREFIX}{'a'}",
     )
     packages_add_button_b = find_within(
         user,
-        marker=ActionSyncElement.ADD_BUTTON_MARKER,
+        marker=ActionUiElement.ADD_BUTTON_MARKER,
         within_marker="ng-action-packages",
         within_outer_marker=f"{SubparserUi.TABPANEL_MARKER_PREFIX}{'b'}",
     )

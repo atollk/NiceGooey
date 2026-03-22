@@ -9,7 +9,7 @@ from nicegui.testing import User
 from nicegooey.argparse.argument_parser import NgArgumentParser
 from nicegooey.argparse.main import main_instance
 from nicegooey.argparse.patch import nice_gooey_argparse_main
-from nicegooey.argparse.ui_classes.actions.action_sync_element import ActionSyncElement
+from nicegooey.argparse.ui_classes.actions.action_ui_element import ActionUiElement
 from tests.conftest import assert_has_validation_error, find_within
 
 
@@ -21,7 +21,7 @@ async def test_required_append_const_basic(user: User) -> None:
 
     # Verify no enable checkbox
     with pytest.raises(AssertionError):
-        user.find(kind=ui.checkbox, marker=ActionSyncElement.ENABLE_PARAMETER_BOX_MARKER)
+        user.find(kind=ui.checkbox, marker=ActionUiElement.ENABLE_PARAMETER_BOX_MARKER)
 
     # List should be empty initially
     assert main_instance.namespace.verbose == []
@@ -33,7 +33,7 @@ async def test_required_append_const_basic(user: User) -> None:
 
     # Click the button once
     verbose_button = find_within(
-        user, marker=ActionSyncElement.ADD_BUTTON_MARKER, within_marker="ng-action-verbose"
+        user, marker=ActionUiElement.ADD_BUTTON_MARKER, within_marker="ng-action-verbose"
     )
     verbose_button.click()
 

@@ -4,7 +4,7 @@ from nicegui.testing import User
 
 from nicegooey.argparse import NgArgumentParser, nice_gooey_argparse_main
 from nicegooey.argparse.main import main_instance
-from nicegooey.argparse.ui_classes.actions.action_sync_element import ActionSyncElement
+from nicegooey.argparse.ui_classes.actions.action_ui_element import ActionUiElement
 
 
 @pytest.mark.nicegui_main_file(__file__)
@@ -19,7 +19,7 @@ async def test_nargs_with_choices(user: User) -> None:
 
     # Find the select element and add button
     select = user.find(ui.select)
-    add_button = user.find(marker=ActionSyncElement.ADD_BUTTON_MARKER)
+    add_button = user.find(marker=ActionUiElement.ADD_BUTTON_MARKER)
 
     # Select "red" and add it
     select.click()

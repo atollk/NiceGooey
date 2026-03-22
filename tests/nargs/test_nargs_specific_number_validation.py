@@ -4,7 +4,7 @@ from nicegui.testing import User
 
 from nicegooey.argparse import NgArgumentParser, nice_gooey_argparse_main
 from nicegooey.argparse.main import main_instance
-from nicegooey.argparse.ui_classes.actions.action_sync_element import ActionSyncElement
+from nicegooey.argparse.ui_classes.actions.action_ui_element import ActionUiElement
 from tests.conftest import assert_has_validation_error
 
 
@@ -21,9 +21,9 @@ async def test_nargs_specific_number_validation(user: User) -> None:
 
     # Add three RGB values
     basic_element = user.find(
-        marker=ActionSyncElement.BASIC_ELEMENT_MARKER + ActionSyncElement.LIST_INNER_ELEMENT_MARKER_SUFFIX
+        marker=ActionUiElement.BASIC_ELEMENT_MARKER + ActionUiElement.LIST_INNER_ELEMENT_MARKER_SUFFIX
     )
-    add_button = user.find(marker=ActionSyncElement.ADD_BUTTON_MARKER)
+    add_button = user.find(marker=ActionUiElement.ADD_BUTTON_MARKER)
 
     # Get submit button for validation tests
     submit_button = user.find("Submit")
@@ -59,9 +59,9 @@ async def test_nargs_three_submit_validation(user: User) -> None:
     await user.open("/")
 
     basic_element = user.find(
-        marker=ActionSyncElement.BASIC_ELEMENT_MARKER + ActionSyncElement.LIST_INNER_ELEMENT_MARKER_SUFFIX
+        marker=ActionUiElement.BASIC_ELEMENT_MARKER + ActionUiElement.LIST_INNER_ELEMENT_MARKER_SUFFIX
     )
-    add_button = user.find(marker=ActionSyncElement.ADD_BUTTON_MARKER)
+    add_button = user.find(marker=ActionUiElement.ADD_BUTTON_MARKER)
     submit_button = user.find("Submit")
 
     # Add only 2 items

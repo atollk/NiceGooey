@@ -13,9 +13,22 @@ def process(parser: argparse.ArgumentParser, args: argparse.Namespace):
 @nice_gooey_argparse_main(patch_argparse=False)
 def main1(*args, **kwargs):
     parser = NgArgumentParser()
-    parser.add_argument_group("User Information", "Information about the user")
-    parser.add_argument("--rgb", nargs=3, type=int, help="RGB color (3 integers)", required=True)
-    parser = uv_parser()
+
+    parser.add_argument("--verbose", action="store_true", help="Verbose mode")
+
+    subparsers = parser.add_subparsers(dest="command", help="Main commands")
+
+    parser_remote = subparsers.add_parser("remote", help="Remote operations")
+    remote_subparsers = parser_remote.add_subparsers(dest="remote_command", help="Remote commands")
+
+    parser_remote_add = remote_subparsers.add_parser("add", help="Add remote")
+    parser_remote_add.add_argument("--name", type=str, help="Remote name", required=True)
+    parser_remote_add.add_argument("--url", type=str, help="Remote URL", required=True)
+
+    parser_remote_remove = remote_subparsers.add_parser("remove", help="Remove remote")
+    parser_remote_remove.add_argument("--name", type=str, help="Remote name to remove", required=True)
+
+    # parser = uv_parser()
     ns = parser.parse_args()
     print(ns)
 

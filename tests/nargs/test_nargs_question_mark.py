@@ -4,7 +4,7 @@ from nicegui.testing import User
 
 from nicegooey.argparse import NgArgumentParser, nice_gooey_argparse_main
 from nicegooey.argparse.main import main_instance
-from nicegooey.argparse.ui_classes.actions.action_sync_element import ActionSyncElement
+from nicegooey.argparse.ui_classes.actions.action_ui_element import ActionUiElement
 from tests.conftest import find_within
 
 
@@ -16,11 +16,11 @@ async def test_nargs_question_mark(user: User) -> None:
 
     await user.should_see("optional")
 
-    enable_arg_checkbox = user.find(marker=ActionSyncElement.ENABLE_PARAMETER_BOX_MARKER)
+    enable_arg_checkbox = user.find(marker=ActionUiElement.ENABLE_PARAMETER_BOX_MARKER)
     enable_value_checkbox = find_within(
-        user, kind=ui.checkbox, within_marker=ActionSyncElement.NARGS_WRAPPER_MARKER
+        user, kind=ui.checkbox, within_marker=ActionUiElement.NARGS_WRAPPER_MARKER
     )
-    value_input = find_within(user, kind=ui.input, within_marker=ActionSyncElement.NARGS_WRAPPER_MARKER)
+    value_input = find_within(user, kind=ui.input, within_marker=ActionUiElement.NARGS_WRAPPER_MARKER)
     assert (
         len(enable_arg_checkbox.elements)
         == len(enable_value_checkbox.elements)

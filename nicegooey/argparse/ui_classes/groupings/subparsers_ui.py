@@ -28,7 +28,10 @@ class SubparsersUi(UiWrapper, SyncElement):
         subparsers: dict[str, argparse.ArgumentParser] = self.subparsers_action.choices
         assert isinstance(subparsers, dict)
         self.subparsers = [
-            SubparserUi(self.parent, title, subparser) for title, subparser in subparsers.items()
+            SubparserUi(
+                parent=self.parent, title=title, get_parent_tabs=lambda: self.ui_tabs, subparser=subparser
+            )
+            for title, subparser in subparsers.items()
         ]
 
         self.ui_tabs = None
@@ -90,10 +93,18 @@ class SubparsersUi(UiWrapper, SyncElement):
             with ui.tabs() as self.ui_tabs:
                 # Required row wrapper so that too many tabs don't overflow but wrap around to a new line instead.
                 with ui.row():
+                    tab_list: list[ui.tab] = []
                     if not self.subparsers_action.required:
                         none_tab = ui.tab("-")
+                        tab_list.append(none_tab)
                     for child in self.subparsers:
-                        child.render_tab()
+                        t = child.render_tab()
+                        tab_list.append(t)
+
+                    # https://github.com/zauberzeug/nicegui/issues/5885#issuecomment-4105965436
+                    for t in tab_list:
+                        t.tabs = self.ui_tabs
+
             self._render_tab_panels(none_tab)
 
         self.subscribe()

@@ -9,7 +9,7 @@ from nicegui.testing import User
 from nicegooey.argparse.argument_parser import NgArgumentParser
 from nicegooey.argparse.main import main_instance
 from nicegooey.argparse.patch import nice_gooey_argparse_main
-from nicegooey.argparse.ui_classes.actions.action_sync_element import ActionSyncElement
+from nicegooey.argparse.ui_classes.actions.action_ui_element import ActionUiElement
 from tests.conftest import assert_has_validation_error
 
 
@@ -21,7 +21,7 @@ async def test_required_extend_basic(user: User) -> None:
 
     # Verify no enable checkbox
     with pytest.raises(AssertionError):
-        user.find(kind=ui.checkbox, marker=ActionSyncElement.ENABLE_PARAMETER_BOX_MARKER)
+        user.find(kind=ui.checkbox, marker=ActionUiElement.ENABLE_PARAMETER_BOX_MARKER)
 
     # List should be empty initially
     assert main_instance.namespace.items == []
@@ -33,9 +33,9 @@ async def test_required_extend_basic(user: User) -> None:
 
     # Add items (extend adds multiple at once)
     input_field = user.find(
-        marker=ActionSyncElement.BASIC_ELEMENT_MARKER + ActionSyncElement.LIST_INNER_ELEMENT_MARKER_SUFFIX
+        marker=ActionUiElement.BASIC_ELEMENT_MARKER + ActionUiElement.LIST_INNER_ELEMENT_MARKER_SUFFIX
     )
-    add_button = user.find(marker=ActionSyncElement.ADD_BUTTON_MARKER)
+    add_button = user.find(marker=ActionUiElement.ADD_BUTTON_MARKER)
     input_field.type("a")
     add_button.click()
     input_field.type("b")

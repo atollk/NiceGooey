@@ -33,7 +33,7 @@ async def test_uv_cli_interface(user: User) -> None:
 
     This test simulates: uv pip install numpy --upgrade --extra-index-url https://test.pypi.org --verbose --offline
     """
-    from nicegooey.argparse.ui_classes.actions.action_sync_element import ActionSyncElement
+    from nicegooey.argparse.ui_classes.actions.action_ui_element import ActionUiElement
     from nicegooey.argparse.ui_classes.groupings.subparser_ui import SubparserUi
     from tests.conftest import find_within
 
@@ -77,14 +77,14 @@ async def test_uv_cli_interface(user: User) -> None:
     # Add a package "numpy" to the packages list (nargs="*")
     packages_element = find_within(
         user,
-        marker=ActionSyncElement.BASIC_ELEMENT_MARKER + ActionSyncElement.LIST_INNER_ELEMENT_MARKER_SUFFIX,
+        marker=ActionUiElement.BASIC_ELEMENT_MARKER + ActionUiElement.LIST_INNER_ELEMENT_MARKER_SUFFIX,
         within_marker="ng-action-packages",
         within_outer_marker=f"{SubparserUi.TABPANEL_MARKER_PREFIX}install",
         within_outest_marker=f"{SubparserUi.TABPANEL_MARKER_PREFIX}pip",
     )
     packages_add_button = find_within(
         user,
-        marker=ActionSyncElement.ADD_BUTTON_MARKER,
+        marker=ActionUiElement.ADD_BUTTON_MARKER,
         within_marker="ng-action-packages",
         within_outer_marker=f"{SubparserUi.TABPANEL_MARKER_PREFIX}install",
         within_outest_marker=f"{SubparserUi.TABPANEL_MARKER_PREFIX}pip",
@@ -108,14 +108,14 @@ async def test_uv_cli_interface(user: User) -> None:
     # Add an extra index URL (append action)
     extra_index_element = find_within(
         user,
-        marker=ActionSyncElement.BASIC_ELEMENT_MARKER + ActionSyncElement.LIST_INNER_ELEMENT_MARKER_SUFFIX,
+        marker=ActionUiElement.BASIC_ELEMENT_MARKER + ActionUiElement.LIST_INNER_ELEMENT_MARKER_SUFFIX,
         within_marker="ng-action-extra_index_url",
         within_outer_marker=f"{SubparserUi.TABPANEL_MARKER_PREFIX}install",
         within_outest_marker=f"{SubparserUi.TABPANEL_MARKER_PREFIX}pip",
     )
     extra_index_add_button = find_within(
         user,
-        marker=ActionSyncElement.ADD_BUTTON_MARKER,
+        marker=ActionUiElement.ADD_BUTTON_MARKER,
         within_marker="ng-action-extra_index_url",
         within_outer_marker=f"{SubparserUi.TABPANEL_MARKER_PREFIX}install",
         within_outest_marker=f"{SubparserUi.TABPANEL_MARKER_PREFIX}pip",
@@ -135,7 +135,7 @@ async def test_uv_cli_interface(user: User) -> None:
     await user.should_see("resolution")
     resolution_enable_box = find_within(
         user,
-        marker=ActionSyncElement.ENABLE_PARAMETER_BOX_MARKER,
+        marker=ActionUiElement.ENABLE_PARAMETER_BOX_MARKER,
         within_marker="ng-action-resolution",
         within_outer_marker=f"{SubparserUi.TABPANEL_MARKER_PREFIX}install",
         within_outest_marker=f"{SubparserUi.TABPANEL_MARKER_PREFIX}pip",

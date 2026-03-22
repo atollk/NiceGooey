@@ -1,2 +1,3 @@
-
-- tabs overflow when the width is too small
+- icons for light/dark mode
+- README & docs
+- override action ui class

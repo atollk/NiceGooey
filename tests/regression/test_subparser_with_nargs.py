@@ -3,7 +3,7 @@ from nicegui.testing import User
 
 from nicegooey.argparse import NgArgumentParser, nice_gooey_argparse_main
 from nicegooey.argparse.main import main_instance
-from nicegooey.argparse.ui_classes.actions.action_sync_element import ActionSyncElement
+from nicegooey.argparse.ui_classes.actions.action_ui_element import ActionUiElement
 from nicegooey.argparse.ui_classes.groupings.subparser_ui import SubparserUi
 
 
@@ -25,9 +25,9 @@ async def test_subparser_with_nargs(user: User) -> None:
 
     # Add an element to args
     basic_element = user.find(
-        marker=ActionSyncElement.BASIC_ELEMENT_MARKER + ActionSyncElement.LIST_INNER_ELEMENT_MARKER_SUFFIX
+        marker=ActionUiElement.BASIC_ELEMENT_MARKER + ActionUiElement.LIST_INNER_ELEMENT_MARKER_SUFFIX
     )
-    add_button = user.find(marker=ActionSyncElement.ADD_BUTTON_MARKER)
+    add_button = user.find(marker=ActionUiElement.ADD_BUTTON_MARKER)
     assert len(basic_element.elements) == len(add_button.elements) == 1
     basic_element.type("value_1")
     add_button.click()

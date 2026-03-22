@@ -13,7 +13,7 @@ async def test_nargs_required(user: User) -> None:
     - required=True with nargs=* or nargs=+ -> no enable checkbox
     - required=False with nargs=* or nargs=+ -> has enable checkbox
     """
-    from nicegooey.argparse.ui_classes.actions.action_sync_element import ActionSyncElement
+    from nicegooey.argparse.ui_classes.actions.action_ui_element import ActionUiElement
     from tests.conftest import find_within
 
     await user.open("/")
@@ -22,7 +22,7 @@ async def test_nargs_required(user: User) -> None:
     # The list input should be visible without an enable checkbox
     packages_star_required = find_within(
         user,
-        marker=ActionSyncElement.BASIC_ELEMENT_MARKER + ActionSyncElement.LIST_INNER_ELEMENT_MARKER_SUFFIX,
+        marker=ActionUiElement.BASIC_ELEMENT_MARKER + ActionUiElement.LIST_INNER_ELEMENT_MARKER_SUFFIX,
         within_marker="ng-action-packages_star_required",
     )
     assert packages_star_required is not None, "List input for required nargs='*' should be visible"
@@ -37,7 +37,7 @@ async def test_nargs_required(user: User) -> None:
     # Test 2: required=True, nargs="+" -> no enable checkbox
     packages_plus_required = find_within(
         user,
-        marker=ActionSyncElement.BASIC_ELEMENT_MARKER + ActionSyncElement.LIST_INNER_ELEMENT_MARKER_SUFFIX,
+        marker=ActionUiElement.BASIC_ELEMENT_MARKER + ActionUiElement.LIST_INNER_ELEMENT_MARKER_SUFFIX,
         within_marker="ng-action-packages_plus_required",
     )
     assert packages_plus_required is not None, "List input for required nargs='+' should be visible"

@@ -3,7 +3,7 @@ from nicegui.testing import User
 
 from nicegooey.argparse import NgArgumentParser, nice_gooey_argparse_main
 from nicegooey.argparse.main import main_instance
-from nicegooey.argparse.ui_classes.actions.action_sync_element import ActionSyncElement
+from nicegooey.argparse.ui_classes.actions.action_ui_element import ActionUiElement
 from tests.conftest import find_within
 
 
@@ -20,11 +20,11 @@ async def test_nargs_different_types(user: User) -> None:
     # Add to ints: "1", "2", "3"
     ints_element = find_within(
         user,
-        marker=ActionSyncElement.BASIC_ELEMENT_MARKER + ActionSyncElement.LIST_INNER_ELEMENT_MARKER_SUFFIX,
+        marker=ActionUiElement.BASIC_ELEMENT_MARKER + ActionUiElement.LIST_INNER_ELEMENT_MARKER_SUFFIX,
         within_marker="ng-action-ints",
     )
     ints_add_button = find_within(
-        user, marker=ActionSyncElement.ADD_BUTTON_MARKER, within_marker="ng-action-ints"
+        user, marker=ActionUiElement.ADD_BUTTON_MARKER, within_marker="ng-action-ints"
     )
 
     ints_element.type("1")
@@ -37,11 +37,11 @@ async def test_nargs_different_types(user: User) -> None:
     # Add to floats: "1.5"
     floats_element = find_within(
         user,
-        marker=ActionSyncElement.BASIC_ELEMENT_MARKER + ActionSyncElement.LIST_INNER_ELEMENT_MARKER_SUFFIX,
+        marker=ActionUiElement.BASIC_ELEMENT_MARKER + ActionUiElement.LIST_INNER_ELEMENT_MARKER_SUFFIX,
         within_marker="ng-action-floats",
     )
     floats_add_button = find_within(
-        user, marker=ActionSyncElement.ADD_BUTTON_MARKER, within_marker="ng-action-floats"
+        user, marker=ActionUiElement.ADD_BUTTON_MARKER, within_marker="ng-action-floats"
     )
 
     floats_element.type("1.5")
@@ -50,11 +50,11 @@ async def test_nargs_different_types(user: User) -> None:
     # Add to strings: "hello", "world"
     strings_element = find_within(
         user,
-        marker=ActionSyncElement.BASIC_ELEMENT_MARKER + ActionSyncElement.LIST_INNER_ELEMENT_MARKER_SUFFIX,
+        marker=ActionUiElement.BASIC_ELEMENT_MARKER + ActionUiElement.LIST_INNER_ELEMENT_MARKER_SUFFIX,
         within_marker="ng-action-strings",
     )
     strings_add_button = find_within(
-        user, marker=ActionSyncElement.ADD_BUTTON_MARKER, within_marker="ng-action-strings"
+        user, marker=ActionUiElement.ADD_BUTTON_MARKER, within_marker="ng-action-strings"
     )
 
     strings_element.type("hello")

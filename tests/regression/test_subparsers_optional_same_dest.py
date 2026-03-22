@@ -2,7 +2,7 @@ import pytest
 from nicegui.testing import User
 
 from nicegooey.argparse import NgArgumentParser, nice_gooey_argparse_main
-from nicegooey.argparse.ui_classes.actions.action_sync_element import ActionSyncElement
+from nicegooey.argparse.ui_classes.actions.action_ui_element import ActionUiElement
 from nicegooey.argparse.ui_classes.groupings.subparser_ui import SubparserUi
 
 from tests.conftest import exactly_one, find_within
@@ -33,7 +33,7 @@ async def test_subparsers_optional_same_dest(user: User) -> None:
     )
     sync_input = find_within(
         user,
-        marker=ActionSyncElement.BASIC_ELEMENT_MARKER,
+        marker=ActionUiElement.BASIC_ELEMENT_MARKER,
         within_marker="ng-action-index_url",
         within_outer_marker=f"{SubparserUi.TABPANEL_MARKER_PREFIX}sync",
     )
@@ -47,7 +47,7 @@ async def test_subparsers_optional_same_dest(user: User) -> None:
     )
     install_input = find_within(
         user,
-        marker=ActionSyncElement.BASIC_ELEMENT_MARKER,
+        marker=ActionUiElement.BASIC_ELEMENT_MARKER,
         within_marker="ng-action-index_url",
         within_outer_marker=f"{SubparserUi.TABPANEL_MARKER_PREFIX}install",
     )

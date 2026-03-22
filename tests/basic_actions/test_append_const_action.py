@@ -3,7 +3,7 @@ from nicegui.testing import User
 
 from nicegooey.argparse import NgArgumentParser, nice_gooey_argparse_main
 from nicegooey.argparse.main import main_instance
-from nicegooey.argparse.ui_classes.actions.action_sync_element import ActionSyncElement
+from nicegooey.argparse.ui_classes.actions.action_ui_element import ActionUiElement
 
 
 @pytest.mark.nicegui_main_file(__file__)
@@ -15,7 +15,7 @@ async def test_append_const_action(user: User) -> None:
 
     assert main_instance.namespace.flags == []
 
-    add_button = user.find(marker=ActionSyncElement.ADD_BUTTON_MARKER)
+    add_button = user.find(marker=ActionUiElement.ADD_BUTTON_MARKER)
     assert len(add_button.elements) == 1
 
     add_button.click()
