@@ -1,7 +1,8 @@
 import argparse
 import time
 
-from nicegooey.argparse import ArgumentParserConfig, NgArgumentParser, nice_gooey_argparse_main
+from nicegooey.argparse import NgArgumentParser, nice_gooey_argparse_main, NiceGooeyConfig
+from nicegooey.argparse.ui_classes.actions.action_alternatives import store_action_slider_element
 
 
 def process(parser: argparse.ArgumentParser, args: argparse.Namespace):
@@ -14,23 +15,18 @@ def process(parser: argparse.ArgumentParser, args: argparse.Namespace):
 def main1(*args, **kwargs):
     parser = NgArgumentParser()
 
-    parser.add_argument("--verbose", action="store_true", help="Verbose mode")
+    # Create two actions
+    custom_action = parser.add_argument("--custom-name", type=int, required=True)
 
-    subparsers = parser.add_subparsers(dest="command", help="Main commands")
-
-    parser_remote = subparsers.add_parser("remote", help="Remote operations")
-    remote_subparsers = parser_remote.add_subparsers(dest="remote_command", help="Remote commands")
-
-    parser_remote_add = remote_subparsers.add_parser("add", help="Add remote")
-    parser_remote_add.add_argument("--name", type=str, help="Remote name", required=True)
-    parser_remote_add.add_argument("--url", type=str, help="Remote URL", required=True)
-
-    parser_remote_remove = remote_subparsers.add_parser("remove", help="Remove remote")
-    parser_remote_remove.add_argument("--name", type=str, help="Remote name to remove", required=True)
+    # Set up override for only the first action
+    parser.nicegooey_config = NiceGooeyConfig(
+        action_element_overrides={custom_action: store_action_slider_element(0, 10, 1)}
+    )
 
     # parser = uv_parser()
     ns = parser.parse_args()
     print(ns)
+    print("abcdefghijklmnopqrstuvxyz" * 100)
 
 
 def uv_parser() -> NgArgumentParser:
@@ -43,7 +39,7 @@ def uv_parser() -> NgArgumentParser:
 
 @nice_gooey_argparse_main(patch_argparse=False)
 def main2(required: bool = False, nargs: int | str | None = None):
-    config = ArgumentParserConfig(argument_vp_width="w-4xl")
+    config = NiceGooeyConfig(root_card_class="w-4xl")
     parser = NgArgumentParser()
     parser.nicegooey_config = config
 

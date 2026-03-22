@@ -2,23 +2,40 @@ import argparse
 import copy
 import dataclasses
 from argparse import Namespace
-from typing import Sequence, overload
+from typing import Sequence, overload, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from nicegooey.argparse.ui_classes.actions.action_ui_element import ActionUiElement
 
 
 @dataclasses.dataclass
-class ArgumentParserConfig:
-    argument_vp_width: int | str = "w-full"
+class NiceGooeyConfig:
+    """
+    Configuration for the NiceGooey setup.
+
+    Attributes:
+        root_card_class (str): A space-separated list of Tailwind classes to be applied to the root of the argument UI.
+            Especially useful to pass something like 'w-4xl' to limit the width on large screens.
+        action_element_overrides (dict): A dict that maps parser action objects to `ActionUiElement` classes.
+            Use this to customize what elements are used to render for certain actions.
+
+    """
+
+    root_card_class: str = "w-full"
+    action_element_overrides: dict[argparse.Action, type["ActionUiElement"]] = dataclasses.field(
+        default_factory=dict
+    )
 
 
 class NgArgumentParser(argparse.ArgumentParser):
-    nicegooey_config: ArgumentParserConfig = ArgumentParserConfig()
+    nicegooey_config: NiceGooeyConfig = NiceGooeyConfig()
 
     @staticmethod
     def from_argparse(parser: argparse.ArgumentParser) -> "NgArgumentParser":
         clone = copy.copy(parser)
         clone.__class__ = NgArgumentParser
         assert isinstance(clone, NgArgumentParser)
-        clone.nicegooey_config = ArgumentParserConfig()
+        clone.nicegooey_config = NiceGooeyConfig()
         return clone
 
     @overload

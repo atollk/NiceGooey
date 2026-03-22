@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING, override
 
 import nicegui.html
 from nicegui import ui
+from nicegui.elements.mixins.text_element import TextElement
 
 from .groupings.parser_ui import ParserUi
 from .util.ui_wrapper import UiWrapper
@@ -20,29 +21,25 @@ class RootUi(UiWrapper):
 
     @override
     def render(self) -> ui.element:
+        with ui.element().classes("absolute right-16"):
+            dark = ui.dark_mode()
+            with ui.row():
+                ui.button(icon="light_mode", on_click=dark.disable)
+                ui.button(icon="dark_mode", on_click=dark.enable)
+
         with ui.column(align_items="center").mark("ng-root") as root:
-            with ui.column(align_items="center"):
-                # TODO: dark mode to save my eyes
-                dark = ui.dark_mode(True)
-                with ui.row():
-                    ui.label("Switch mode:")
-                    ui.button("Dark", on_click=dark.enable)
-                    ui.button("Light", on_click=dark.disable)
+            TextElement(text=self.parent.parent_parser.prog, tag="h1").classes("text-h2")
+            TextElement(text=self.parent.parent_parser.description, tag="h2").classes("text-subtitle1")
 
-                width = (
-                    self.parser_config.argument_vp_width
-                    if isinstance(self.parser_config.argument_vp_width, str)
-                    else f"w-{self.parser_config.argument_vp_width}"
-                )
-                with ui.card():
-                    # Use a form to enable submit keyboard controls, but prevent page redirect on Submit.
-                    with nicegui.html.form().props("onsubmit='return false;'"):
-                        with ui.element().classes(width):
-                            self.parser.render()
+            with ui.card():
+                # Use a form to enable submit keyboard controls, but prevent page redirect on Submit.
+                with nicegui.html.form().props("onsubmit='return false;'"):
+                    with ui.element().classes(self.parser_config.root_card_class):
+                        self.parser.render()
 
-                        # Submit button
-                        on_submit = self.parent.submit
-                        ui.button("Submit").on_click(on_submit).props("type=submit")
+                    # Submit button
+                    on_submit = self.parent.submit
+                    ui.button("Submit").on_click(on_submit).props("type=submit")
 
             with ui.column(align_items="end"):
                 ui.link("License", "/license")

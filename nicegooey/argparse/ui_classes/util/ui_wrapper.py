@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 
 from nicegui import ui
 
-from nicegooey.argparse import ArgumentParserConfig
+from nicegooey.argparse import NiceGooeyConfig
 
 if TYPE_CHECKING:
     from nicegooey.argparse.main import NiceGooeyMain
@@ -17,7 +17,7 @@ class UiWrapper:
         self.parent = parent
 
     @property
-    def parser_config(self) -> ArgumentParserConfig:
+    def parser_config(self) -> NiceGooeyConfig:
         assert self.parent.parser_config is not None
         return self.parent.parser_config
 

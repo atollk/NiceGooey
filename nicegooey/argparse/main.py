@@ -9,7 +9,7 @@ import nicegui.helpers
 import nicegui.run
 from nicegui import ui
 
-from .argument_parser import ArgumentParserConfig, NgArgumentParser
+from .argument_parser import NgArgumentParser, NiceGooeyConfig
 from .util import CallbackWriter, logger
 
 if TYPE_CHECKING:
@@ -55,7 +55,6 @@ class NiceGooeyMain:
     parent_parser: argparse.ArgumentParser | None
     main_func: Callable | None
     is_running: bool
-    parser_config: ArgumentParserConfig | None
 
     # Argument values
     namespace: NiceGooeyNamespace
@@ -66,12 +65,18 @@ class NiceGooeyMain:
     def __init__(self):
         self.reset()
 
+    @property
+    def parser_config(self) -> NiceGooeyConfig:
+        if isinstance(self.parent_parser, NgArgumentParser):
+            return self.parent_parser.nicegooey_config
+        else:
+            return NiceGooeyConfig()
+
     def reset(self) -> None:
         """Used to reset the instance during testing."""
         self.parent_parser = None
         self.main_func = None
         self.is_running = False
-        self.parser_config = None
         self.namespace = NiceGooeyNamespace()
         self.ui_root = None
 
@@ -84,11 +89,6 @@ class NiceGooeyMain:
         else:
             self.is_running = True
             self.parent_parser = argument_parser
-            if isinstance(self.parent_parser, NgArgumentParser):
-                self.parser_config = self.parent_parser.nicegooey_config
-            else:
-                self.parser_config = ArgumentParserConfig()
-
             ui.run(self._ui_root, reload=False)
 
             if nicegui.helpers.is_user_simulation():
@@ -110,12 +110,12 @@ class NiceGooeyMain:
 
         # Process result
         assert self.main_func is not None
-        dialog = ui.dialog()
-        with dialog:
+        with ui.dialog() as dialog:
             with ui.card():
                 terminal = ui.xterm()
                 finish_button = ui.button("Close", on_click=dialog.close)
         finish_button.disable()
+        # TODO: fix dialog width so that xterm is completely visible
         dialog.open()
         write_terminal: Callable[[str], Any] = terminal.write
         file_buffer = CallbackWriter(write_terminal)

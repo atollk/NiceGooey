@@ -45,7 +45,7 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
 
     @staticmethod
     def from_action(parent: NiceGooeyMain, action: argparse.Action) -> "ActionUiElement | None":
-        from .action_impls import (
+        from .standard_actions import (
             AppendActionUiElement,
             AppendConstActionUiElement,
             CountActionUiElement,
@@ -53,6 +53,10 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
             StoreActionUiElement,
             StoreConstActionUiElement,
         )
+
+        overrides = parent.parser_config.action_element_overrides
+        if (override := overrides.get(action, None)) is not None:
+            return override(parent=parent, action=action)
 
         match action:
             case argparse._StoreAction():
