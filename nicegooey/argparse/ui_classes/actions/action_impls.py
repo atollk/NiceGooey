@@ -8,7 +8,7 @@ from nicegui.elements.mixins.validation_element import ValidationElement
 from nicegooey.argparse.ui_classes.actions.action_info_helper import ActionInfoHelper
 from nicegooey.argparse.ui_classes.actions.action_sync_element import ActionSyncElement
 from nicegooey.argparse.ui_classes.actions.action_ui_element import ActionUiElement
-from nicegooey.argparse.ui_classes.util.misc import add_validation
+from nicegooey.argparse.ui_classes.util.misc import add_validation, q_field
 
 
 class StoreActionUiElement(ActionUiElement[argparse._StoreAction]):
@@ -90,7 +90,7 @@ class ListActionUiElement[ActionT: argparse.Action](ActionUiElement[ActionT], ab
                 list_element.value = getattr(ns, action_info.action.dest)
                 inner_element.set_value(inner_element_default_value)
 
-            with ValidationElement(validation=None, value=None, tag="q-field") as required_wrapper:
+            with q_field() as required_wrapper:
                 required_wrapper.mark(cls.REQUIRED_WRAPPER_MARKER)
                 list_element = cls._list_element(
                     nargs_wrapper_element, on_add_button_click=on_add_button_click
@@ -144,9 +144,7 @@ class AppendConstActionUiElement(ListActionUiElement[argparse._AppendConstAction
         def _action_type_input_nargs_wrapper(
             cls, action_info: ActionInfoHelper, basic_element: Callable[[], ValidationElement]
         ) -> ValidationElement:
-            return ValidationElement(validation=None, value=None, tag="q-field").mark(
-                cls.BASIC_ELEMENT_MARKER, cls.NARGS_WRAPPER_MARKER
-            )
+            return q_field().mark(cls.BASIC_ELEMENT_MARKER, cls.NARGS_WRAPPER_MARKER)
 
     @override
     @classmethod
@@ -187,12 +185,7 @@ class CountActionUiElement(ActionUiElement[argparse._CountAction]):
             if self._original_action.required:
                 # if the original is required, the min count should be 1
                 if self._ui_state_to_value() < 1:
-                    el = self.inner_elements.required_wrapper_element
-                    # Custom errors only work if validation is not None.
-                    # https://github.com/zauberzeug/nicegui/issues/5895
-                    if el.validation is None:
-                        el.validation = {}
-                    el.error = "Value needs to be at least 1"
+                    self.inner_elements.required_wrapper_element.error = "Value needs to be at least 1"
                     return False
             return True
 

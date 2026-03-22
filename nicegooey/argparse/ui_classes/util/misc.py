@@ -21,9 +21,15 @@ def clear_value_element(e: ValueElement) -> None:
     e.value = ""
 
 
+def q_field() -> ValidationElement:
+    return ValidationElement(value=None, validation={}, tag="q-field").props("borderless")
+
+
 def add_validation(
     element: ValidationElement, validation: ValidationDict | ValidationFunction | None
 ) -> None:
+    """Like ValidationElement.validation = x, but adds to the existing validation instead of overwriting it."""
+
     def convert_dict_to_func(d: ValidationDict, make_async: bool) -> ValidationFunction:
         def f(value: Any) -> str | None:
             for k, v in d.items():

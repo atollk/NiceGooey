@@ -11,7 +11,7 @@ from nicegooey.argparse.ui_classes.actions.action_info_helper import ActionInfoH
 from nicegooey.argparse.ui_classes.util.disableable_div import DisableableDiv
 from nicegooey.argparse.ui_classes.util.grouping_sync_ui import UiWrapperSyncElement
 from nicegooey.argparse.ui_classes.util.max_width_select import MaxWidthSelect
-from nicegooey.argparse.ui_classes.util.misc import Nargs, add_validation, clear_value_element
+from nicegooey.argparse.ui_classes.util.misc import Nargs, add_validation, clear_value_element, q_field
 from nicegooey.argparse.ui_classes.util.optional_value_element import OptionalValidationElement
 from nicegooey.argparse.ui_classes.util.sync_element import SyncElement
 from nicegooey.argparse.ui_classes.util.validation_checkbox import ValidationCheckbox
@@ -288,7 +288,7 @@ class ActionSyncElement(SyncElement, UiWrapperSyncElement):
                     ui.button(on_click=on_click).props("square padding=xs").mark(cls.ADD_BUTTON_MARKER)
                 )
                 add_button.set_icon("south")
-            list_element = ui.input_chips(value=[])
+            list_element = ui.input_chips(value=[]).props("use-input=false")
             list_element.mark(*inner_element_markers)
         return list_element
 
@@ -319,9 +319,7 @@ class ActionSyncElement(SyncElement, UiWrapperSyncElement):
                 raise NotImplementedError(f"nargs value {nargs} are not supported in _action_type_input")
             case int(n):
                 if n == 0:
-                    nargs_value_element = ValidationElement(validation=None, value=None, tag="q-field").mark(
-                        cls.BASIC_ELEMENT_MARKER
-                    )
+                    nargs_value_element = q_field().mark(cls.BASIC_ELEMENT_MARKER)
                 else:
                     nargs_value_element = cls._list_element(basic_element)
                     nargs_value_element.without_auto_validation()
@@ -340,7 +338,7 @@ class ActionSyncElement(SyncElement, UiWrapperSyncElement):
         cls, action_info: ActionInfoHelper, nargs_wrapper_element: Callable[[], ValidationElement]
     ) -> ValidationElement:
         """Creates and returns an element that wraps the nargs wrapper element depending on whether this action is required or optional."""
-        with ValidationElement(validation=None, value=None, tag="q-field") as required_wrapper:
+        with q_field() as required_wrapper:
             # Unlike the vanilla argparse, we consider positional arguments to be required in all cases.
             is_required = action_info.action.required or len(action_info.action.option_strings) == 0
             if is_required:
