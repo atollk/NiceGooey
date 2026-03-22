@@ -9,6 +9,7 @@ from nicegui.elements.mixins.value_element import ValueElement
 from nicegooey.argparse.ui_classes.actions.action_info_helper import ActionInfoHelper
 from nicegooey.argparse.ui_classes.actions.action_sync_element import ActionSyncElement
 from nicegooey.argparse.ui_classes.actions.action_ui_element import ActionUiElement
+from nicegooey.argparse.ui_classes.util.misc import add_validation
 
 
 class StoreActionUiElement(ActionUiElement[argparse._StoreAction]):
@@ -98,11 +99,12 @@ class ListActionUiElement[ActionT: argparse.Action](ActionUiElement[ActionT], ab
                 )
 
             if action_info.action.required:
-                list_element.validation = {
-                    "At least one element is required": lambda v: isinstance(v, list) and len(v) > 0
-                }
                 list_element.without_auto_validation()
-                list_element.error = None
+
+                def asdf(v):
+                    return isinstance(v, list) and len(v) > 0
+
+                add_validation(list_element, {"At least one element is required": asdf})
 
         def _ui_state_to_value(self) -> Any:
             assert self.inner_elements is not None
@@ -122,6 +124,7 @@ class ListActionUiElement[ActionT: argparse.Action](ActionUiElement[ActionT], ab
         self.element.inner_elements.nargs_wrapper_element.classes("w-xl")
         return self.element
 
+    @override
     @classmethod
     def _action_sync_element(cls) -> Type[ActionSyncElement]:
         return cls._ActionSyncElement
@@ -136,7 +139,20 @@ class AppendActionUiElement(ListActionUiElement[argparse._AppendAction]):
 
 
 class AppendConstActionUiElement(ListActionUiElement[argparse._AppendConstAction]):
-    pass
+    class _ActionSyncElement(ListActionUiElement._ActionSyncElement):
+        @override
+        @classmethod
+        def _action_type_input_nargs_wrapper(
+            cls, action_info: ActionInfoHelper, basic_element: Callable[[], ValidationElement]
+        ) -> ValidationElement:
+            return ValidationElement(validation=None, value=None, tag="q-field").mark(
+                cls.BASIC_ELEMENT_MARKER, cls.NARGS_WRAPPER_MARKER
+            )
+
+    @override
+    @classmethod
+    def _action_sync_element(cls) -> Type[ActionSyncElement]:
+        return cls._ActionSyncElement
 
 
 class CountActionUiElement(ActionUiElement[argparse._CountAction]):

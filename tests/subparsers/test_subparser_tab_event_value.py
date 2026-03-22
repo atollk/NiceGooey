@@ -3,8 +3,6 @@ Test that subparser tab change events use correct value type.
 This test verifies confirms that ev.value is a string (tab name) and not a Tab object.
 """
 
-import os
-
 import pytest
 from nicegui.testing import User
 
@@ -65,10 +63,7 @@ def main():
     parser_cmd2 = subparsers.add_parser("cmd2", help="Command 2")
     parser_cmd2.add_argument("--arg2", type=int, help="Argument for cmd2")
 
-    args = parser.parse_args()
-
-    if not os.environ["PYTEST_CURRENT_TEST"].endswith("(setup)"):
-        print(f"Command: {args.command}")
+    parser.parse_args()
 
 
 if __name__ == "__main__":

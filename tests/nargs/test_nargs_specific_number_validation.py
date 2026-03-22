@@ -1,5 +1,3 @@
-import os
-
 import pytest
 from nicegui import ui
 from nicegui.testing import User
@@ -7,6 +5,7 @@ from nicegui.testing import User
 from nicegooey.argparse import NgArgumentParser, nice_gooey_argparse_main
 from nicegooey.argparse.main import main_instance
 from nicegooey.argparse.ui_classes.actions.action_sync_element import ActionSyncElement
+from tests.conftest import assert_has_validation_error
 
 
 @pytest.mark.nicegui_main_file(__file__)
@@ -34,16 +33,14 @@ async def test_nargs_specific_number_validation(user: User) -> None:
     add_button.click()
     # Verify validation failure - need exactly 3 values
     submit_button.click()
-    with pytest.raises(AssertionError):
-        user.find(kind=ui.xterm)
+    await assert_has_validation_error(user)
 
     # Add second value (G)
     basic_element.type("128")
     add_button.click()
     # Verify validation failure - still need 3 values
     submit_button.click()
-    with pytest.raises(AssertionError):
-        user.find(kind=ui.xterm)
+    await assert_has_validation_error(user)
 
     # Add third value (B)
     basic_element.type("64")
@@ -75,8 +72,7 @@ async def test_nargs_three_submit_validation(user: User) -> None:
 
     # Should fail validation (need exactly 3)
     submit_button.click()
-    with pytest.raises(AssertionError):
-        user.find(kind=ui.xterm)
+    await assert_has_validation_error(user)
 
     # Add third item
     basic_element.type("64")
@@ -94,10 +90,7 @@ async def test_nargs_three_submit_validation(user: User) -> None:
 def main():
     parser = NgArgumentParser()
     parser.add_argument("--rgb", nargs=3, type=int, help="RGB color (3 integers)", required=True)
-    args = parser.parse_args()
-
-    if not os.environ["PYTEST_CURRENT_TEST"].endswith("(setup)"):
-        print(f"RGB: {args.rgb}")
+    parser.parse_args()
 
 
 if __name__ == "__main__":

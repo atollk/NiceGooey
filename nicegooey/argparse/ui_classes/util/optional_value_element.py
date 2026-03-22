@@ -5,8 +5,8 @@ from nicegui.elements.mixins.validation_element import ValidationElement
 from nicegui.elements.mixins.value_element import ValueElement
 from nicegui.events import Handler, ValueChangeEventArguments
 
-from nicegooey.argparse.ui_classes.util import clear_value_element
 from nicegooey.argparse.ui_classes.util.disableable_div import DisableableDiv
+from nicegooey.argparse.ui_classes.util.misc import clear_value_element
 
 
 class OptionalValidationElement(ValidationElement):
@@ -23,7 +23,7 @@ class OptionalValidationElement(ValidationElement):
                 self.inner_element = inner()
             self.checkbox = ui.checkbox().props("dense")
         disableable_div.bind_enabled_from(self.checkbox, "value")
-        super().__init__(value=none_value, validation=None)
+        super().__init__(value=none_value, validation=None, tag="q-field")
         row.move(self)
 
     @property

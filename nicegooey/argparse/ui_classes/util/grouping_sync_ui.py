@@ -29,7 +29,8 @@ class GroupingSyncUi(UiWrapper, SyncElement, UiWrapperSyncElement):
             child.deactivate()
 
     def validate(self) -> bool:
-        return all(list(self.get_children()))
+        children = list(c.validate() for c in self.get_children())
+        return all(children)
 
     def sync_to_namespace(self) -> None:
         for child in self.get_children():

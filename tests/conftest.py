@@ -1,5 +1,7 @@
+import asyncio
 from typing import Iterable, overload, Any
 
+import nicegui.context
 import pytest
 from nicegui import ElementFilter
 from nicegui.testing import UserInteraction
@@ -27,6 +29,20 @@ def exactly_one[T](iterable: Iterable[T]) -> T:
         return x
     else:
         raise AssertionError("Iterable contains more than one element.")
+
+
+async def assert_has_validation_error(user: User) -> None:
+    with user:
+        scope = nicegui.context.slot.parent
+    # The validation errors actually don't pop up immediately, so we have to do a retry-sleep-check here.
+    for retry in range(3):
+        for el in scope.descendants():
+            if not el.props.get("error", False):
+                continue
+            if "error-message" in el.props:
+                return
+        await asyncio.sleep([0.1, 1, 0][retry])
+    raise AssertionError("No validation error found")
 
 
 @overload

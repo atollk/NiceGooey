@@ -4,7 +4,7 @@ This test verifies the BUG at grouping_sync_ui.py:31-32 - validate() should
 call validate() on all children, not just check if children exist.
 """
 
-import os
+from typing import Any
 
 import pytest
 from nicegui import ui
@@ -12,7 +12,7 @@ from nicegui.testing import User
 
 from nicegooey.argparse.argument_parser import NgArgumentParser
 from nicegooey.argparse.patch import nice_gooey_argparse_main
-from tests.conftest import find_within
+from tests.conftest import find_within, assert_has_validation_error
 
 
 @pytest.mark.nicegui_main_file(__file__)
@@ -25,8 +25,7 @@ async def test_action_group_validates_children(user: User) -> None:
     submit_button.click()
 
     # Should fail validation (required field is empty)
-    with pytest.raises(AssertionError):
-        user.find(kind=ui.xterm)
+    await assert_has_validation_error(user)
 
     # Fill required field in the user group
     name_input = find_within(user, kind=ui.input, within_marker="ng-action-name")
@@ -42,16 +41,17 @@ def main():
     parser = NgArgumentParser()
 
     # Create an argument group with a required field
+    def nonempty_str(v: Any) -> str:
+        result = str(v)
+        if not result:
+            raise ValueError()
+        else:
+            return result
+
     user_group = parser.add_argument_group("User Information", "Information about the user")
-    user_group.add_argument("--name", type=str, required=True, help="User's name")
-    user_group.add_argument("--email", type=str, help="User's email (optional)")
+    user_group.add_argument("--name", type=nonempty_str, required=True, help="User's name")
 
-    args = parser.parse_args()
-
-    if not os.environ["PYTEST_CURRENT_TEST"].endswith("(setup)"):
-        print(f"Name: {args.name}")
-        if args.email:
-            print(f"Email: {args.email}")
+    parser.parse_args()
 
 
 if __name__ == "__main__":

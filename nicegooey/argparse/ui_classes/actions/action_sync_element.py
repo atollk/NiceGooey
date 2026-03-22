@@ -9,11 +9,10 @@ from nicegui.elements.mixins.value_element import ValueElement
 
 from nicegooey.argparse.main import NiceGooeyNamespace, main_instance
 from nicegooey.argparse.ui_classes.actions.action_info_helper import ActionInfoHelper
-from nicegooey.argparse.ui_classes.util import clear_value_element
 from nicegooey.argparse.ui_classes.util.disableable_div import DisableableDiv
 from nicegooey.argparse.ui_classes.util.grouping_sync_ui import UiWrapperSyncElement
 from nicegooey.argparse.ui_classes.util.max_width_select import MaxWidthSelect
-from nicegooey.argparse.ui_classes.util.nargs import Nargs
+from nicegooey.argparse.ui_classes.util.misc import Nargs, add_validation, clear_value_element
 from nicegooey.argparse.ui_classes.util.optional_value_element import OptionalValidationElement
 from nicegooey.argparse.ui_classes.util.sync_element import SyncElement
 from nicegooey.argparse.ui_classes.util.validation_checkbox import ValidationCheckbox
@@ -145,15 +144,13 @@ class ActionSyncElement(SyncElement, UiWrapperSyncElement):
                 if action_info.action_nargs() == Nargs.OPTIONAL and value is None:
                     return "Value is required"
                 try:
-                    action_info.action_type()[1](value)
+                    action_info.action_type_with_nargs()(value)
                     return None
                 except Exception as e:
                     return str(e)
 
-            # TODO: make sure that el.validation is not overwritten at a later point
             el.without_auto_validation()
-            el.validation = _input_element_validate
-            el.error = None
+            add_validation(el, _input_element_validate)
 
         # Set default values
         self.inner_elements.nargs_wrapper_element.value = (
@@ -280,10 +277,6 @@ class ActionSyncElement(SyncElement, UiWrapperSyncElement):
                 inner_element = inner_element_f()
                 inner_element_markers = inner_element._markers
                 inner_element.mark(*(m + cls.LIST_INNER_ELEMENT_MARKER_SUFFIX for m in inner_element_markers))
-                if isinstance(inner_element, ValidationElement):
-                    inner_element.validation = {"Must enter a value": lambda v: v is not None}
-                    inner_element.without_auto_validation()
-                    inner_element.error = None
                 inner_element_default_value = inner_element.value
 
                 # Create add button
@@ -322,26 +315,28 @@ class ActionSyncElement(SyncElement, UiWrapperSyncElement):
                 nargs_value_element = cls._list_element(basic_element)
             case Nargs.ONE_OR_MORE:
                 nargs_value_element = cls._list_element(basic_element)
-                nargs_value_element.validation = {
-                    "Must enter at least one value": lambda v: isinstance(v, list) and len(v) > 0
-                }
+                nargs_value_element.without_auto_validation()
+                add_validation(
+                    nargs_value_element,
+                    {"Must enter at least one value": lambda v: isinstance(v, list) and len(v) > 0},
+                )
             case Nargs.PARSER | Nargs.REMAINDER | Nargs.SUPPRESS:
                 raise NotImplementedError(f"nargs value {nargs} are not supported in _action_type_input")
             case int(n):
                 if n == 0:
-                    nargs_value_element = ValidationElement(validation=None, value=None).mark(
+                    nargs_value_element = ValidationElement(validation=None, value=None, tag="q-field").mark(
                         cls.BASIC_ELEMENT_MARKER
                     )
                 else:
                     nargs_value_element = cls._list_element(basic_element)
-                    nargs_value_element.validation = {
-                        "Must enter at least one value": lambda v: isinstance(v, list) and len(v) == n
-                    }
+                    nargs_value_element.without_auto_validation()
+                    add_validation(
+                        nargs_value_element,
+                        {f"Must enter exactly {n} values": lambda v: isinstance(v, list) and len(v) == n},
+                    )
             case _:
                 raise ValueError(f"Invalid nargs value: {nargs}")
 
-        nargs_value_element.without_auto_validation()
-        nargs_value_element.error = None
         nargs_value_element.mark(cls.NARGS_WRAPPER_MARKER, *nargs_value_element._markers)
         return nargs_value_element
 

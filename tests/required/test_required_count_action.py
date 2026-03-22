@@ -3,8 +3,6 @@ Test that count actions enforce minimum count when required=True.
 This test verifies count actions with required=True should enforce minimum count of 1.
 """
 
-import os
-
 import pytest
 from nicegui import ui
 from nicegui.testing import User
@@ -12,6 +10,7 @@ from nicegui.testing import User
 from nicegooey.argparse.argument_parser import NgArgumentParser
 from nicegooey.argparse.main import main_instance
 from nicegooey.argparse.patch import nice_gooey_argparse_main
+from tests.conftest import assert_has_validation_error
 
 
 @pytest.mark.nicegui_main_file(__file__)
@@ -31,9 +30,7 @@ async def test_required_count_validation(user: User) -> None:
     # Try to submit with count=0 - should fail for required count
     submit_button = user.find("Submit")
     submit_button.click()
-    # TODO: check for actual validation, because this check always passes
-    with pytest.raises(AssertionError):
-        user.find(kind=ui.xterm)
+    await assert_has_validation_error(user)
 
     # Set to 1
     number_input.clear()
@@ -49,10 +46,7 @@ async def test_required_count_validation(user: User) -> None:
 def main():
     parser = NgArgumentParser()
     parser.add_argument("--verbose", "-v", action="count", required=True, help="Verbosity level")
-    args = parser.parse_args()
-
-    if not os.environ["PYTEST_CURRENT_TEST"].endswith("(setup)"):
-        print(f"Verbosity: {args.verbose}")
+    parser.parse_args()
 
 
 if __name__ == "__main__":

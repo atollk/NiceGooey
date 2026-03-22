@@ -5,7 +5,7 @@ import enum
 import warnings
 from typing import Any, Callable
 
-from nicegooey.argparse.ui_classes.util.nargs import Nargs
+from nicegooey.argparse.ui_classes.util.misc import Nargs
 
 
 @dataclasses.dataclass
