@@ -20,7 +20,7 @@ class RootUi(UiWrapper):
 
     @override
     def render(self) -> ui.element:
-        with ui.column().mark("ng-root") as root:
+        with ui.column(align_items="center").mark("ng-root") as root:
             with ui.column(align_items="center"):
                 # TODO: dark mode to save my eyes
                 dark = ui.dark_mode(True)

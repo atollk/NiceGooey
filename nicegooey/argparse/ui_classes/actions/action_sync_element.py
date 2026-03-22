@@ -17,16 +17,6 @@ from nicegooey.argparse.ui_classes.util.sync_element import SyncElement
 from nicegooey.argparse.ui_classes.util.validation_checkbox import ValidationCheckbox
 
 
-def _find_exactly_one_element[T](filter: ElementFilter, typ: Type[T]) -> T | None:
-    elements = list(filter)
-    if not elements:
-        return None
-    assert len(elements) == 1
-    e = elements[0]
-    assert isinstance(e, typ)
-    return e
-
-
 class ActionSyncElement(SyncElement, UiWrapperSyncElement):
     """
     A group of UI elements that represent a single value of the argparse namespace.
@@ -354,3 +344,13 @@ class ActionSyncElement(SyncElement, UiWrapperSyncElement):
 
         required_wrapper.mark(cls.REQUIRED_WRAPPER_MARKER)
         return required_wrapper
+
+
+def _find_exactly_one_element[T](filter: ElementFilter, typ: Type[T]) -> T | None:
+    elements = list(filter)
+    if not elements:
+        return None
+    assert len(elements) == 1
+    e = elements[0]
+    assert isinstance(e, typ)
+    return e

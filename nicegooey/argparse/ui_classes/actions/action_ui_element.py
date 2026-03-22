@@ -11,7 +11,11 @@ from .action_sync_element import ActionSyncElement
 
 
 class ActionUiElement[ActionT: argparse.Action](GroupingSyncUi, abc.ABC):
-    _UNSET = object()
+    """
+    A group of UI elements representing one single action of the argument parser.
+
+
+    """
 
     action: ActionT
     element: ActionSyncElement

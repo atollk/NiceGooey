@@ -58,7 +58,7 @@ class ArgumentGroupUi(GroupingSyncUi):
             return ui.element()
         with ui.card().classes("w-full").mark(f"ng-group-{self.group.title}") as root:
             ui.label(self.group.title or "").classes("text-lg font-bold mb-2")
-            with ui.list().classes("flex justify-between"):
+            with ui.list().classes("flex justify-between gap-y-4"):
                 for child in self.children:
                     if isinstance(child, ActionUiElement):
                         with ui.item().classes("border-2"):

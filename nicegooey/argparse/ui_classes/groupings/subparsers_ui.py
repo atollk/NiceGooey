@@ -88,10 +88,12 @@ class SubparsersUi(UiWrapper, SyncElement):
         none_tab = None
         with ui.element() as root:
             with ui.tabs() as self.ui_tabs:
-                if not self.subparsers_action.required:
-                    none_tab = ui.tab("-")
-                for child in self.subparsers:
-                    child.render_tab()
+                # Required row wrapper so that too many tabs don't overflow but wrap around to a new line instead.
+                with ui.row():
+                    if not self.subparsers_action.required:
+                        none_tab = ui.tab("-")
+                    for child in self.subparsers:
+                        child.render_tab()
             self._render_tab_panels(none_tab)
 
         self.subscribe()

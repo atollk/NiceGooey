@@ -15,7 +15,7 @@ def main1(*args, **kwargs):
     parser = NgArgumentParser()
     parser.add_argument_group("User Information", "Information about the user")
     parser.add_argument("--rgb", nargs=3, type=int, help="RGB color (3 integers)", required=True)
-    # parser = uv_parser()
+    parser = uv_parser()
     ns = parser.parse_args()
     print(ns)
 
@@ -23,7 +23,9 @@ def main1(*args, **kwargs):
 def uv_parser() -> NgArgumentParser:
     from tests.integration.uv import create_uv_parser
 
-    return NgArgumentParser.from_argparse(create_uv_parser())
+    p = NgArgumentParser.from_argparse(create_uv_parser())
+    p.nicegooey_config.argument_vp_width = "w-6xl"
+    return p
 
 
 @nice_gooey_argparse_main(patch_argparse=False)
