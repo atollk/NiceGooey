@@ -111,8 +111,13 @@ class NiceGooeyMain:
         # Process result
         assert self.main_func is not None
         with ui.dialog() as dialog:
-            with ui.card():
-                terminal = ui.xterm()
+            with ui.card() as dialog_card:
+                xterm_options = {"cols": 80}
+                terminal = ui.xterm(xterm_options)
+                # For some reason, the terminal is rendered too narrow so we need to increase the width manually.
+                ui.query(".xterm-screen").style(f"width: {xterm_options['cols'] * 9 + 20}px")
+                ui.query(".xterm-rows > div").style("width: none")
+                dialog_card.style("max-width: none")
                 finish_button = ui.button("Close", on_click=dialog.close)
         finish_button.disable()
         # TODO: fix dialog width so that xterm is completely visible

@@ -26,7 +26,6 @@ def main1(*args, **kwargs):
     # parser = uv_parser()
     ns = parser.parse_args()
     print(ns)
-    print("abcdefghijklmnopqrstuvxyz" * 100)
 
 
 def uv_parser() -> NgArgumentParser:
