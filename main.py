@@ -14,18 +14,21 @@ def process(parser: argparse.ArgumentParser, args: argparse.Namespace):
 @nice_gooey_argparse_main(patch_argparse=False)
 def main1(*args, **kwargs):
     parser = NgArgumentParser()
-
-    # Create two actions
-    custom_action = parser.add_argument("--custom-name", type=int, required=True)
-
-    # Set up override for only the first action
+    parser.add_argument("--my-name", type=str, required=True)
+    my_age_action = parser.add_argument("--my-age", type=int, required=True)
     parser.nicegooey_config = NiceGooeyConfig(
-        action_element_overrides={custom_action: store_action_slider_element(0, 10, 1)}
+        root_card_class="max-w-4xl",  # don't take up the entire screen on wide desktops
+        action_element_overrides={
+            # Display the age as a slider instead of a number field.
+            my_age_action: store_action_slider_element(min=0, max=100, step=1)
+        },
     )
+    namespace = parser.parse_args()
+    print(f"Hi, {namespace.my_name}")
 
     # parser = uv_parser()
-    ns = parser.parse_args()
-    print(ns)
+    # ns = parser.parse_args()
+    # print(ns)
 
 
 def uv_parser() -> NgArgumentParser:

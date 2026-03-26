@@ -1,3 +1,4 @@
 - README & docs
-- override action ui class
 - pypi publish workflow
+- custom validation logic
+- file picker UI class
