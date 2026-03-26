@@ -93,4 +93,4 @@ def main2(required: bool = False, nargs: int | str | None = None):
 
 
 if __name__ in {"__main__", "__mp_main__"}:
-    main1(required=False, nargs="*")
+    main2(required=False, nargs="*")

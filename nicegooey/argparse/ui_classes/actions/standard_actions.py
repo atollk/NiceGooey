@@ -10,8 +10,6 @@ from nicegooey.argparse.ui_classes.actions.action_info_helper import ActionInfoH
 from nicegooey.argparse.ui_classes.actions.action_ui_element import ActionUiElement
 from nicegooey.argparse.ui_classes.util.misc import add_validation, q_field
 
-# TODO: make some method names clearer
-
 
 class StoreActionUiElement(ActionUiElement[argparse._StoreAction]):
     @override
@@ -71,7 +69,7 @@ class ListActionUiElement[ActionT: argparse.Action](ActionUiElement[ActionT], ab
 
     @override
     @classmethod
-    def _action_type_input_required_wrapper(
+    def _render_action_required(
         cls, action_info: ActionInfoHelper, nargs_wrapper_element: Callable[[], ValidationElement]
     ) -> ui.element:
         def on_add_button_click(
@@ -90,7 +88,9 @@ class ListActionUiElement[ActionT: argparse.Action](ActionUiElement[ActionT], ab
 
         with q_field() as required_wrapper:
             required_wrapper.mark(cls.REQUIRED_WRAPPER_MARKER)
-            list_element = cls._list_element(nargs_wrapper_element, on_add_button_click=on_add_button_click)
+            list_element = cls._render_action_list(
+                nargs_wrapper_element, on_add_button_click=on_add_button_click
+            )
 
         if action_info.action.required:
             list_element.without_auto_validation()
@@ -122,13 +122,13 @@ class AppendActionUiElement(ListActionUiElement[argparse._AppendAction]):
 class AppendConstActionUiElement(ListActionUiElement[argparse._AppendConstAction]):
     @override
     @classmethod
-    def _action_type_input_nargs_wrapper(
+    def _render_action_nargs(
         cls, action_info: ActionInfoHelper, basic_element: Callable[[], ValidationElement]
     ) -> ValidationElement:
         return q_field().mark(cls.BASIC_ELEMENT_MARKER, cls.NARGS_WRAPPER_MARKER)
 
 
-class CountActionUiElement(ActionUiElement[argparse._CountAction]):
+class CountActionUiElement(ActionUiElement[argparse.Action]):
     """Count actions are a special case because they differ very much between UI and CLI usage. In the UI, they are just a number widget."""
 
     _original_action: argparse.Action
@@ -155,6 +155,7 @@ class CountActionUiElement(ActionUiElement[argparse._CountAction]):
 
     @override
     def validate(self) -> bool:
+        assert self.inner_elements is not None
         if not super().validate():
             return False
         if self._original_action.required:

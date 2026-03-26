@@ -247,10 +247,10 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
             action_marker = self.action.dest
 
         with ui.element().mark(f"ng-action-{action_marker}") as outmost:
-            required_wrapper_element = self._action_type_input_required_wrapper(
+            required_wrapper_element = self._render_action_required(
                 action_info,
-                lambda: self._action_type_input_nargs_wrapper(
-                    action_info, lambda: self._action_type_input_basic_element(action_info)
+                lambda: self._render_action_nargs(
+                    action_info, lambda: self._render_action_single(action_info)
                 ),
             )
 
@@ -281,8 +281,8 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
         )
 
     @classmethod
-    def _action_type_input_basic_element(cls, action_info: ActionInfoHelper) -> ValidationElement:
-        """Creates and returns an input element depending on just the type of this action."""
+    def _render_action_single(cls, action_info: ActionInfoHelper) -> ValidationElement:
+        """Creates and returns an input element depending on just the type of this action, ignoring 'required' and 'nargs'."""
         basic_element: ValidationElement
         if action_info.action.choices is not None:
             choices = list(action_info.action.choices)
@@ -306,7 +306,7 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
         return basic_element
 
     @classmethod
-    def _list_element(
+    def _render_action_list(
         cls,
         inner_element_f: Callable[[], ValidationElement],
         on_add_button_click: Callable[[ValidationElement, ValidationElement, Any], None] | None = None,
@@ -351,7 +351,7 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
         return list_element
 
     @classmethod
-    def _action_type_input_nargs_wrapper(
+    def _render_action_nargs(
         cls, action_info: ActionInfoHelper, basic_element: Callable[[], ValidationElement]
     ) -> ValidationElement:
         """Creates and returns an element that wraps the basic element depending on the nargs of this action."""
@@ -365,9 +365,9 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
                     inner=basic_element, none_value=action_info.action_const()
                 )
             case Nargs.ZERO_OR_MORE:
-                nargs_value_element = cls._list_element(basic_element)
+                nargs_value_element = cls._render_action_list(basic_element)
             case Nargs.ONE_OR_MORE:
-                nargs_value_element = cls._list_element(basic_element)
+                nargs_value_element = cls._render_action_list(basic_element)
                 nargs_value_element.without_auto_validation()
                 add_validation(
                     nargs_value_element,
@@ -379,7 +379,7 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
                 if n == 0:
                     nargs_value_element = q_field().mark(cls.BASIC_ELEMENT_MARKER)
                 else:
-                    nargs_value_element = cls._list_element(basic_element)
+                    nargs_value_element = cls._render_action_list(basic_element)
                     nargs_value_element.without_auto_validation()
                     add_validation(
                         nargs_value_element,
@@ -392,7 +392,7 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
         return nargs_value_element
 
     @classmethod
-    def _action_type_input_required_wrapper(
+    def _render_action_required(
         cls, action_info: ActionInfoHelper, nargs_wrapper_element: Callable[[], ValidationElement]
     ) -> ValidationElement:
         """Creates and returns an element that wraps the nargs wrapper element depending on whether this action is required or optional."""

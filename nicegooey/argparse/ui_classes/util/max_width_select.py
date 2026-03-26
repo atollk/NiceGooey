@@ -4,7 +4,7 @@ from nicegui import ui
 class MaxWidthSelect(ui.select):
     """A select element that is as wide as its longest option, but no wider."""
 
-    def __init__(self, options: list[str], **kwargs):
+    def __init__(self, options: list[str], **kwargs) -> None:
         super().__init__(options, **kwargs)
 
         # Reparent: wrap self in an inline-block div after creation

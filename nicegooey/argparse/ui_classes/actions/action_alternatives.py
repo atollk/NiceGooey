@@ -14,7 +14,7 @@ from nicegooey.argparse.ui_classes.util.validation_wrapper import ValidationWrap
 def store_action_slider_element(min: float, max: float, step: float) -> Type[ActionUiElement]:
     class StoreActionSliderElement(StoreActionUiElement):
         @classmethod
-        def _action_type_input_basic_element(cls, action_info: ActionInfoHelper) -> ValidationElement:
+        def _render_action_single(cls, action_info: ActionInfoHelper) -> ValidationElement:
             def slider():
                 return (
                     ui.slider(min=min, max=max, step=step)
