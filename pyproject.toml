@@ -1,9 +1,9 @@
 [project]
 name = "nicegooey"
 version = "0.1.0"
-description = "Add your description here"
+description = "Turn your Python CLI program into a modern web-based UI"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.12"
 dependencies = [
     "nicegui>=3.9.0",
 ]
