@@ -26,13 +26,21 @@ strict = true
 
 [tool.tox]
 requires = ["tox>=4.19"]
-env_list = ["3.14t", "3.14", "3.13", "3.12", "type"]
+env_list = ["3.14t", "3.14", "3.13", "3.12"]
+
+[tool.tox.gh-actions]
+python = """
+	3.12: py312
+	3.13: py313
+	3.14: py314
+	3.14t: py314t
+	"""
 
 [tool.tox.env_run_base]
 description = "Run test under {base_python}"
 commands = [["pytest"]]
 
-[tool.tox.env.type]
-description = "run type check on code base"
-deps = ["mypy==1.18.2", "types-cachetools>=5.5.0.20240820", "types-chardet>=5.0.4.6"]
-commands = [["mypy", "src{/}tox"], ["mypy", "tests"]]
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+addopts = "-p nicegui.testing.plugin"

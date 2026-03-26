@@ -1,4 +1,3 @@
-- README & docs
 - pypi publish workflow
 - custom validation logic
 - file picker UI class
