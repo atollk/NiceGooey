@@ -120,7 +120,6 @@ class NiceGooeyMain:
                 dialog_card.style("max-width: none")
                 finish_button = ui.button("Close", on_click=dialog.close)
         finish_button.disable()
-        # TODO: fix dialog width so that xterm is completely visible
         dialog.open()
         write_terminal: Callable[[str], Any] = terminal.write
         file_buffer = CallbackWriter(write_terminal)

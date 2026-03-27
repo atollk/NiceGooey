@@ -1,14 +1,14 @@
 import abc
 import argparse
-from typing import Any, Callable, override
+from typing import Any, Callable, override, Final
 
-from nicegui import ui
+from nicegui import ui, ElementFilter
 from nicegui.elements.mixins.validation_element import ValidationElement
 
 from nicegooey.argparse.main import NiceGooeyMain
 from nicegooey.argparse.ui_classes.actions.action_info_helper import ActionInfoHelper
-from nicegooey.argparse.ui_classes.actions.action_ui_element import ActionUiElement
-from nicegooey.argparse.ui_classes.util.misc import add_validation, q_field
+from nicegooey.argparse.ui_classes.actions.action_ui_element import ActionUiElement, find_exactly_one_element
+from nicegooey.argparse.ui_classes.util.misc import add_validation, q_field, clear_value_element
 
 
 class StoreActionUiElement(ActionUiElement[argparse._StoreAction]):
@@ -59,13 +59,22 @@ class StoreConstActionUiElement(ActionUiElement[argparse._StoreConstAction]):
 
 
 class ListActionUiElement[ActionT: argparse.Action](ActionUiElement[ActionT], abc.ABC):
+    LIST_ELEMENT_MARKER: Final[str] = "ng-action-listelement"
+
     add_element_default_value: Any = None
+    list_input_element: ui.input_chips | None = None
 
     @override
     def _render_input_element(self) -> None:
         super()._render_input_element()
         assert self.inner_elements is not None
         self.inner_elements.nargs_wrapper_element.classes("w-xl")
+        self.list_input_element = find_exactly_one_element(
+            ElementFilter(marker=self.LIST_ELEMENT_MARKER).within(instance=self.inner_elements.outmost),
+            ui.input_chips,
+        )
+        assert self.list_input_element is not None
+        self.list_input_element.on_value_change(lambda ev: self.sync_to_namespace())
 
     @override
     @classmethod
@@ -88,9 +97,10 @@ class ListActionUiElement[ActionT: argparse.Action](ActionUiElement[ActionT], ab
 
         with q_field() as required_wrapper:
             required_wrapper.mark(cls.REQUIRED_WRAPPER_MARKER)
-            list_element = cls._render_action_list(
+            list_element, inner_element, add_button = cls._render_action_list(
                 nargs_wrapper_element, on_add_button_click=on_add_button_click
             )
+            list_element.mark(cls.LIST_ELEMENT_MARKER)
 
         if action_info.action.required:
             list_element.without_auto_validation()
@@ -101,14 +111,41 @@ class ListActionUiElement[ActionT: argparse.Action](ActionUiElement[ActionT], ab
 
         return required_wrapper
 
+    @override
     def _ui_state_to_value(self) -> Any:
+        if self.list_input_element is None:
+            return []
         assert self.inner_elements is not None
         if not self.is_enabled():
             return ActionInfoHelper(action=self.action, parser=self._parser).action_default()
-        v = self.inner_elements.nargs_wrapper_element.value
+        v = self.list_input_element.value
         assert isinstance(v, list) or v is None
         action_info = ActionInfoHelper(action=self.action, parser=self._parser)
-        return [action_info.action_type()[1](u) for u in (v or [])]
+        return [action_info.action_type_with_nargs()(u) for u in (v or [])]
+
+    # TODO: this override is almost entirely duplicate code; can we make this nicer?
+    @override
+    def _ui_state_from_value(self, value: Any) -> None:
+        assert self.inner_elements is not None
+        assert self.list_input_element is not None
+
+        # Evaluate whether the element should be disabled or enabled (if non-required).
+        typ = self._action_info.action_type()
+        try:
+            typ(value)
+        except Exception:
+            value_is_valid = False
+        else:
+            value_is_valid = True
+        disable = value is None or not value_is_valid or value == self._action_info.action_default()
+
+        # Set the values of the UI elements.
+        if self.inner_elements.enable_box_element is not None:
+            self.inner_elements.enable_box_element.value = not disable
+        if value_is_valid and value is not None:
+            self.list_input_element.value = value
+        else:
+            clear_value_element(self.list_input_element)
 
 
 class ExtendActionUiElement(ActionUiElement[argparse._AppendAction]):

@@ -12,15 +12,25 @@ def process(parser: argparse.ArgumentParser, args: argparse.Namespace):
 
 
 @nice_gooey_argparse_main(patch_argparse=False)
+def main0(*args, **kwargs):
+    parser = NgArgumentParser()
+    parser.add_argument("--append", action="append", type=str, help="Append multiple values", nargs="*")
+    namespace = parser.parse_args()
+    print(namespace)
+
+
+@nice_gooey_argparse_main(patch_argparse=False)
 def main1(*args, **kwargs):
     parser = NgArgumentParser()
     parser.add_argument("--my-name", type=str, required=True)
     my_age_action = parser.add_argument("--my-age", type=int, required=True)
     parser.nicegooey_config = NiceGooeyConfig(
         root_card_class="max-w-4xl",  # don't take up the entire screen on wide desktops
-        action_element_overrides={
+        action_config={
             # Display the age as a slider instead of a number field.
-            my_age_action: store_action_slider_element(min=0, max=100, step=1)
+            my_age_action: NiceGooeyConfig.ActionConfig(
+                element_override=store_action_slider_element(min=0, max=100, step=1),
+            ),
         },
     )
     namespace = parser.parse_args()
@@ -93,4 +103,4 @@ def main2(required: bool = False, nargs: int | str | None = None):
 
 
 if __name__ in {"__main__", "__mp_main__"}:
-    main2(required=False, nargs="*")
+    main0(required=False, nargs="*")

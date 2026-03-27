@@ -2,6 +2,7 @@ import argparse
 import copy
 import dataclasses
 from argparse import Namespace
+from collections import defaultdict
 from typing import Sequence, overload, TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -14,16 +15,28 @@ class NiceGooeyConfig:
     Configuration for the NiceGooey setup.
 
     Attributes:
-        root_card_class (str): A space-separated list of Tailwind classes to be applied to the root of the argument UI.
+        root_card_class: A space-separated list of Tailwind classes to be applied to the root of the argument UI.
             Especially useful to pass something like 'w-4xl' to limit the width on large screens.
-        action_element_overrides (dict): A dict that maps parser action objects to `ActionUiElement` classes.
-            Use this to customize what elements are used to render for certain actions.
+        action_config: A dict that maps parser action objects to `ActionConfig` classes.
+            Use this to set configurations affecting individual actions.
 
     """
 
+    @dataclasses.dataclass
+    class ActionConfig:
+        """
+        Configuration for a single action.
+
+        Attributes:
+            element_override: If set, this class is instantiated to display the widget for this element in the UI
+                instead of the default.
+        """
+
+        element_override: type["ActionUiElement"] | None = None
+
     root_card_class: str = "w-full"
-    action_element_overrides: dict[argparse.Action, type["ActionUiElement"]] = dataclasses.field(
-        default_factory=dict
+    action_config: dict[argparse.Action, ActionConfig] = dataclasses.field(
+        default_factory=lambda: defaultdict(NiceGooeyConfig.ActionConfig)
     )
 
 

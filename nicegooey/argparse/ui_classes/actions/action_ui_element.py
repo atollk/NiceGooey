@@ -33,14 +33,15 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
         nargs_wrapper_element: ValidationElement
         enable_box_element: ui.checkbox | None
         required_wrapper_element: ValidationElement
+        outmost: ui.element
 
     inner_elements: InnerElements | None
 
     LIST_INNER_ELEMENT_MARKER_SUFFIX: Final[str] = "-inner"
-    BASIC_ELEMENT_MARKER: Final[str] = "ng-action-type-input-basic"
-    NARGS_WRAPPER_MARKER: Final[str] = "ng-action-type-input-nargs-wrapper"
-    ENABLE_PARAMETER_BOX_MARKER: Final[str] = "ng-action-type-input-enable-parameter-box"
-    REQUIRED_WRAPPER_MARKER: Final[str] = "ng-action-type-input-required-wrapper"
+    BASIC_ELEMENT_MARKER: Final[str] = "ng-action-element-basic"
+    NARGS_WRAPPER_MARKER: Final[str] = "ng-action-element-nargs"
+    ENABLE_PARAMETER_BOX_MARKER: Final[str] = "ng-action-element-parameter-box"
+    REQUIRED_WRAPPER_MARKER: Final[str] = "ng-action-element-required"
     ADD_BUTTON_MARKER: Final[str] = "ng-action-add-button"
 
     @staticmethod
@@ -54,8 +55,8 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
             StoreConstActionUiElement,
         )
 
-        overrides = parent.parser_config.action_element_overrides
-        if (override := overrides.get(action, None)) is not None:
+        action_config = parent.parser_config.action_config[action]
+        if (override := action_config.element_override) is not None:
             return override(parent=parent, action=action)
 
         match action:
@@ -187,7 +188,7 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
         assert self.inner_elements is not None
 
         # Evaluate whether the element should be disabled or enabled (if non-required).
-        typ = self._action_info.action_type()[1]
+        typ = self._action_info.action_type()
         try:
             typ(value)
         except Exception:
@@ -254,21 +255,21 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
                 ),
             )
 
-        basic_element = _find_exactly_one_element(
+        basic_element = find_exactly_one_element(
             ElementFilter(marker=self.BASIC_ELEMENT_MARKER).within(instance=outmost), ValidationElement
         )
         assert basic_element is not None
-        basic_element_inner = _find_exactly_one_element(
+        basic_element_inner = find_exactly_one_element(
             ElementFilter(marker=self.BASIC_ELEMENT_MARKER + self.LIST_INNER_ELEMENT_MARKER_SUFFIX).within(
                 instance=outmost
             ),
             ValidationElement,
         )
-        nargs_wrapper_element = _find_exactly_one_element(
+        nargs_wrapper_element = find_exactly_one_element(
             ElementFilter(marker=self.NARGS_WRAPPER_MARKER).within(instance=outmost), ValidationElement
         )
         assert nargs_wrapper_element is not None
-        enable_box_element = _find_exactly_one_element(
+        enable_box_element = find_exactly_one_element(
             ElementFilter(marker=self.ENABLE_PARAMETER_BOX_MARKER).within(instance=outmost), ui.checkbox
         )
 
@@ -278,6 +279,7 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
             nargs_wrapper_element=nargs_wrapper_element,
             enable_box_element=enable_box_element,
             required_wrapper_element=required_wrapper_element,
+            outmost=outmost,
         )
 
     @classmethod
@@ -288,7 +290,7 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
             choices = list(action_info.action.choices)
             basic_element = MaxWidthSelect(options=choices)
         else:
-            _, action_type = action_info.action_type()
+            action_type = action_info.action_type()
             match action_type:
                 case builtins.bool:
                     basic_element = ValidationCheckbox()
@@ -306,16 +308,20 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
         return basic_element
 
     @classmethod
-    def _render_action_list(
+    def _render_action_list[T: ValidationElement](
         cls,
-        inner_element_f: Callable[[], ValidationElement],
-        on_add_button_click: Callable[[ValidationElement, ValidationElement, Any], None] | None = None,
-    ) -> ValidationElement:
-        """Creates and returns an element for inputting multiple items of the given inner element."""
+        inner_element_f: Callable[[], T],
+        on_add_button_click: Callable[[ui.input_chips, T, Any], None] | None = None,
+    ) -> tuple[ui.input_chips, T, ui.button]:
+        """
+        Creates and returns an element for inputting multiple items of the given inner element.
+        Returns a tuple of (outer list element, inner input element, add button).
+        Notably, does not add any markers to the new elements - this has to be done outside of this function, if desired.
+        """
 
         def on_add_button_click_default(
-            list_element: ValidationElement,
-            inner_element: ValidationElement,
+            list_element: ui.input_chips,
+            inner_element: T,
             inner_element_default_value: Any,
         ) -> None:
             if not inner_element.validate():
@@ -328,8 +334,6 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
             with ui.row(align_items="center"):
                 # Create single-item add element
                 inner_element = inner_element_f()
-                inner_element_markers = inner_element._markers
-                inner_element.mark(*(m + cls.LIST_INNER_ELEMENT_MARKER_SUFFIX for m in inner_element_markers))
                 inner_element_default_value = inner_element.value
 
                 # Create add button
@@ -342,13 +346,10 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
                         )
                     )
                 )
-                add_button = (
-                    ui.button(on_click=on_click).props("square padding=xs").mark(cls.ADD_BUTTON_MARKER)
-                )
+                add_button = ui.button(on_click=on_click).props("square padding=xs")
                 add_button.set_icon("south")
             list_element = ui.input_chips(value=[]).props("use-input=false")
-            list_element.mark(*inner_element_markers)
-        return list_element
+        return list_element, inner_element, add_button
 
     @classmethod
     def _render_action_nargs(
@@ -357,6 +358,7 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
         """Creates and returns an element that wraps the basic element depending on the nargs of this action."""
         nargs = action_info.action_nargs()
         nargs_value_element: ValidationElement
+        inner_element = list_add_button = None
         match nargs:
             case Nargs.SINGLE_ELEMENT:
                 nargs_value_element = basic_element()
@@ -365,9 +367,9 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
                     inner=basic_element, none_value=action_info.action_const()
                 )
             case Nargs.ZERO_OR_MORE:
-                nargs_value_element = cls._render_action_list(basic_element)
+                nargs_value_element, inner_element, list_add_button = cls._render_action_list(basic_element)
             case Nargs.ONE_OR_MORE:
-                nargs_value_element = cls._render_action_list(basic_element)
+                nargs_value_element, inner_element, list_add_button = cls._render_action_list(basic_element)
                 nargs_value_element.without_auto_validation()
                 add_validation(
                     nargs_value_element,
@@ -379,7 +381,9 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
                 if n == 0:
                     nargs_value_element = q_field().mark(cls.BASIC_ELEMENT_MARKER)
                 else:
-                    nargs_value_element = cls._render_action_list(basic_element)
+                    nargs_value_element, inner_element, list_add_button = cls._render_action_list(
+                        basic_element
+                    )
                     nargs_value_element.without_auto_validation()
                     add_validation(
                         nargs_value_element,
@@ -389,6 +393,15 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
                 raise ValueError(f"Invalid nargs value: {nargs}")
 
         nargs_value_element.mark(cls.NARGS_WRAPPER_MARKER, *nargs_value_element._markers)
+        if inner_element is not None and list_add_button is not None:
+            inner_element_markers = inner_element._markers
+            inner_element.mark(*(m + cls.LIST_INNER_ELEMENT_MARKER_SUFFIX for m in inner_element_markers))
+            nargs_value_element.mark(
+                cls.NARGS_WRAPPER_MARKER, *inner_element_markers, *nargs_value_element._markers
+            )
+            list_add_button.mark(cls.ADD_BUTTON_MARKER)
+        else:
+            nargs_value_element.mark(cls.NARGS_WRAPPER_MARKER, *nargs_value_element._markers)
         return nargs_value_element
 
     @classmethod
@@ -414,7 +427,7 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
         return required_wrapper
 
 
-def _find_exactly_one_element[T](filter: ElementFilter, typ: Type[T]) -> T | None:
+def find_exactly_one_element[T](filter: ElementFilter, typ: Type[T]) -> T | None:
     elements = list(filter)
     if not elements:
         return None

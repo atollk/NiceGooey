@@ -18,7 +18,8 @@ class ActionInfoHelper:
         One = "1"
         Many = "*"
 
-    def _is_nargs_multiple(self) -> TypeCount:
+    def action_type_count(self) -> TypeCount:
+        """Returns the number of elements represented by the type, if you follow the nargs of this action."""
         nargs = self.action_nargs()
         is_multiple = nargs in (Nargs.ZERO_OR_MORE, Nargs.ONE_OR_MORE) or (
             isinstance(nargs, int) and nargs > 0
@@ -30,27 +31,26 @@ class ActionInfoHelper:
         else:
             return self.TypeCount.One
 
-    def action_type(self) -> tuple[TypeCount, Callable[[str], Any]]:
+    def action_type(self) -> Callable[[str], Any]:
         """Returns the type of this action, or a reasonable default if no type is set."""
-        base_type = None
         match self.action.type:
             case None:
-                base_type = str
+                return str
             case argparse.FileType:
                 raise NotImplementedError("argparse.FileType is deprecated and not supported.")
             case str():
-                base_type = self.parser._registry_get("type", self.action.type)
+                return self.parser._registry_get("type", self.action.type)
             case _:
-                base_type = self.action.type
-        return self._is_nargs_multiple(), base_type
+                return self.action.type
 
     def action_type_with_nargs(self) -> Callable[[Any], Any]:
-        type_count, type_base = self.action_type()
+        """Like action_type, but also takes into considering the nargs of this action."""
+        type_count = self.action_type_count()
         match type_count:
             case ActionInfoHelper.TypeCount.Zero:
                 return lambda v: v
             case ActionInfoHelper.TypeCount.One:
-                return type_base
+                return self.action_type()
             case ActionInfoHelper.TypeCount.Many:
                 return lambda v: list(v)
             case _:
@@ -61,7 +61,8 @@ class ActionInfoHelper:
 
     def action_default(self) -> Any:
         """Returns the default value for this action, or a reasonable default if no default is set."""
-        type_count, type_base = self.action_type()
+        type_count = self.action_type_count()
+        type_base = self.action_type()
 
         # ugly hack but I don't know a better solution
         if isinstance(self.action, argparse._AppendAction):
