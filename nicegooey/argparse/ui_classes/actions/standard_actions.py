@@ -1,6 +1,5 @@
 import abc
 import argparse
-import sys
 from typing import Any, Callable, override, Final
 
 from nicegui import ui, ElementFilter
@@ -193,10 +192,6 @@ class CountActionUiElement(ActionUiElement[argparse.Action]):
     @staticmethod
     def _create_pseudo_action(action: argparse.Action) -> argparse.Action:
         """Create a pseudo action that behaves like the count action but can be used to initialize the input element."""
-        if sys.version_info[1] >= 13:
-            deprecated_args = {"deprecated": action.deprecated if hasattr(action, "deprecated") else False}
-        else:
-            deprecated_args = {}
         return argparse._StoreAction(
             option_strings=action.option_strings,
             dest=action.dest,
@@ -206,7 +201,6 @@ class CountActionUiElement(ActionUiElement[argparse.Action]):
             required=True,
             help=action.help,
             metavar=action.metavar,
-            **deprecated_args,
         )
 
     @override
