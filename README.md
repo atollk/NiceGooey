@@ -102,5 +102,5 @@ This is covered by NiceGooey already, which shows a "License" button at the bott
 Generative AI and coding agents being a hot topic at the moment, especially in Open Source projects, this section is about disclosing any use of AI within this project, for anyone who is intersted:
 
 - There is no AI of any kind being called from the NiceGooey code itself.
-- Anthropic's Claude chat was used when planning ideas, implementations, and troubleshooting of the implementation.
-- Anthropic's Claude Code was used occasionally to write unit tests and perform refactorings on the implementation.
+- Anthropic's Claude chat was used to rubberduck ideas and troubleshoot the implementation.
+- Anthropic's Claude Code was used to write some of the unit tests and perform refactorings on the implementation.
