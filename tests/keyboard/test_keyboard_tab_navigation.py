@@ -50,7 +50,7 @@ async def test_keyboard_tab_navigation(screen: Screen) -> None:
 
 
 @nice_gooey_argparse_main(patch_argparse=False)
-def main():
+def main() -> None:
     parser = NgArgumentParser()
     parser.add_argument("--name", type=str, help="Your name", required=True)
     parser.add_argument("--email", type=str, help="Your email", required=True)

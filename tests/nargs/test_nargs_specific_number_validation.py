@@ -87,7 +87,7 @@ async def test_nargs_three_submit_validation(user: User) -> None:
 
 
 @nice_gooey_argparse_main(patch_argparse=False)
-def main():
+def main() -> None:
     parser = NgArgumentParser()
     parser.add_argument("--rgb", nargs=3, type=int, help="RGB color (3 integers)", required=True)
     parser.parse_args()

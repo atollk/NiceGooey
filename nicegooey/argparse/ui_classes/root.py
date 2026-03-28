@@ -21,6 +21,8 @@ class RootUi(UiWrapper):
 
     @override
     def render(self) -> ui.element:
+        assert self.parent.parent_parser is not None
+
         with ui.element().classes("absolute right-16"):
             dark = ui.dark_mode()
             with ui.row():
@@ -29,7 +31,7 @@ class RootUi(UiWrapper):
 
         with ui.column(align_items="center").mark("ng-root") as root:
             TextElement(text=self.parent.parent_parser.prog, tag="h1").classes("text-h2")
-            TextElement(text=self.parent.parent_parser.description, tag="h2").classes("text-subtitle1")
+            TextElement(text=self.parent.parent_parser.description or "", tag="h2").classes("text-subtitle1")
 
             with ui.card():
                 # Use a form to enable submit keyboard controls, but prevent page redirect on Submit.

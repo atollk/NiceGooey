@@ -44,7 +44,7 @@ async def test_nargs_question_mark(user: User) -> None:
 
 
 @nice_gooey_argparse_main(patch_argparse=False)
-def main():
+def main() -> None:
     parser = NgArgumentParser()
     parser.add_argument(
         "--optional", nargs="?", type=str, const="CONST", default="DEFAULT", help="Optional value"

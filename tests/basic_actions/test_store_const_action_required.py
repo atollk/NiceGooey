@@ -20,7 +20,7 @@ async def test_store_const_action_required(user: User) -> None:
 
 
 @nice_gooey_argparse_main(patch_argparse=False)
-def main():
+def main() -> None:
     parser = NgArgumentParser()
     parser.add_argument(
         "--verbose",

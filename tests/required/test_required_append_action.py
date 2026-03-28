@@ -46,7 +46,7 @@ async def test_required_append_validation(user: User) -> None:
 
 
 @nice_gooey_argparse_main(patch_argparse=False)
-def main():
+def main() -> None:
     parser = NgArgumentParser()
     parser.add_argument("--tag", action="append", type=str, dest="tags", required=True, help="Add tags")
     parser.parse_args()

@@ -29,7 +29,7 @@ async def test_submit(user: User) -> None:
 
 
 @nice_gooey_argparse_main(patch_argparse=False)
-def main():
+def main() -> None:
     parser = NgArgumentParser()
     parser.add_argument("--name", type=str, help="Your name", required=True)
     args = parser.parse_args()

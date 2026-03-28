@@ -23,7 +23,7 @@ async def test_store_true_action(user: User) -> None:
 
 
 @nice_gooey_argparse_main(patch_argparse=False)
-def main():
+def main() -> None:
     parser = NgArgumentParser()
     parser.add_argument("--enable", action="store_true", help="Enable feature")
     parser.parse_args()

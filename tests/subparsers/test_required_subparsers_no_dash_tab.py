@@ -27,7 +27,7 @@ async def test_required_subparsers_no_dash_tab(user: User) -> None:
 
 
 @nice_gooey_argparse_main(patch_argparse=False)
-def main():
+def main() -> None:
     parser = NgArgumentParser()
 
     subparsers = parser.add_subparsers(dest="command", required=True, help="Required commands")

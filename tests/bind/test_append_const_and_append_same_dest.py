@@ -48,7 +48,7 @@ async def test_append_const_and_append_same_dest(user: User) -> None:
 
 
 @nice_gooey_argparse_main(patch_argparse=False)
-def main():
+def main() -> None:
     parser = NgArgumentParser()
     parser.add_argument(
         "--add-flag", action="append_const", const="FLAG", dest="items", help="Add flag constant"

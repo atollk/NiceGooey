@@ -41,7 +41,7 @@ async def test_nargs_with_choices(user: User) -> None:
 
 
 @nice_gooey_argparse_main(patch_argparse=False)
-def main():
+def main() -> None:
     parser = NgArgumentParser()
     parser.add_argument(
         "--colors", nargs="*", choices=["red", "green", "blue"], help="Select colors", required=True

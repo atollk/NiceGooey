@@ -42,7 +42,7 @@ async def test_string_and_int_same_dest(user: User) -> None:
 
 
 @nice_gooey_argparse_main(patch_argparse=False)
-def main():
+def main() -> None:
     parser = NgArgumentParser()
     parser.add_argument("--value-str", dest="value", type=str, default="", help="Value as string")
     parser.add_argument("--value-int", dest="value", type=int, default=0, help="Value as int")

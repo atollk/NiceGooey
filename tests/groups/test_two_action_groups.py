@@ -20,7 +20,7 @@ async def test_two_action_groups(user: User) -> None:
 
 
 @nice_gooey_argparse_main(patch_argparse=False)
-def main():
+def main() -> None:
     parser = NgArgumentParser()
 
     parser.add_argument("--global-option", type=str, help="Global option")

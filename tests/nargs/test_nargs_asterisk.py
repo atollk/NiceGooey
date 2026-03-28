@@ -36,7 +36,7 @@ async def test_nargs_asterisk(user: User) -> None:
 
 
 @nice_gooey_argparse_main(patch_argparse=False)
-def main():
+def main() -> None:
     parser = NgArgumentParser()
     parser.add_argument("--items", nargs="*", type=str, help="Zero or more items", required=True)
     parser.parse_args()

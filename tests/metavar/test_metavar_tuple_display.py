@@ -15,7 +15,7 @@ async def test_metavar_tuple_display(user: User) -> None:
 
 
 @nice_gooey_argparse_main(patch_argparse=False)
-def main():
+def main() -> None:
     parser = NgArgumentParser()
     parser.add_argument(
         "--files", type=str, metavar=("FILE1", "FILE2"), nargs="+", help="Input files", required=True

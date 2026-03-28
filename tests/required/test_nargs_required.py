@@ -63,7 +63,7 @@ async def test_nargs_required(user: User) -> None:
 
 
 @nice_gooey_argparse_main(patch_argparse=False)
-def main():
+def main() -> None:
     parser = NgArgumentParser()
 
     # Case 1: required=True, nargs="*" -> no enable checkbox

@@ -166,7 +166,7 @@ async def test_uv_cli_interface(user: User) -> None:
 
 
 @nice_gooey_argparse_main(patch_argparse=False)
-def main():
+def main() -> None:
     """Build the UV CLI interface using argparse."""
     parser = NgArgumentParser.from_argparse(create_uv_parser())
     parser.parse_args()

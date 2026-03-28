@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 
 
 class ArgumentGroupUi(GroupingSyncUi):
-    children: list["ActionUiElement | MutuallyExclusiveGroupUi"]
+    children: list["ActionUiElement[argparse.Action] | MutuallyExclusiveGroupUi"]
     group: argparse._ArgumentGroup
 
     def __init__(self, parent: "NiceGooeyMain", group: argparse._ArgumentGroup) -> None:

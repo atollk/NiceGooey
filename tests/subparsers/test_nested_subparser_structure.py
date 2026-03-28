@@ -64,7 +64,7 @@ async def test_nested_subparser_structure(user: User) -> None:
 
 
 @nice_gooey_argparse_main(patch_argparse=False)
-def main():
+def main() -> None:
     parser = NgArgumentParser()
 
     parser.add_argument("--verbose", action="store_true", help="Verbose mode")

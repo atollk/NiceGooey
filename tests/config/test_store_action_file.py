@@ -36,7 +36,7 @@ async def test_store_action_file(user: User) -> None:
 
 
 @nice_gooey_argparse_main(patch_argparse=False)
-def main():
+def main() -> None:
     parser = NgArgumentParser()
     config_action = parser.add_argument("--config-file", type=str, help="Configuration file path")
 

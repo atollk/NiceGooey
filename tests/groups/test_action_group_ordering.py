@@ -17,7 +17,7 @@ async def test_action_group_ordering(user: User) -> None:
 
 
 @nice_gooey_argparse_main(patch_argparse=False)
-def main():
+def main() -> None:
     parser = NgArgumentParser()
 
     group = parser.add_argument_group(title="Ordered Options")

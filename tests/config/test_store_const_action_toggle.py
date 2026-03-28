@@ -38,7 +38,7 @@ async def test_store_const_action_toggle(user: User) -> None:
 
 
 @nice_gooey_argparse_main(patch_argparse=False)
-def main():
+def main() -> None:
     parser = NgArgumentParser()
     verbose_action = parser.add_argument(
         "--verbose", action="store_const", const="DEBUG", default="INFO", help="Enable debug mode"

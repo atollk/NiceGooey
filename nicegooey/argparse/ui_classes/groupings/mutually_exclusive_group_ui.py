@@ -1,5 +1,5 @@
 import argparse
-from typing import TYPE_CHECKING, Literal, override, Iterable
+from typing import TYPE_CHECKING, Literal, override, Iterable, cast
 
 import nicegui.events
 from nicegui import ui
@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 
 class MutuallyExclusiveGroupUi(GroupingSyncUi):
     group: argparse._MutuallyExclusiveGroup
-    active_element: ActionUiElement | None
+    active_element: ActionUiElement[argparse.Action] | None
 
     def __init__(self, parent: "NiceGooeyMain", group: argparse._MutuallyExclusiveGroup) -> None:
         super().__init__(parent)
@@ -53,7 +53,7 @@ class MutuallyExclusiveGroupUi(GroupingSyncUi):
     @override
     def render(self) -> ui.element:
         render_action = ui.refreshable(self._render_action)
-        choices = self._build_action_choice_names()
+        choices = cast(dict[argparse.Action | Literal[""], str], self._build_action_choice_names())
 
         def on_selector_change(ev: nicegui.events.ValueChangeEventArguments) -> None:
             # Undo the previous action
@@ -67,7 +67,8 @@ class MutuallyExclusiveGroupUi(GroupingSyncUi):
             if not choices:
                 raise RuntimeError(f"Mutually exclusive group must not be empty: {self.group}")
             if not self.group.required:
-                choices = {**{"": "-"}, **choices}  # should be the first item
+                # "" should be the first item
+                choices = {**{"": "-"}, **choices}  # zuban: ignore[dict-item]
                 default_choice = ""
             selector = ui.select(
                 choices,

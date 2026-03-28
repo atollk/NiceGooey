@@ -29,7 +29,7 @@ async def test_append_const_action(user: User) -> None:
 
 
 @nice_gooey_argparse_main(patch_argparse=False)
-def main():
+def main() -> None:
     parser = NgArgumentParser()
     parser.add_argument("--add-flag", action="append_const", const="FLAG", dest="flags", help="Add flag")
     parser.parse_args()

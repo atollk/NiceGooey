@@ -23,7 +23,7 @@ async def test_two_store_actions_same_dest_last_wins(user: User) -> None:
 
 
 @nice_gooey_argparse_main(patch_argparse=False)
-def main():
+def main() -> None:
     parser = NgArgumentParser()
     parser.add_argument("--field-a", dest="shared", type=str, help="Field A", required=True)
     parser.add_argument("--field-b", dest="shared", type=str, help="Field B", required=True)

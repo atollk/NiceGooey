@@ -24,7 +24,7 @@ async def test_nargs_one(user: User) -> None:
 
 
 @nice_gooey_argparse_main(patch_argparse=False)
-def main():
+def main() -> None:
     parser = NgArgumentParser()
     parser.add_argument("--item", nargs=1, type=str, help="One item", required=True)
     parser.parse_args()

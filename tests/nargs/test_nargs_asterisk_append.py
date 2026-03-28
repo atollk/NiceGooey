@@ -98,7 +98,7 @@ async def test_nargs_asterisk_append(user: User) -> None:
 
 
 @nice_gooey_argparse_main(patch_argparse=False)
-def main():
+def main() -> None:
     parser = NgArgumentParser()
     parser.add_argument("--items", action="append", nargs="*", type=str, required=True)
     parser.parse_args()

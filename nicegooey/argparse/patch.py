@@ -29,7 +29,7 @@ def _argparse_patch_context(*, patch: bool) -> Generator[None, None, None]:
 
 
 @contextlib.contextmanager
-def _active_main_function_context(main_func: MainCallable) -> Generator[None, None, None]:
+def _active_main_function_context(main_func: MainCallable[Param, RetType]) -> Generator[None, None, None]:
     if not nicegui.helpers.is_user_simulation():
         # In tests, this function is called multiple within a test due to how nicegui implements the simulation.
         if main_instance.main_func is not None:
@@ -43,8 +43,10 @@ def _active_main_function_context(main_func: MainCallable) -> Generator[None, No
             main_instance.main_func = None
 
 
-def nice_gooey_argparse_main(*, patch_argparse: bool = True) -> Callable[[MainCallable], MainCallable]:
-    def decorator(func: MainCallable) -> MainCallable:
+def nice_gooey_argparse_main(
+    *, patch_argparse: bool = True
+) -> Callable[[MainCallable[Param, RetType]], MainCallable[Param, RetType]]:
+    def decorator(func: MainCallable[Param, RetType]) -> MainCallable[Param, RetType]:
         @functools.wraps(func)
         def wrapper(*args: Param.args, **kwargs: Param.kwargs) -> RetType:
             with _argparse_patch_context(patch=patch_argparse), _active_main_function_context(main_func=func):

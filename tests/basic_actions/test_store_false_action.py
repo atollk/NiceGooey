@@ -23,7 +23,7 @@ async def test_store_false_action(user: User) -> None:
 
 
 @nice_gooey_argparse_main(patch_argparse=False)
-def main():
+def main() -> None:
     parser = NgArgumentParser()
     parser.add_argument("--no-cache", action="store_false", dest="cache", help="Disable cache")
     parser.parse_args()

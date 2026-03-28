@@ -39,7 +39,7 @@ async def test_nargs_three(user: User) -> None:
 
 
 @nice_gooey_argparse_main(patch_argparse=False)
-def main():
+def main() -> None:
     parser = NgArgumentParser()
     parser.add_argument("--coords", nargs=3, type=float, help="Three coordinates (x, y, z)", required=True)
     parser.parse_args()

@@ -37,7 +37,7 @@ async def test_action_group_validates_children(user: User) -> None:
 
 
 @nice_gooey_argparse_main(patch_argparse=False)
-def main():
+def main() -> None:
     parser = NgArgumentParser()
 
     # Create an argument group with a required field

@@ -48,7 +48,7 @@ class OptionalValidationElement(ValidationElement):
             new_ev = ValueChangeEventArguments(
                 value=self.value, previous_value=None, sender=ev.sender, client=ev.client
             )
-            callback(new_ev)
+            callback(new_ev)  # pyrefly: ignore[bad-argument-count]
 
         self.inner_element.on_value_change(wrapped_cb)
         self.checkbox.on_value_change(wrapped_cb)

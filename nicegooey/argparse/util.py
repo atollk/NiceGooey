@@ -45,7 +45,7 @@ class BindingNamespace(argparse.Namespace):
 class CallbackWriter(io.StringIO):
     """a StringIO-based object that calls a function on every write."""
 
-    def __init__(self, callback: Callable[[str], ...], *args, **kwargs) -> None:
+    def __init__(self, callback: Callable[[str], object], *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.callback = callback
 
@@ -54,6 +54,6 @@ class CallbackWriter(io.StringIO):
         self.callback(s)
         return result
 
-    def writelines(self, lines: Iterable[str]) -> None:
+    def writelines(self, lines: Iterable[str]) -> None:  # type: ignore[override]
         for line in lines:
             self.write(line)

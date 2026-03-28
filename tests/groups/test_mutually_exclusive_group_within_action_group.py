@@ -21,7 +21,7 @@ async def test_mutually_exclusive_group_within_action_group(user: User) -> None:
 
 
 @nice_gooey_argparse_main(patch_argparse=False)
-def main():
+def main() -> None:
     parser = NgArgumentParser()
 
     group = parser.add_argument_group(title="Network Options")

@@ -7,7 +7,7 @@ class LocalFilePicker(ui.dialog):
         self,
         directory: str,
         *,
-        upper_limit: str | None = ...,
+        upper_limit: str | None = None,
         multiple: bool = False,
         show_hidden_files: bool = False,
     ) -> None:
@@ -16,7 +16,7 @@ class LocalFilePicker(ui.dialog):
         self.upper_limit = (
             None
             if upper_limit is None
-            else Path(directory if upper_limit == ... else upper_limit).expanduser()
+            else Path(directory if upper_limit is None else upper_limit).expanduser()
         )
         self.show_hidden_files = show_hidden_files
 
@@ -70,6 +70,6 @@ class LocalFilePicker(ui.dialog):
         else:
             self.submit([str(self.path)])
 
-    async def _handle_ok(self):
+    async def _handle_ok(self) -> None:
         rows = await self.grid.get_selected_rows()
         self.submit([r["path"] for r in rows])

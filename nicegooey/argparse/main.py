@@ -19,17 +19,17 @@ if TYPE_CHECKING:
 class NiceGooeyNamespace(argparse.Namespace):
     @dataclasses.dataclass
     class NgState:
-        events: dict[str, nicegui.event.Event[[Any]]] = dataclasses.field(
+        events: dict[str, nicegui.event.Event[[]]] = dataclasses.field(
             default_factory=lambda: defaultdict(nicegui.event.Event)
         )
 
     @override
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any):
         super().__init__(**kwargs)
         self._nicegooey_state = self.NgState()
 
     @override
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         if not isinstance(other, argparse.Namespace):
             return NotImplemented
         self_vars = {k: v for k, v in vars(self).items() if k != "_nicegooey_state"}
@@ -39,7 +39,6 @@ class NiceGooeyNamespace(argparse.Namespace):
     def __setattr__(self, key: str, value: Any) -> None:
         super().__setattr__(key, value)
         ev = self._nicegooey_state.events[key]
-        # pyrefly: ignore[bad-argument-count]
         ev.emit()
 
     def _nicegooey_to_argparse(self) -> argparse.Namespace:

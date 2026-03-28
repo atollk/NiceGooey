@@ -29,7 +29,7 @@ async def test_subparser_with_groups(user: User) -> None:
 
 
 @nice_gooey_argparse_main(patch_argparse=False)
-def main():
+def main() -> None:
     parser = NgArgumentParser()
 
     subparsers = parser.add_subparsers(dest="command", help="Commands")

@@ -44,7 +44,7 @@ async def test_subparser_with_nargs(user: User) -> None:
 
 
 @nice_gooey_argparse_main(patch_argparse=False)
-def main():
+def main() -> None:
     parser = NgArgumentParser()
     subparsers = parser.add_subparsers(dest="command", help="Commands", required=True)
     parser_run = subparsers.add_parser("run", help="Run a command or script")

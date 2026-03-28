@@ -38,7 +38,7 @@ async def test_optional_disabled_when_not_enabled(user: User) -> None:
 
 
 @nice_gooey_argparse_main(patch_argparse=False)
-def main():
+def main() -> None:
     parser = NgArgumentParser()
     parser.add_argument("--name", type=str, help="Your name")
     parser.parse_args()

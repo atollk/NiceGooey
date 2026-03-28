@@ -10,19 +10,18 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "pyrefly>=0.58.0",
     "pytest>=9.0.2",
     "pytest-asyncio>=1.3.0",
     "ruff>=0.14.13",
     "selenium>=4.41.0",
-    "zuban>=0.6.2",
 ]
 
 [tool.ruff]
 line-length = 110
 
-[tool.zuban]
-mode = "default"
-strict = true
+[tool.pyrefly]
+project_excludes = ["tests"]
 
 [tool.tox]
 requires = ["tox>=4.19"]

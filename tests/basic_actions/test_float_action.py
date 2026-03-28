@@ -22,7 +22,7 @@ async def test_float_action(user: User) -> None:
 
 
 @nice_gooey_argparse_main(patch_argparse=False)
-def main():
+def main() -> None:
     parser = NgArgumentParser()
     parser.add_argument("--price", type=float, help="Price", required=True)
     parser.parse_args()

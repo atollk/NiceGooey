@@ -10,7 +10,7 @@ class SyncElement(abc.ABC):
     _disable_sync_to_namespace: bool
     _disable_sync_from_namespace: bool
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._disable_sync_to_namespace = False
         self._disable_sync_from_namespace = False
 

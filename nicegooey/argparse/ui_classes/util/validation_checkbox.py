@@ -14,4 +14,4 @@ class ValidationCheckbox(ui.checkbox, ValidationElement):
         value: bool | None = DEFAULT_PROPS["model-value"] | False,
         on_change: Handler[ValueChangeEventArguments] | None = None,
     ) -> None:
-        super().__init__(text, value=value, on_change=on_change)
+        super().__init__(text, value=value, on_change=on_change)  # zuban: ignore[arg-type]

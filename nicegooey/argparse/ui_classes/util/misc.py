@@ -54,29 +54,33 @@ def add_validation(
             element.error = None
         return
 
-    old_is_function = callable(old_validation)
-    new_is_function = callable(validation)
-    old_is_async_function = old_is_function and is_coroutine_function(old_validation)
-    new_is_async_function = new_is_function and is_coroutine_function(validation)
+    old_is_async_function = not isinstance(old_validation, dict) and is_coroutine_function(old_validation)
+    new_is_async_function = not isinstance(validation, dict) and is_coroutine_function(validation)
 
     # If both are functions but exactly one is async, they cannot be combined smoothly.
-    if old_is_function and new_is_function and (old_is_async_function != new_is_async_function):
+    if (
+        isinstance(old_validation, dict)
+        and isinstance(validation, dict)
+        and (old_is_async_function != new_is_async_function)
+    ):
         raise ValueError(
             "Cannot merge two validation functions, one of which is async, the other of which is sync."
         )
 
-    if not old_is_function and not new_is_function:
+    new_validation: ValidationFunction | ValidationDict | None = None
+
+    if isinstance(old_validation, dict) and isinstance(validation, dict):
         # Both are dicts: Simply merge them
         new_validation = {**old_validation, **validation}
     else:
-        target_async = new_is_async_function if new_is_function else old_is_async_function
+        target_async = new_is_async_function if isinstance(validation, dict) else old_is_async_function
 
         # Make sure that both are functions.
-        if old_is_function:
+        if not isinstance(old_validation, dict):
             old_f = old_validation
         else:
             old_f = convert_dict_to_func(old_validation, target_async)
-        if new_is_function:
+        if not isinstance(validation, dict):
             new_f = validation
         else:
             new_f = convert_dict_to_func(validation, target_async)
@@ -85,15 +89,16 @@ def add_validation(
         if target_async:
 
             async def new_validation(v: Any) -> str | None:
-                if (r := await old_f(v)) is not None:
+                r = await old_f(v)  # pyrefly: ignore[not-async]
+                if r is not None:
                     return r
-                return await new_f(v)
+                return await new_f(v)  # pyrefly: ignore[not-async]
         else:
 
             def new_validation(v: Any) -> str | None:
                 if (r := old_f(v)) is not None:
-                    return r
-                return new_f(v)
+                    return r  # pyrefly: ignore[bad-return]
+                return new_f(v)  # pyrefly: ignore[bad-return]
 
     element.validation = new_validation
     if not element._auto_validation:

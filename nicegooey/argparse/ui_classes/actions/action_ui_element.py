@@ -2,7 +2,7 @@ import abc
 import argparse
 import builtins
 import dataclasses
-from typing import Type, override, Final, Callable, Any
+from typing import override, Final, Callable, Any, cast
 
 from nicegui import ui, ElementFilter
 from nicegui.elements.mixins.validation_element import ValidationElement
@@ -139,6 +139,7 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
         """Creates a ValueElement that represents the input of a single item matching the type of this action."""
         assert self.inner_elements is None
         self._render_inner_elements()
+        assert self.inner_elements is not None
 
         action_info = self._action_info
 
@@ -218,6 +219,7 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
     def validate(self) -> bool:
         if not self.is_enabled():
             return True
+        assert self.inner_elements is not None
         for el in [
             self.inner_elements.basic_element,
             self.inner_elements.nargs_wrapper_element,
@@ -233,7 +235,7 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
             return False
         if self.inner_elements.enable_box_element is None:
             return True
-        return self.inner_elements.enable_box_element.value
+        return cast(bool, self.inner_elements.enable_box_element.value)
 
     def deactivate(self) -> None:
         """Undoes any actions performed by this element and resets the namespace fields. Notably, this does not set the namespace field to the action's default but erases it completely."""
@@ -257,21 +259,21 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
             )
 
         basic_element = find_exactly_one_element(
-            ElementFilter(marker=self.BASIC_ELEMENT_MARKER).within(instance=outmost), ValidationElement
+            ElementFilter(marker=self.BASIC_ELEMENT_MARKER, kind=ValidationElement).within(instance=outmost)
         )
         assert basic_element is not None
         basic_element_inner = find_exactly_one_element(
-            ElementFilter(marker=self.BASIC_ELEMENT_MARKER + self.LIST_INNER_ELEMENT_MARKER_SUFFIX).within(
-                instance=outmost
-            ),
-            ValidationElement,
+            ElementFilter(
+                marker=self.BASIC_ELEMENT_MARKER + self.LIST_INNER_ELEMENT_MARKER_SUFFIX,
+                kind=ValidationElement,
+            ).within(instance=outmost),
         )
         nargs_wrapper_element = find_exactly_one_element(
-            ElementFilter(marker=self.NARGS_WRAPPER_MARKER).within(instance=outmost), ValidationElement
+            ElementFilter(marker=self.NARGS_WRAPPER_MARKER, kind=ValidationElement).within(instance=outmost)
         )
         assert nargs_wrapper_element is not None
         enable_box_element = find_exactly_one_element(
-            ElementFilter(marker=self.ENABLE_PARAMETER_BOX_MARKER).within(instance=outmost), ValueElement
+            ElementFilter(marker=self.ENABLE_PARAMETER_BOX_MARKER, kind=ValueElement).within(instance=outmost)
         )
 
         self.inner_elements = self.InnerElements(
@@ -428,11 +430,9 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
         return required_wrapper
 
 
-def find_exactly_one_element[T](filter: ElementFilter, typ: Type[T]) -> T | None:
+def find_exactly_one_element[T: ui.element](filter: ElementFilter[T]) -> T | None:
     elements = list(filter)
     if not elements:
         return None
     assert len(elements) == 1
-    e = elements[0]
-    assert isinstance(e, typ)
-    return e
+    return elements[0]

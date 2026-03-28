@@ -27,10 +27,13 @@ class SubparsersUi(UiWrapper, SyncElement):
 
         subparsers: dict[str, argparse.ArgumentParser] = self.subparsers_action.choices
         assert isinstance(subparsers, dict)
+
+        def get_ui_tabs() -> ui.tabs:
+            assert self.ui_tabs is not None
+            return self.ui_tabs
+
         self.subparsers = [
-            SubparserUi(
-                parent=self.parent, title=title, get_parent_tabs=lambda: self.ui_tabs, subparser=subparser
-            )
+            SubparserUi(parent=self.parent, title=title, get_parent_tabs=get_ui_tabs, subparser=subparser)
             for title, subparser in subparsers.items()
         ]
 
@@ -56,13 +59,13 @@ class SubparsersUi(UiWrapper, SyncElement):
     def _ui_state_to_value(self) -> Any:
         return self.active_tab_title
 
-    def _render_tab_panels(self, none_tab: ui.tab | None):
+    def _render_tab_panels(self, none_tab: ui.tab | None) -> None:
         def on_tab_change(ev: nicegui.events.ValueChangeEventArguments) -> None:
             # Deactivate the previous tab
             child: SubparserUi | None = None
             if self.active_tab_title is not None:
-                child = next(p for p in self.subparsers if p.title == self.active_tab_title)
-                child.deactivate()
+                child = p = next(p for p in self.subparsers if p.title == self.active_tab_title)
+                p.deactivate()
             # Memorize the next tab
             self.active_tab_title = ev.value
             # Store in namespace

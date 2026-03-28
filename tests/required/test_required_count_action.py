@@ -43,7 +43,7 @@ async def test_required_count_validation(user: User) -> None:
 
 
 @nice_gooey_argparse_main(patch_argparse=False)
-def main():
+def main() -> None:
     parser = NgArgumentParser()
     parser.add_argument("--verbose", "-v", action="count", required=True, help="Verbosity level")
     parser.parse_args()

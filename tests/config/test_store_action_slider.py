@@ -36,7 +36,7 @@ async def test_store_action_slider(user: User) -> None:
 
 
 @nice_gooey_argparse_main(patch_argparse=False)
-def main():
+def main() -> None:
     parser = NgArgumentParser()
     volume_action = parser.add_argument("--volume", type=int, help="Volume level", default=0)
 

@@ -31,7 +31,7 @@ async def test_binding_updates_all_fields(user: User) -> None:
 
 
 @nice_gooey_argparse_main(patch_argparse=False)
-def main():
+def main() -> None:
     parser = NgArgumentParser()
     parser.add_argument(
         "--name1", dest="name", type=str, default="default", help="Name field 1", required=True

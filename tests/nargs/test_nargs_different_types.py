@@ -69,7 +69,7 @@ async def test_nargs_different_types(user: User) -> None:
 
 
 @nice_gooey_argparse_main(patch_argparse=False)
-def main():
+def main() -> None:
     parser = NgArgumentParser()
     parser.add_argument("--ints", nargs="+", type=int, help="One or more integers", required=True)
     parser.add_argument("--floats", nargs="*", type=float, help="Zero or more floats", required=True)

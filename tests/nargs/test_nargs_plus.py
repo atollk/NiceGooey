@@ -36,7 +36,7 @@ async def test_nargs_plus(user: User) -> None:
 
 
 @nice_gooey_argparse_main(patch_argparse=False)
-def main():
+def main() -> None:
     parser = NgArgumentParser()
     parser.add_argument(
         "--required-items", nargs="+", type=str, help="One or more items (required)", required=True

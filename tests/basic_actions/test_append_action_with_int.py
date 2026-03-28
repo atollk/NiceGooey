@@ -35,7 +35,7 @@ async def test_append_action_with_int(user: User) -> None:
 
 
 @nice_gooey_argparse_main(patch_argparse=False)
-def main():
+def main() -> None:
     parser = NgArgumentParser()
     parser.add_argument("--number", action="append", type=int, dest="numbers", help="Add numbers")
     parser.parse_args()

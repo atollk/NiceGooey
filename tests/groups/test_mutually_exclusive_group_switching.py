@@ -71,7 +71,7 @@ async def test_mutually_exclusive_group_switching(user: User) -> None:
 
 
 @nice_gooey_argparse_main(patch_argparse=False)
-def main():
+def main() -> None:
     parser = NgArgumentParser()
 
     me_group = parser.add_mutually_exclusive_group()

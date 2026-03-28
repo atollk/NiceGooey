@@ -29,7 +29,7 @@ async def test_subparsers_with_external_argument(user: User) -> None:
 
 
 @nice_gooey_argparse_main(patch_argparse=False)
-def main():
+def main() -> None:
     parser = NgArgumentParser()
 
     parser.add_argument("--global-option", type=str, help="Global option visible everywhere")

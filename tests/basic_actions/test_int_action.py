@@ -20,7 +20,7 @@ async def test_int_action(user: User) -> None:
 
 
 @nice_gooey_argparse_main(patch_argparse=False)
-def main():
+def main() -> None:
     parser = NgArgumentParser()
     parser.add_argument("--age", type=int, help="Your age", required=True)
     parser.parse_args()

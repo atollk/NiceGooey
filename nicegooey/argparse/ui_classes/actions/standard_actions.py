@@ -71,8 +71,9 @@ class ListActionUiElement[ActionT: argparse.Action](ActionUiElement[ActionT], ab
         assert self.inner_elements is not None
         self.inner_elements.nargs_wrapper_element.classes("w-xl")
         self.list_input_element = find_exactly_one_element(
-            ElementFilter(marker=self.LIST_ELEMENT_MARKER).within(instance=self.inner_elements.outmost),
-            ui.input_chips,
+            ElementFilter(marker=self.LIST_ELEMENT_MARKER, kind=ui.input_chips).within(
+                instance=self.inner_elements.outmost
+            ),
         )
 
     @override
@@ -85,7 +86,7 @@ class ListActionUiElement[ActionT: argparse.Action](ActionUiElement[ActionT], ab
     @classmethod
     def _render_action_required(
         cls, action_info: ActionInfoHelper, nargs_wrapper_element: Callable[[], ValidationElement]
-    ) -> ui.element:
+    ) -> ValidationElement:
         def on_add_button_click(
             list_element: ValidationElement,
             inner_element: ValidationElement,
@@ -157,6 +158,7 @@ class ListActionUiElement[ActionT: argparse.Action](ActionUiElement[ActionT], ab
 
     @override
     def validate(self) -> bool:
+        assert self.list_input_element is not None
         return super().validate() and self.list_input_element.validate()
 
 

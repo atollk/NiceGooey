@@ -37,7 +37,7 @@ async def test_store_action_radio(user: User) -> None:
 
 
 @nice_gooey_argparse_main(patch_argparse=False)
-def main():
+def main() -> None:
     parser = NgArgumentParser()
     color_action = parser.add_argument(
         "--color", type=str, choices=["red", "green", "blue"], help="Choose a color"

@@ -56,7 +56,7 @@ async def test_list_actions_with_same_dest_share_list(user: User) -> None:
 
 
 @nice_gooey_argparse_main(patch_argparse=False)
-def main():
+def main() -> None:
     parser = NgArgumentParser()
     parser.add_argument("--add-a", action="append", dest="items", type=str, help="Add via A")
     parser.add_argument("--add-b", action="append", dest="items", type=str, help="Add via B")

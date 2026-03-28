@@ -46,13 +46,13 @@ def store_action_radio() -> Type[StoreActionUiElement]:
         @override
         @classmethod
         def _render_action_single(cls, action_info: ActionInfoHelper) -> ValidationElement:
-            options = list(action_info.action.choices)
+            options = list(action_info.action.choices or [])
             if not options:
                 raise ValueError(
                     "store_action_radio can only be used when 'choices' are specified on the action."
                 )
             basic_element = ValidationWrapper(
-                validation={}, value_element=lambda: ui.radio(options=list(action_info.action.choices))
+                validation={}, value_element=lambda: ui.radio(options=list(action_info.action.choices or []))
             )
             basic_element.mark(cls.BASIC_ELEMENT_MARKER)
             return basic_element
