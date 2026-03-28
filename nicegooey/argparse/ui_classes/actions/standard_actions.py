@@ -192,6 +192,7 @@ class CountActionUiElement(ActionUiElement[argparse.Action]):
     @staticmethod
     def _create_pseudo_action(action: argparse.Action) -> argparse.Action:
         """Create a pseudo action that behaves like the count action but can be used to initialize the input element."""
+        deprecated = action.deprecated if hasattr(action, "deprecated") else False
         return argparse._StoreAction(
             option_strings=action.option_strings,
             dest=action.dest,
@@ -201,7 +202,7 @@ class CountActionUiElement(ActionUiElement[argparse.Action]):
             required=True,
             help=action.help,
             metavar=action.metavar,
-            deprecated=action.deprecated if hasattr(action, "deprecated") else False,
+            deprecated=deprecated,  # pyrefly: ignore[unexpected-keyword]
         )
 
     @override

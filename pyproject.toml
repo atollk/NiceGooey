@@ -23,21 +23,24 @@ line-length = 110
 [tool.pyrefly]
 project_excludes = ["tests"]
 
+[tool.setuptools]
+py-modules = []
+
 [tool.tox]
 requires = ["tox>=4.19"]
-env_list = ["3.14t", "3.14", "3.13", "3.12"]
+env_list = ["3.14", "3.13", "3.12"]
 
 [tool.tox.gh-actions]
 python = """
 	3.12: py312
 	3.13: py313
 	3.14: py314
-	3.14t: py314t
 	"""
 
 [tool.tox.env_run_base]
 description = "Run test under {base_python}"
-commands = [["pytest"]]
+dependency_groups = ["dev"]
+commands = [["python", "-m", "pytest"]]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
