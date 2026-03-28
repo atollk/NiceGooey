@@ -8,6 +8,10 @@ dependencies = [
     "nicegui>=3.9.0",
 ]
 
+[project.urls]
+sourcecode = "https://codeberg.org/atollk/NiceGooey/"
+GitHub = "https://github.com/atollk/NiceGooey/"
+
 [dependency-groups]
 dev = [
     "pyrefly>=0.58.0",
