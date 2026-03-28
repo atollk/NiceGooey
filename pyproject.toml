@@ -23,9 +23,6 @@ line-length = 110
 [tool.pyrefly]
 project_excludes = ["tests"]
 
-[tool.setuptools]
-py-modules = []
-
 [tool.tox]
 requires = ["tox>=4.19"]
 env_list = ["3.14", "3.13", "3.12"]
