@@ -1,6 +1,6 @@
 [project]
 name = "nicegooey"
-version = "0.1.0"
+version = "1.0.0b1"
 description = "Turn your Python CLI program into a modern web-based UI"
 readme = "README.md"
 requires-python = ">=3.12"

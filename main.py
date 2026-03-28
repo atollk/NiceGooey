@@ -16,11 +16,19 @@ def process(parser: argparse.ArgumentParser, args: argparse.Namespace):
 @nice_gooey_argparse_main(patch_argparse=False)
 def main1(*args, **kwargs):
     parser = NgArgumentParser()
-    parser.add_argument("--tag", action="append", type=str, dest="tags", required=True, help="Add tags")
+
+    # Add an argument with custom validation
+    age_action = parser.add_argument("--age", type=int, help="Your age", default=20)
+
+    # Add custom validation: age must be >= 18
+    def validate_age(value: int) -> str | None:
+        if value < 18:
+            return "Age must be at least 18"
+        return None
+
+    parser.nicegooey_config.action_config[age_action].validation = validate_age
+
     parser.parse_args()
-    # parser = uv_parser()
-    ns = parser.parse_args()
-    print(ns)
 
 
 def uv_parser() -> NgArgumentParser:

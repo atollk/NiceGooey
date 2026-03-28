@@ -7,6 +7,9 @@ Based on [Gooey](https://github.com/chriskiehl/Gooey) and created using [nicegui
 NiceGooey transforms your CLI tool written with Python's [argparse](https://docs.python.org/3/library/argparse.html) into
 a modern web UI with just a single line of code.
 
+(NiceGooey is currently released as a Beta.
+It is functional and no major refactorings are planned, but some breaking changes and bug might happen.)
+
 # Minimal example
 
 Just importing and adding the annotation `@nice_gooey_argparse_main(patch_argparse=True)` to your main function is
@@ -62,17 +65,28 @@ def main1(*args, **kwargs):
 # Configuring your application
 
 By setting the `nicegooey_config` field of an `NgArgumentParser` instance, you can configure the style and behavior of your page.
-The `NiceGooeyConfig` class offers the following options:
+
+### `NiceGooeyConfig`
 
 **root_card_class** <br>
-A string of space-separated Tailwind classes that are applied to the top-level card widget.
-Most useful for specifying a certain size with "w-[size]" or "max-w-[size]".
+A space-separated list of Tailwind classes to be applied to the root of the argument UI.
+Especially useful to pass something like 'w-4xl' to limit the width on large screens.
 
-**action_element_overrides** <br>
-A dict that maps action objects (which are created and returned by `add_argument`) to special widget classes to render them.
-The module `nicegooey.argparse.ui_classes.actions.action_alternatives` contains pre-defined alternatives to existing standards,
-like a slider with minimum and maximum limits instead of a free-form number input. <br>
-If you are interested in writing your own class, consider looking at the `action_alternatives` for a starting point.
+**action_config** <br>
+A dict that maps parser action objects to `ActionConfig` classes.
+Use this to set configurations affecting individual actions.
+
+### `ActionConfig`
+
+**element_override** <br>
+If set, this class is instantiated to display the widget for this element in the UI instead of the default.
+For example, use this to render a slider with min and max limits, instead of a numeric input field.
+Look at `nicegooey.argparse.ui_classes.actions.action_alternatives` for predefined options.
+
+**validation** <br>
+A callable that is run when "Submit" is pressed. The value of the action is passed as the argument.
+If the function returns a string, the process is stopped and the string is shown as an error.
+
 
 # License
 

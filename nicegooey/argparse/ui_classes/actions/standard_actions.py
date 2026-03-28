@@ -16,13 +16,13 @@ class StoreActionUiElement(ActionUiElement[argparse._StoreAction]):
     def _ui_state_to_value(self) -> Any:
         assert self.inner_elements is not None
         if not self.is_enabled():
-            return ActionInfoHelper(action=self.action, parser=self._parser).action_default()
+            return ActionInfoHelper(action=self.action, parser=self._parser).default()
         v = self.inner_elements.nargs_wrapper_element.value
         ns = argparse.Namespace()
         ns.__setattr__(self.action.dest, getattr(self.namespace, self.action.dest, None))
         try:
             action_info = ActionInfoHelper(action=self.action, parser=self._parser)
-            t = action_info.action_type_with_nargs()
+            t = action_info.type_with_nargs()
             cast = t(v)
         except (TypeError, ValueError):
             pass
@@ -43,7 +43,7 @@ class StoreConstActionUiElement(ActionUiElement[argparse._StoreConstAction]):
         # This logic doesn't matter because the value isn't actually used, but it's fun to have here :)
         if value == self.action.const:
             el.value = True
-        elif value == ActionInfoHelper(action=self.action, parser=self._parser).action_default():
+        elif value == ActionInfoHelper(action=self.action, parser=self._parser).default():
             el.value = False
         else:
             el.value = None
@@ -51,7 +51,7 @@ class StoreConstActionUiElement(ActionUiElement[argparse._StoreConstAction]):
     @override
     def _ui_state_to_value(self) -> Any:
         if not self.is_enabled():
-            return ActionInfoHelper(action=self.action, parser=self._parser).action_default()
+            return ActionInfoHelper(action=self.action, parser=self._parser).default()
         ns = argparse.Namespace()
         assert self._parser is not None
         self.action(self._parser, ns, None)
@@ -124,11 +124,11 @@ class ListActionUiElement[ActionT: argparse.Action](ActionUiElement[ActionT], ab
             return []
         assert self.inner_elements is not None
         if not self.is_enabled():
-            return ActionInfoHelper(action=self.action, parser=self._parser).action_default()
+            return ActionInfoHelper(action=self.action, parser=self._parser).default()
         v = self.list_input_element.value
         assert isinstance(v, list) or v is None
         action_info = ActionInfoHelper(action=self.action, parser=self._parser)
-        return [action_info.action_type_with_nargs()(u) for u in (v or [])]
+        return [action_info.type_with_nargs()(u) for u in (v or [])]
 
     # TODO: this override is almost entirely duplicate code; can we make this nicer?
     @override
@@ -139,14 +139,14 @@ class ListActionUiElement[ActionT: argparse.Action](ActionUiElement[ActionT], ab
         assert self.list_input_element is not None
 
         # Evaluate whether the element should be disabled or enabled (if non-required).
-        typ = self._action_info.action_type()
+        typ = self._action_info.type()
         try:
             typ(value)
         except Exception:
             value_is_valid = False
         else:
             value_is_valid = True
-        disable = value is None or not value_is_valid or value == self._action_info.action_default()
+        disable = value is None or not value_is_valid or value == self._action_info.default()
 
         # Set the values of the UI elements.
         if self.inner_elements.enable_box_element is not None:

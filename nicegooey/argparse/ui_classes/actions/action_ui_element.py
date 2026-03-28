@@ -16,7 +16,6 @@ from ..util.optional_value_element import OptionalValidationElement
 from ..util.sync_element import SyncElement
 from ..util.ui_wrapper import UiWrapper
 from ..util.validation_checkbox import ValidationCheckbox
-from ... import NiceGooeyConfig
 from ...main import NiceGooeyMain, NiceGooeyNamespace, main_instance
 from .action_info_helper import ActionInfoHelper
 
@@ -57,7 +56,8 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
             StoreConstActionUiElement,
         )
 
-        action_config = parent.parser_config.action_config.get(action, NiceGooeyConfig.ActionConfig())
+        assert parent.parent_parser is not None
+        action_config = ActionInfoHelper(action=action, parser=parent.parent_parser).ng_config()
         if (override := action_config.element_override) is not None:
             return override(parent=parent, action=action)
 
@@ -146,10 +146,10 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
         # Configure validation
         def _input_element_validate(value: Any) -> str | None:
             """Used by `_create_input_element_generic` as the validation function for the input element. Validates the value by trying to cast it to the action's type by default."""
-            if action_info.action_nargs() == Nargs.OPTIONAL and value is None:
+            if action_info.nargs() == Nargs.OPTIONAL and value is None:
                 return "Value is required"
             try:
-                action_info.action_type_with_nargs()(value)
+                action_info.type_with_nargs()(value)
                 return None
             except Exception as e:
                 return str(e)
@@ -160,9 +160,7 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
 
         # Set default values
         self.inner_elements.nargs_wrapper_element.value = (
-            action_info.action_const()
-            if action_info.action_nargs() == Nargs.OPTIONAL
-            else action_info.action_default()
+            action_info.const() if action_info.nargs() == Nargs.OPTIONAL else action_info.default()
         )
         if self.action.choices:
             el = self.inner_elements.basic_element_inner or self.inner_elements.basic_element
@@ -189,14 +187,14 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
         assert self.inner_elements is not None
 
         # Evaluate whether the element should be disabled or enabled (if non-required).
-        typ = self._action_info.action_type()
+        typ = self._action_info.type()
         try:
             typ(value)
         except Exception:
             value_is_valid = False
         else:
             value_is_valid = True
-        disable = value is None or not value_is_valid or value == self._action_info.action_default()
+        disable = value is None or not value_is_valid or value == self._action_info.default()
 
         # Set the values of the UI elements.
         if self.inner_elements.enable_box_element is not None:
@@ -211,14 +209,17 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
         assert self.inner_elements is not None
 
         if not self.is_enabled():
-            value = self._action_info.action_default()
+            value = self._action_info.default()
         else:
             value = self.inner_elements.nargs_wrapper_element.value
         return value
 
     def validate(self) -> bool:
+        # If the element is disabled, it's always valid.
         if not self.is_enabled():
             return True
+
+        # Otherwise, check every sub-element for validation.
         assert self.inner_elements is not None
         for el in [
             self.inner_elements.basic_element,
@@ -228,6 +229,14 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
         ]:
             if el is not None and not el.validate():
                 return False
+
+        # Check custom user logic, if any.
+        custom_validation = self._action_info.ng_config().validation
+        if err := custom_validation(self._ui_state_to_value()):
+            self.inner_elements.required_wrapper_element.error = err
+            return False
+
+        # Validation passed
         return True
 
     def is_enabled(self) -> bool:
@@ -293,7 +302,7 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
             choices = list(action_info.action.choices)
             basic_element = MaxWidthSelect(options=choices)
         else:
-            action_type = action_info.action_type()
+            action_type = action_info.type()
             match action_type:
                 case builtins.bool:
                     basic_element = ValidationCheckbox()
@@ -359,7 +368,7 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
         cls, action_info: ActionInfoHelper, basic_element: Callable[[], ValidationElement]
     ) -> ValidationElement:
         """Creates and returns an element that wraps the basic element depending on the nargs of this action."""
-        nargs = action_info.action_nargs()
+        nargs = action_info.nargs()
         nargs_value_element: ValidationElement
         inner_element = list_add_button = None
         match nargs:
@@ -367,7 +376,7 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
                 nargs_value_element = basic_element()
             case Nargs.OPTIONAL:
                 nargs_value_element = OptionalValidationElement(
-                    inner=basic_element, none_value=action_info.action_const()
+                    inner=basic_element, none_value=action_info.const()
                 )
             case Nargs.ZERO_OR_MORE:
                 nargs_value_element, inner_element, list_add_button = cls._render_action_list(basic_element)

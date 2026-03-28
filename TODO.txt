@@ -1,2 +1,0 @@
-- pypi publish workflow
-- custom validation logic
