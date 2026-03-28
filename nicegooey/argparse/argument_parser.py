@@ -34,7 +34,7 @@ class NiceGooeyConfig:
 
         element_override: type["ActionUiElement"] | None = None
 
-    root_card_class: str = "w-full"
+    root_card_class: str = "max-w-4xl"
     action_config: dict[argparse.Action, ActionConfig] = dataclasses.field(
         default_factory=lambda: defaultdict(NiceGooeyConfig.ActionConfig)
     )

@@ -37,7 +37,8 @@ See below for more info about `nicegooey_config`.
 
 ```python
 from nicegooey.argparse import nice_gooey_argparse_main, NgArgumentParser, NiceGooeyConfig
-from nicegooey.argparse.ui_classes.actions.action_alternatives import store_action_slider_element
+from nicegooey.argparse.ui_classes.actions.action_alternatives import store_action_slider
+
 
 @nice_gooey_argparse_main(patch_argparse=False)
 def main1(*args, **kwargs):
@@ -48,7 +49,7 @@ def main1(*args, **kwargs):
         root_card_class="max-w-4xl",  # don't take up the entire screen on wide desktops
         action_element_overrides={
             # Display the age as a slider instead of a number field.
-            my_age_action: store_action_slider_element(min=0, max=100, step=1)
+            my_age_action: store_action_slider(min=0, max=100, step=1)
         }
     )
     namespace = parser.parse_args()

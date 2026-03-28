@@ -6,6 +6,7 @@ from typing import Type, override, Final, Callable, Any
 
 from nicegui import ui, ElementFilter
 from nicegui.elements.mixins.validation_element import ValidationElement
+from nicegui.elements.mixins.value_element import ValueElement
 
 from ..util.disableable_div import DisableableDiv
 from ..util.grouping_sync_ui import UiWrapperSyncElement
@@ -15,6 +16,7 @@ from ..util.optional_value_element import OptionalValidationElement
 from ..util.sync_element import SyncElement
 from ..util.ui_wrapper import UiWrapper
 from ..util.validation_checkbox import ValidationCheckbox
+from ... import NiceGooeyConfig
 from ...main import NiceGooeyMain, NiceGooeyNamespace, main_instance
 from .action_info_helper import ActionInfoHelper
 
@@ -31,7 +33,7 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
         basic_element: ValidationElement
         basic_element_inner: ValidationElement | None
         nargs_wrapper_element: ValidationElement
-        enable_box_element: ui.checkbox | None
+        enable_box_element: ValueElement | None
         required_wrapper_element: ValidationElement
         outmost: ui.element
 
@@ -55,7 +57,7 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
             StoreConstActionUiElement,
         )
 
-        action_config = parent.parser_config.action_config[action]
+        action_config = parent.parser_config.action_config.get(action, NiceGooeyConfig.ActionConfig())
         if (override := action_config.element_override) is not None:
             return override(parent=parent, action=action)
 
@@ -162,10 +164,8 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
             else action_info.action_default()
         )
         if self.action.choices:
-            el = self.inner_elements.basic_element
-            if not isinstance(el, ui.select):
-                el = self.inner_elements.basic_element_inner
-            assert isinstance(el, ui.select)
+            el = self.inner_elements.basic_element_inner or self.inner_elements.basic_element
+            assert hasattr(el, "options")
             el.value = action_info.action.const or next(iter(el.options))
 
         # Bind the namespace value to the element which handles the value.
@@ -270,7 +270,7 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
         )
         assert nargs_wrapper_element is not None
         enable_box_element = find_exactly_one_element(
-            ElementFilter(marker=self.ENABLE_PARAMETER_BOX_MARKER).within(instance=outmost), ui.checkbox
+            ElementFilter(marker=self.ENABLE_PARAMETER_BOX_MARKER).within(instance=outmost), ValueElement
         )
 
         return self.InnerElements(

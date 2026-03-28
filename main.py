@@ -1,8 +1,8 @@
 import argparse
 import time
 
+
 from nicegooey.argparse import NgArgumentParser, nice_gooey_argparse_main, NiceGooeyConfig
-from nicegooey.argparse.ui_classes.actions.action_alternatives import store_action_slider_element
 
 
 def process(parser: argparse.ArgumentParser, args: argparse.Namespace):
@@ -12,33 +12,15 @@ def process(parser: argparse.ArgumentParser, args: argparse.Namespace):
 
 
 @nice_gooey_argparse_main(patch_argparse=False)
-def main0(*args, **kwargs):
-    parser = NgArgumentParser()
-    parser.add_argument("--append", action="append", type=str, help="Append multiple values", nargs="*")
-    namespace = parser.parse_args()
-    print(namespace)
-
-
-@nice_gooey_argparse_main(patch_argparse=False)
 def main1(*args, **kwargs):
     parser = NgArgumentParser()
-    parser.add_argument("--my-name", type=str, required=True)
-    my_age_action = parser.add_argument("--my-age", type=int, required=True)
-    parser.nicegooey_config = NiceGooeyConfig(
-        root_card_class="max-w-4xl",  # don't take up the entire screen on wide desktops
-        action_config={
-            # Display the age as a slider instead of a number field.
-            my_age_action: NiceGooeyConfig.ActionConfig(
-                element_override=store_action_slider_element(min=0, max=100, step=1),
-            ),
-        },
-    )
-    namespace = parser.parse_args()
-    print(f"Hi, {namespace.my_name}")
+    parser.add_argument("--number", action="append", type=int, dest="numbers", help="Add numbers")
+    parser.parse_args()
+    ns = parser.parse_args()
 
     # parser = uv_parser()
-    # ns = parser.parse_args()
-    # print(ns)
+    ns = parser.parse_args()
+    print(ns)
 
 
 def uv_parser() -> NgArgumentParser:
@@ -103,4 +85,4 @@ def main2(required: bool = False, nargs: int | str | None = None):
 
 
 if __name__ in {"__main__", "__mp_main__"}:
-    main0(required=False, nargs="*")
+    main1(required=False, nargs="*")
