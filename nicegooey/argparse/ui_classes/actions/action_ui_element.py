@@ -138,7 +138,7 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
     def _render_input_element(self) -> None:
         """Creates a ValueElement that represents the input of a single item matching the type of this action."""
         assert self.inner_elements is None
-        self.inner_elements = self._render_inner_elements()
+        self._render_inner_elements()
 
         action_info = self._action_info
 
@@ -239,7 +239,8 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
         """Undoes any actions performed by this element and resets the namespace fields. Notably, this does not set the namespace field to the action's default but erases it completely."""
         setattr(self.namespace, self.action.dest, None)
 
-    def _render_inner_elements(self) -> InnerElements:
+    def _render_inner_elements(self) -> None:
+        """Renders all inner elements by calling the respective class functions, and sets the result to self.inner_elements."""
         action_info = self._action_info
 
         if self.action.option_strings:
@@ -273,7 +274,7 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
             ElementFilter(marker=self.ENABLE_PARAMETER_BOX_MARKER).within(instance=outmost), ValueElement
         )
 
-        return self.InnerElements(
+        self.inner_elements = self.InnerElements(
             basic_element=basic_element,
             basic_element_inner=basic_element_inner,
             nargs_wrapper_element=nargs_wrapper_element,

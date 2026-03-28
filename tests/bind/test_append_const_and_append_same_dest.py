@@ -4,6 +4,7 @@ from nicegui.testing import User
 from nicegooey.argparse import NgArgumentParser, nice_gooey_argparse_main
 from nicegooey.argparse.main import main_instance
 from nicegooey.argparse.ui_classes.actions.action_ui_element import ActionUiElement
+from nicegooey.argparse.ui_classes.actions.standard_actions import ListActionUiElement
 from tests.conftest import find_within
 
 
@@ -21,7 +22,7 @@ async def test_append_const_and_append_same_dest(user: User) -> None:
     # Find the add button for append_const action (--add-flag)
     # Now elements have both the action marker and their type marker
     add_flag_button = find_within(
-        user, marker=ActionUiElement.ADD_BUTTON_MARKER, within_marker="ng-action-add-flag"
+        user, marker=ListActionUiElement.LIST_ADD_BUTTON_MARKER, within_marker="ng-action-add-flag"
     )
     add_flag_button.click()
     assert main_instance.namespace.items == ["FLAG"]
@@ -29,11 +30,11 @@ async def test_append_const_and_append_same_dest(user: User) -> None:
     # Find input and button for append action (--add-item)
     input_field = find_within(
         user,
-        marker=ActionUiElement.BASIC_ELEMENT_MARKER + ActionUiElement.LIST_INNER_ELEMENT_MARKER_SUFFIX,
+        marker=ActionUiElement.BASIC_ELEMENT_MARKER,
         within_marker="ng-action-add-item",
     )
     add_item_button = find_within(
-        user, marker=ActionUiElement.ADD_BUTTON_MARKER, within_marker="ng-action-add-item"
+        user, marker=ListActionUiElement.LIST_ADD_BUTTON_MARKER, within_marker="ng-action-add-item"
     )
 
     # Add a custom item

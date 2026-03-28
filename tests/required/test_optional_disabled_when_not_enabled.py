@@ -4,6 +4,7 @@ from nicegui.testing import User
 
 from nicegooey.argparse import NgArgumentParser, nice_gooey_argparse_main
 from nicegooey.argparse.main import main_instance
+from nicegooey.argparse.ui_classes.actions.action_ui_element import ActionUiElement
 
 
 @pytest.mark.nicegui_main_file(__file__)
@@ -14,7 +15,7 @@ async def test_optional_disabled_when_not_enabled(user: User) -> None:
     await user.should_see("name")
 
     # Find the enable checkbox and input field
-    enable_checkbox = user.find(kind=ui.checkbox, marker="ng-action-type-input-enable-parameter-box")
+    enable_checkbox = user.find(kind=ui.checkbox, marker=ActionUiElement.ENABLE_PARAMETER_BOX_MARKER)
     input_field = user.find(ui.input)
 
     # Initially, the namespace value should be empty string (checkbox is unchecked by default)

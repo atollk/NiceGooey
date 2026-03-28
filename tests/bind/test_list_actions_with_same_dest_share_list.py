@@ -4,6 +4,7 @@ from nicegui.testing import User
 from nicegooey.argparse import NgArgumentParser, nice_gooey_argparse_main
 from nicegooey.argparse.main import main_instance
 from nicegooey.argparse.ui_classes.actions.action_ui_element import ActionUiElement
+from nicegooey.argparse.ui_classes.actions.standard_actions import ListActionUiElement
 from tests.conftest import find_within
 
 
@@ -21,18 +22,22 @@ async def test_list_actions_with_same_dest_share_list(user: User) -> None:
     # Find elements for --add-a action using action-specific markers
     input_a = find_within(
         user,
-        marker=ActionUiElement.BASIC_ELEMENT_MARKER + ActionUiElement.LIST_INNER_ELEMENT_MARKER_SUFFIX,
+        marker=ActionUiElement.BASIC_ELEMENT_MARKER,
         within_marker="ng-action-add-a",
     )
-    button_a = find_within(user, marker=ActionUiElement.ADD_BUTTON_MARKER, within_marker="ng-action-add-a")
+    button_a = find_within(
+        user, marker=ListActionUiElement.LIST_ADD_BUTTON_MARKER, within_marker="ng-action-add-a"
+    )
 
     # Find elements for --add-b action using action-specific markers
     input_b = find_within(
         user,
-        marker=ActionUiElement.BASIC_ELEMENT_MARKER + ActionUiElement.LIST_INNER_ELEMENT_MARKER_SUFFIX,
+        marker=ActionUiElement.BASIC_ELEMENT_MARKER,
         within_marker="ng-action-add-b",
     )
-    button_b = find_within(user, marker=ActionUiElement.ADD_BUTTON_MARKER, within_marker="ng-action-add-b")
+    button_b = find_within(
+        user, marker=ListActionUiElement.LIST_ADD_BUTTON_MARKER, within_marker="ng-action-add-b"
+    )
 
     # Add item via first action (add-a)
     input_a.type("item-a")

@@ -34,6 +34,7 @@ async def test_uv_cli_interface(user: User) -> None:
     This test simulates: uv pip install numpy --upgrade --extra-index-url https://test.pypi.org --verbose --offline
     """
     from nicegooey.argparse.ui_classes.actions.action_ui_element import ActionUiElement
+    from nicegooey.argparse.ui_classes.actions.standard_actions import ListActionUiElement
     from nicegooey.argparse.ui_classes.groupings.subparser_ui import SubparserUi
     from tests.conftest import find_within
 
@@ -108,14 +109,14 @@ async def test_uv_cli_interface(user: User) -> None:
     # Add an extra index URL (append action)
     extra_index_element = find_within(
         user,
-        marker=ActionUiElement.BASIC_ELEMENT_MARKER + ActionUiElement.LIST_INNER_ELEMENT_MARKER_SUFFIX,
+        marker=ActionUiElement.BASIC_ELEMENT_MARKER,
         within_marker="ng-action-extra_index_url",
         within_outer_marker=f"{SubparserUi.TABPANEL_MARKER_PREFIX}install",
         within_outest_marker=f"{SubparserUi.TABPANEL_MARKER_PREFIX}pip",
     )
     extra_index_add_button = find_within(
         user,
-        marker=ActionUiElement.ADD_BUTTON_MARKER,
+        marker=ListActionUiElement.LIST_ADD_BUTTON_MARKER,
         within_marker="ng-action-extra_index_url",
         within_outer_marker=f"{SubparserUi.TABPANEL_MARKER_PREFIX}install",
         within_outest_marker=f"{SubparserUi.TABPANEL_MARKER_PREFIX}pip",

@@ -60,19 +60,24 @@ class StoreConstActionUiElement(ActionUiElement[argparse._StoreConstAction]):
 
 class ListActionUiElement[ActionT: argparse.Action](ActionUiElement[ActionT], abc.ABC):
     LIST_ELEMENT_MARKER: Final[str] = "ng-action-listelement"
+    LIST_ADD_BUTTON_MARKER: Final[str] = "ng-action-listbutton"
 
     add_element_default_value: Any = None
     list_input_element: ui.input_chips | None = None
 
     @override
-    def _render_input_element(self) -> None:
-        super()._render_input_element()
+    def _render_inner_elements(self) -> None:
+        super()._render_inner_elements()
         assert self.inner_elements is not None
         self.inner_elements.nargs_wrapper_element.classes("w-xl")
         self.list_input_element = find_exactly_one_element(
             ElementFilter(marker=self.LIST_ELEMENT_MARKER).within(instance=self.inner_elements.outmost),
             ui.input_chips,
         )
+
+    @override
+    def _render_input_element(self) -> None:
+        super()._render_input_element()
         assert self.list_input_element is not None
         self.list_input_element.on_value_change(lambda ev: self.sync_to_namespace())
 
@@ -101,6 +106,7 @@ class ListActionUiElement[ActionT: argparse.Action](ActionUiElement[ActionT], ab
                 nargs_wrapper_element, on_add_button_click=on_add_button_click
             )
             list_element.mark(cls.LIST_ELEMENT_MARKER)
+            add_button.mark(cls.LIST_ADD_BUTTON_MARKER)
 
         if action_info.action.required:
             list_element.without_auto_validation()
@@ -127,6 +133,8 @@ class ListActionUiElement[ActionT: argparse.Action](ActionUiElement[ActionT], ab
     @override
     def _ui_state_from_value(self, value: Any) -> None:
         assert self.inner_elements is not None
+
+        # TODO: this assertion is False if the namespace value is already set
         assert self.list_input_element is not None
 
         # Evaluate whether the element should be disabled or enabled (if non-required).
@@ -146,6 +154,10 @@ class ListActionUiElement[ActionT: argparse.Action](ActionUiElement[ActionT], ab
             self.list_input_element.value = value
         else:
             clear_value_element(self.list_input_element)
+
+    @override
+    def validate(self) -> bool:
+        return super().validate() and self.list_input_element.validate()
 
 
 class ExtendActionUiElement(ActionUiElement[argparse._AppendAction]):

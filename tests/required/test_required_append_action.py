@@ -10,6 +10,7 @@ from nicegooey.argparse.argument_parser import NgArgumentParser
 from nicegooey.argparse.main import main_instance
 from nicegooey.argparse.patch import nice_gooey_argparse_main
 from nicegooey.argparse.ui_classes.actions.action_ui_element import ActionUiElement
+from nicegooey.argparse.ui_classes.actions.standard_actions import ListActionUiElement
 from tests.conftest import assert_has_validation_error
 
 
@@ -32,10 +33,8 @@ async def test_required_append_validation(user: User) -> None:
     await assert_has_validation_error(user)
 
     # Add one item
-    input_field = user.find(
-        marker=ActionUiElement.BASIC_ELEMENT_MARKER + ActionUiElement.LIST_INNER_ELEMENT_MARKER_SUFFIX
-    )
-    add_button = user.find(marker=ActionUiElement.ADD_BUTTON_MARKER)
+    input_field = user.find(marker=ActionUiElement.BASIC_ELEMENT_MARKER)
+    add_button = user.find(marker=ListActionUiElement.LIST_ADD_BUTTON_MARKER)
     input_field.type("python")
     add_button.click()
 
