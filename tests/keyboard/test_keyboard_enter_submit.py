@@ -40,6 +40,7 @@ async def test_keyboard_enter_submit(screen: Screen) -> None:
 def main() -> None:
     parser = NgArgumentParser()
     parser.add_argument("--name", type=str, help="Your name", required=True)
+
     parser.parse_args()
 
 

@@ -25,7 +25,7 @@ async def test_submit(user: User) -> None:
 
     # Verify that the terminal (xterm) opened
     await user.should_see(kind=ui.xterm)
-    assert user.should_see(content="Hello, Alice")
+    assert await user.should_see(content="Hello, Alice")
 
 
 @nice_gooey_argparse_main(patch_argparse=False)

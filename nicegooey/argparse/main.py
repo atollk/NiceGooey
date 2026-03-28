@@ -90,7 +90,7 @@ class NiceGooeyMain:
             self.parent_parser = argument_parser
             ui.run(self._ui_root, reload=False)
 
-            if nicegui.helpers.is_user_simulation():
+            if nicegui.helpers.is_pytest():
                 return argparse.Namespace()
             else:
                 raise AssertionError("nicegui.ui.run should not return")
