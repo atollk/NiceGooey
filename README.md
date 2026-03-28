@@ -10,6 +10,9 @@ a modern web UI with just a single line of code.
 (NiceGooey is currently released as a Beta.
 It is functional and no major refactorings are planned, but some breaking changes and bug might happen.)
 
+This project is published at [Codeberg](https://codeberg.org/atollk/NiceGooey) and mirrored
+to [GitHub](https://github.com/atollk/NiceGooey/).
+
 # Minimal example
 
 Just importing and adding the annotation `@nice_gooey_argparse_main(patch_argparse=True)` to your main function is
