@@ -11,7 +11,7 @@ a modern web UI with just a single line of code.
 It is functional and no major refactorings are planned, but some breaking changes and bug might happen.)
 
 This project is published at [Codeberg](https://codeberg.org/atollk/NiceGooey) and mirrored
-to [GitHub](https://github.com/atollk/NiceGooey/).
+to [GitHub](https://github.com/atollk/NiceGooey/). It is available on PyPi as [nicegooey](https://pypi.org/project/nicegooey/).
 
 # Minimal example
 
