@@ -40,7 +40,6 @@ class StoreConstActionUiElement(ActionUiElement[argparse._StoreConstAction]):
         if el is None:
             # The element is required, so we can't do anything.
             return
-        # This logic doesn't matter because the value isn't actually used, but it's fun to have here :)
         if value == self.action.const:
             el.value = True
         elif value == ActionInfoHelper(action=self.action, parser=self._parser).default():
@@ -56,6 +55,11 @@ class StoreConstActionUiElement(ActionUiElement[argparse._StoreConstAction]):
         assert self._parser is not None
         self.action(self._parser, ns, None)
         return getattr(ns, self.action.dest)
+
+    @classmethod
+    def _should_render_enable_box(cls, action_info: ActionInfoHelper) -> bool:
+        # Since a store-const action is basically useless if it cannot be en-/disabled, we only don't do that if it is explicitly asked for.
+        return action_info.ng_config().required or action_info.action.required
 
 
 class ListActionUiElement[ActionT: argparse.Action](ActionUiElement[ActionT], abc.ABC):
@@ -177,6 +181,11 @@ class AppendConstActionUiElement(ListActionUiElement[argparse._AppendConstAction
         cls, action_info: ActionInfoHelper, basic_element: Callable[[], ValidationElement]
     ) -> ValidationElement:
         return q_field().mark(cls.BASIC_ELEMENT_MARKER, cls.NARGS_WRAPPER_MARKER)
+
+    @classmethod
+    def _should_render_enable_box(cls, action_info: ActionInfoHelper) -> bool:
+        # Since an append-const action is basically useless if it cannot be en-/disabled, we only don't do that if it is explicitly asked for.
+        return action_info.ng_config().required or action_info.action.required
 
 
 class CountActionUiElement(ActionUiElement[argparse.Action]):

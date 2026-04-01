@@ -3,7 +3,6 @@
 import argparse
 import time
 
-
 from nicegooey.argparse import NgArgumentParser, nice_gooey_argparse_main, NiceGooeyConfig
 
 

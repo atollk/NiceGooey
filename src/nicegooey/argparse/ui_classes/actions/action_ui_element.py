@@ -16,6 +16,7 @@ from ..util.optional_value_element import OptionalValidationElement
 from ..util.sync_element import SyncElement
 from ..util.ui_wrapper import UiWrapper
 from ..util.validation_checkbox import ValidationCheckbox
+from ... import NiceGooeyConfig
 from ...main import NiceGooeyMain, NiceGooeyNamespace, main_instance
 from .action_info_helper import ActionInfoHelper
 
@@ -107,15 +108,15 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
 
     @override
     def render(self) -> ui.element:
-        c = ui.column()
-        with c:
+        with ui.column() as c:
             self._render_action_name()
             self._render_input_element()
         return c
 
     def _render_action_name(self):
         """Renders the name of this action (i.e. the metavar or dest) and a tooltip with the help text if it exists."""
-        with ui.row(align_items="center"):
+        name = self._action_info.ng_config().display_name
+        if name is None:
             if isinstance(self.action.metavar, str):
                 name = self.action.metavar
             elif isinstance(self.action.metavar, tuple):
@@ -125,15 +126,26 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
                 name = max(self.action.option_strings, key=len).lstrip(self._parser.prefix_chars)
             else:
                 name = self.action.dest
-            ui.label(name).classes("font-bold")
-            if self.action.help:
-                with ui.button(icon="question_mark") as btn:
-                    # Styling
-                    btn.props("round padding=xs size=xs")
-                    # Non-focusable with keyboard
-                    btn.props("tabindex='-1'")
-                    # Tooltip on hover
-                    ui.tooltip(self.action.help)
+
+        match self.parser_config.display_help:
+            case NiceGooeyConfig.DisplayHelp.NoDisplay:
+                ui.label(name).classes("font-bold")
+            case NiceGooeyConfig.DisplayHelp.Tooltip:
+                with ui.row(align_items="center"):
+                    ui.label(name).classes("font-bold")
+                    if self.action.help:
+                        with ui.button(icon="question_mark") as btn:
+                            # Styling
+                            btn.props("round padding=xs size=xs")
+                            # Non-focusable with keyboard
+                            btn.props("tabindex='-1'")
+                            # Tooltip on hover
+                            ui.tooltip(self.action.help)
+            case NiceGooeyConfig.DisplayHelp.Label:
+                with ui.column():
+                    ui.label(name).classes("font-bold")
+                    if self.action.help:
+                        ui.label(self.action.help).classes("text-sm")
 
     def _render_input_element(self) -> None:
         """Creates a ValueElement that represents the input of a single item matching the type of this action."""
@@ -165,7 +177,11 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
         if self.action.choices:
             el = self.inner_elements.basic_element_inner or self.inner_elements.basic_element
             assert hasattr(el, "options")
-            el.value = action_info.action.const or next(iter(el.options))
+            el.value = action_info.action.const
+            if el.value is None or el.value not in el.options:
+                el.value = action_info.action.default
+            if el.value is None or el.value not in el.options:
+                el.value = next(iter(el.options))
 
         # Bind the namespace value to the element which handles the value.
         self.subscribe()
@@ -417,14 +433,27 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
         return nargs_value_element
 
     @classmethod
+    def _should_render_enable_box(cls, action_info: ActionInfoHelper) -> bool:
+        is_required = action_info.ng_config().required
+        if is_required is None:
+            # Unlike the vanilla argparse, we consider positional arguments to be required in all cases.
+            is_required = (
+                action_info.action.required
+                or len(action_info.action.option_strings) == 0
+                or (
+                    main_instance.parser_config.require_all_with_default
+                    and action_info.action.default is not None
+                )
+            )
+        return is_required
+
+    @classmethod
     def _render_action_required(
         cls, action_info: ActionInfoHelper, nargs_wrapper_element: Callable[[], ValidationElement]
     ) -> ValidationElement:
         """Creates and returns an element that wraps the nargs wrapper element depending on whether this action is required or optional."""
         with q_field() as required_wrapper:
-            # Unlike the vanilla argparse, we consider positional arguments to be required in all cases.
-            is_required = action_info.action.required or len(action_info.action.option_strings) == 0
-            if is_required:
+            if cls._should_render_enable_box(action_info):
                 nargs_wrapper_element()
             else:
                 with ui.row():
