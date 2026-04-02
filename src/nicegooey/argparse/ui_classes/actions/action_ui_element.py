@@ -436,14 +436,12 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
     def _should_render_enable_box(cls, action_info: ActionInfoHelper) -> bool:
         is_required = action_info.ng_config().required
         if is_required is None:
+            is_required = False
+            is_required = is_required or action_info.action.required
             # Unlike the vanilla argparse, we consider positional arguments to be required in all cases.
-            is_required = (
-                action_info.action.required
-                or len(action_info.action.option_strings) == 0
-                or (
-                    main_instance.parser_config.require_all_with_default
-                    and action_info.action.default is not None
-                )
+            is_required = is_required or len(action_info.action.option_strings) == 0
+            is_required = is_required or (
+                main_instance.config.require_all_with_default and action_info.action.default is not None
             )
         return is_required
 

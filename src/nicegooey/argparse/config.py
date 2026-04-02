@@ -8,6 +8,10 @@ if TYPE_CHECKING:
     from nicegooey.argparse.ui_classes.actions.action_ui_element import ActionUiElement
 
 
+def foo():
+    return defaultdict(NiceGooeyConfig.ActionConfig)
+
+
 @dataclasses.dataclass
 class NiceGooeyConfig:
     """
@@ -47,15 +51,19 @@ class NiceGooeyConfig:
                 Look at nicegooey.argparse.ui_classes.actions.action_alternatives for predefined options.
             validation: A callable that is run when "Submit" is pressed. The value of the action is passed as the
                 argument. If the function returns a string, the process is stopped and the string is shown as an error.
-            required: Overwrites the "required" field of the action. If `None`, the global default is used.
+            required: Overwrites the "required" field of the action.
         """
 
         display_name: str | None = None
         element_override: type["ActionUiElement[argparse.Action]"] | None = None
         validation: Callable[[Any], str | None] = lambda v: None
         required: bool | None = None
-        # TODO: require with default=""
 
-    action_config: dict[argparse.Action, ActionConfig] = dataclasses.field(
-        default_factory=lambda: defaultdict(NiceGooeyConfig.ActionConfig)
-    )
+    action_config: dict[argparse.Action, ActionConfig] = dataclasses.field(default_factory=foo)
+
+    def get_action_config(self, action: argparse.Action) -> ActionConfig:
+        config = self.action_config.get(action, None)
+        if config is None:
+            config = self.ActionConfig()
+            self.action_config[action] = config
+        return config

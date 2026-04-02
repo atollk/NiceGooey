@@ -9,7 +9,7 @@ import nicegui.helpers
 import nicegui.run
 from nicegui import ui
 
-from .argument_parser import NgArgumentParser, NiceGooeyConfig
+from .argument_parser import NiceGooeyConfig
 from .util import CallbackWriter, logger
 
 if TYPE_CHECKING:
@@ -54,6 +54,7 @@ class NiceGooeyMain:
     parent_parser: argparse.ArgumentParser | None
     main_func: Callable | None
     is_running: bool
+    config: NiceGooeyConfig = NiceGooeyConfig()
 
     # Argument values
     namespace: NiceGooeyNamespace
@@ -63,13 +64,6 @@ class NiceGooeyMain:
 
     def __init__(self):
         self.reset()
-
-    @property
-    def parser_config(self) -> NiceGooeyConfig:
-        if isinstance(self.parent_parser, NgArgumentParser):
-            return self.parent_parser.nicegooey_config
-        else:
-            return NiceGooeyConfig()
 
     def reset(self) -> None:
         """Used to reset the instance during testing."""

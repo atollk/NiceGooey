@@ -18,8 +18,7 @@ class UiWrapper:
 
     @property
     def parser_config(self) -> NiceGooeyConfig:
-        assert self.parent.parser_config is not None
-        return self.parent.parser_config
+        return self.parent.config
 
     def render(self) -> ui.element:
         return ui.element()

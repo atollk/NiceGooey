@@ -35,7 +35,7 @@ def build_parser() -> argparse.ArgumentParser:
         "Output Stage",
         "Specify the desired output behavior for the encoded file.",
     )
-    output_group.add_argument(
+    x = output_group.add_argument(
         "-o",
         "--output",
         metavar="OUTPUT_FILE",
@@ -46,6 +46,7 @@ def build_parser() -> argparse.ArgumentParser:
             "Defaults to the input filename with an .mp3 extension."
         ),
     )
+    x.nicegooey_config.required = True
     output_group.add_argument(
         "--compression",
         metavar="LEVEL",

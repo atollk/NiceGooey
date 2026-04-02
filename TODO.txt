@@ -1,0 +1,2 @@
+- render special sequences correctly in help strings
+- line breaks in help strings

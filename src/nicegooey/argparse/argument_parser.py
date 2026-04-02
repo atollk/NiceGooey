@@ -45,7 +45,10 @@ class _NgActionsContainer(argparse._ActionsContainer):
 
         @override
         def add_argument(self, *args, **kwargs) -> "NgActionWrapper":
-            return _copy_as_type(super().add_argument(*args, **kwargs), NgActionWrapper)
+            action = super().add_argument(*args, **kwargs)
+            wrapper = _copy_as_type(action, NgActionWrapper)
+            wrapper.original_action = action
+            return wrapper
 
         @override
         def add_argument_group(self, *args, **kwargs) -> "NgArgumentGroup":
@@ -59,18 +62,21 @@ class _NgActionsContainer(argparse._ActionsContainer):
 
 
 class NgActionWrapper(argparse.Action):
-    def __get_nicegooey_config(self) -> NiceGooeyConfig:
-        import nicegooey.argparse.main
-
-        return nicegooey.argparse.main.main_instance.parser_config
+    original_action: argparse.Action | None = None
 
     @property
     def nicegooey_config(self) -> NiceGooeyConfig.ActionConfig:
-        return self.__get_nicegooey_config().action_config.get(self, NiceGooeyConfig.ActionConfig())
+        from nicegooey.argparse.main import main_instance
+
+        assert self.original_action is not None
+        return main_instance.config.get_action_config(self.original_action)
 
     @nicegooey_config.setter
     def nicegooey_config(self, value: NiceGooeyConfig.ActionConfig) -> None:
-        self.__get_nicegooey_config().action_config[self] = value
+        from nicegooey.argparse.main import main_instance
+
+        assert self.original_action is not None
+        main_instance.config.action_config[self.original_action] = value
 
     def set_nicegooey_config(self, value: NiceGooeyConfig.ActionConfig) -> None:
         self.nicegooey_config = value
@@ -85,13 +91,15 @@ class NgMutualExclusiveGroup(_NgActionsContainer, argparse._MutuallyExclusiveGro
 
 
 class NgArgumentParser(_NgActionsContainer, argparse.ArgumentParser):
-    nicegooey_config: NiceGooeyConfig = NiceGooeyConfig()
+    @property
+    def nicegooey_config(self) -> NiceGooeyConfig:
+        from nicegooey.argparse.main import main_instance
+
+        return main_instance.config
 
     @staticmethod
     def from_argparse(parser: argparse.ArgumentParser) -> "NgArgumentParser":
-        clone = _copy_as_type(parser, NgArgumentParser)
-        clone.nicegooey_config = NiceGooeyConfig()
-        return clone
+        return _copy_as_type(parser, NgArgumentParser)
 
     @overload
     def parse_args(self, args: Sequence[str] | None = None, namespace: None = None) -> Namespace: ...

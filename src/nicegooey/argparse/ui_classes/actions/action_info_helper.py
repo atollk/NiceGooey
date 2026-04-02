@@ -104,6 +104,6 @@ class ActionInfoHelper:
     def ng_config(self) -> NiceGooeyConfig.ActionConfig:
         """Returns the NiceGooey-specific config for this action that was set by the user."""
         if isinstance(self.parser, NgArgumentParser):
-            return self.parser.nicegooey_config.action_config.get(self.action, NiceGooeyConfig.ActionConfig())
+            return self.parser.nicegooey_config.get_action_config(self.action)
         else:
-            return NiceGooeyConfig.ActionConfig()
+            raise TypeError("Cannot access config: Parser is not of type NgArgumentParser")
