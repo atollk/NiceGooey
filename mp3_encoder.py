@@ -4,6 +4,7 @@ import argparse
 
 
 from nicegooey.argparse import NgArgumentParser, nice_gooey_argparse_main, NiceGooeyConfig
+from nicegooey.argparse.util import parse_quasar_theme_variables
 
 """
 MP3 Encoder - A software encoder for converting audio to the MP3 format.
@@ -35,7 +36,7 @@ def build_parser() -> argparse.ArgumentParser:
         "Output Stage",
         "Specify the desired output behavior for the encoded file.",
     )
-    x = output_group.add_argument(
+    output_group.add_argument(
         "-o",
         "--output",
         metavar="OUTPUT_FILE",
@@ -45,8 +46,7 @@ def build_parser() -> argparse.ArgumentParser:
             "The output destination for the encoded file. "
             "Defaults to the input filename with an .mp3 extension."
         ),
-    )
-    x.nicegooey_config.required = True
+    ).nicegooey_config.override_required = True
     output_group.add_argument(
         "--compression",
         metavar="LEVEL",
@@ -81,6 +81,7 @@ def build_parser() -> argparse.ArgumentParser:
     # Lowpass
     resample_group.add_argument(
         "--lowpass",
+        "-l",
         metavar="FREQ_KHZ",
         type=float,
         default=None,
@@ -89,18 +90,11 @@ def build_parser() -> argparse.ArgumentParser:
             "Frequencies above this value are attenuated before encoding."
         ),
     )
-    resample_group.add_argument(
-        "-l",
-        "--lowpass-enable",
-        action="store_true",
-        dest="lowpass_enable",
-        default=False,
-        help="Enable the lowpass filter. Requires --lowpass to be set.",
-    )
 
     # Resample
     resample_group.add_argument(
         "--resample",
+        "-r",
         metavar="FREQ_KHZ",
         type=float,
         default=None,
@@ -109,18 +103,12 @@ def build_parser() -> argparse.ArgumentParser:
             "(e.g. 44.1, 48.0). Resamples the audio stream before encoding."
         ),
     )
-    resample_group.add_argument(
-        "-r",
-        "--resample-enable",
-        action="store_true",
-        dest="resample_enable",
-        default=False,
-        help="Enable resampling. Requires --resample to be set.",
-    )
 
     parser.nicegooey_config.root_card_class = "max-w-6xl"
+    parser.nicegooey_config.action_card_class = "max-w-1/3"
     parser.nicegooey_config.display_help = NiceGooeyConfig.DisplayHelp.Label
     parser.nicegooey_config.require_all_with_default = True
+    parser.prog = "MP3 Encoder"
     return parser
 
 
@@ -135,6 +123,56 @@ def validate(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
 @nice_gooey_argparse_main(patch_argparse=True)
 def main() -> None:
     parser = build_parser()
+
+    parse_quasar_theme_variables("""
+// Brand Colors
+$primary   : #0ea5e9;
+$secondary : #64748b;
+$accent    : #06b6d4;
+
+// Dark Mode
+$dark      : #0c4a6e;
+$dark-page : #082f49;
+
+// Semantic Colors
+$positive  : #22c55e;
+$negative  : #ef4444;
+$info      : #3b82f6;
+$warning   : #f59e0b;
+
+// Primary Scale
+$primary-50: #f0f9ff;
+$primary-100: #e0f2fe;
+$primary-200: #bae6fd;
+$primary-300: #7dd3fc;
+$primary-400: #38bdf8;
+$primary-500: #0ea5e9;
+$primary-600: #0284c7;
+$primary-700: #0369a1;
+$primary-800: #075985;
+$primary-900: #0c4a6e;
+$primary-950: #082f49;
+
+// Gray Scale
+$gray-50: #f8fafc;
+$gray-100: #f1f5f9;
+$gray-200: #e2e8f0;
+$gray-300: #cbd5e1;
+$gray-400: #94a3b8;
+$gray-500: #64748b;
+$gray-600: #475569;
+$gray-700: #334155;
+$gray-800: #1e293b;
+$gray-900: #0f172a;
+$gray-950: #020617;
+
+// Gradient Colors
+$linear-1: rgba(255, 255, 255, 0) !default;
+$linear-2: rgba(255, 255, 255, 1) !default;
+$linear-dark-1: rgba(18, 18, 18, 0) !default;
+$linear-dark-2: rgba(18, 18, 18, 1) !default;
+    """)
+
     args = parser.parse_args()
     validate(args, parser)
 

@@ -59,7 +59,7 @@ class StoreConstActionUiElement(ActionUiElement[argparse._StoreConstAction]):
     @classmethod
     def _should_render_enable_box(cls, action_info: ActionInfoHelper) -> bool:
         # Since a store-const action is basically useless if it cannot be en-/disabled, we only don't do that if it is explicitly asked for.
-        return action_info.ng_config().required or action_info.action.required
+        return action_info.ng_config().override_required or action_info.action.required
 
 
 class ListActionUiElement[ActionT: argparse.Action](ActionUiElement[ActionT], abc.ABC):
@@ -185,7 +185,7 @@ class AppendConstActionUiElement(ListActionUiElement[argparse._AppendConstAction
     @classmethod
     def _should_render_enable_box(cls, action_info: ActionInfoHelper) -> bool:
         # Since an append-const action is basically useless if it cannot be en-/disabled, we only don't do that if it is explicitly asked for.
-        return action_info.ng_config().required or action_info.action.required
+        return action_info.ng_config().override_required or action_info.action.required
 
 
 class CountActionUiElement(ActionUiElement[argparse.Action]):

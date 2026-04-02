@@ -35,6 +35,8 @@ class ActionInfoHelper:
 
     def type(self) -> Callable[[str], Any]:
         """Returns the type of this action, or a reasonable default if no type is set."""
+        if (override := self.ng_config().override_type) is not None:
+            return override
         match self.action.type:
             case None:
                 return str

@@ -61,7 +61,7 @@ class ArgumentGroupUi(GroupingSyncUi):
             with ui.list().classes("flex justify-between gap-y-4"):
                 for child in self.children:
                     if isinstance(child, ActionUiElement):
-                        with ui.item().classes("border-2"):
+                        with ui.item().classes("border-2").classes(self.parser_config.action_card_class):
                             child.render().mark(f"ng-action-{child.action.dest}")
                     else:
                         with ui.card():

@@ -114,7 +114,7 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
         return c
 
     def _render_action_name(self):
-        """Renders the name of this action (i.e. the metavar or dest) and a tooltip with the help text if it exists."""
+        """Renders the name of this action (i.e. the metavar or dest) and the help text."""
         name = self._action_info.ng_config().display_name
         if name is None:
             if isinstance(self.action.metavar, str):
@@ -127,25 +127,26 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
             else:
                 name = self.action.dest
 
+        help_text = self._parser._get_formatter()._expand_help(self.action)
         match self.parser_config.display_help:
             case NiceGooeyConfig.DisplayHelp.NoDisplay:
                 ui.label(name).classes("font-bold")
             case NiceGooeyConfig.DisplayHelp.Tooltip:
                 with ui.row(align_items="center"):
                     ui.label(name).classes("font-bold")
-                    if self.action.help:
+                    if help_text:
                         with ui.button(icon="question_mark") as btn:
                             # Styling
                             btn.props("round padding=xs size=xs")
                             # Non-focusable with keyboard
                             btn.props("tabindex='-1'")
                             # Tooltip on hover
-                            ui.tooltip(self.action.help)
+                            ui.tooltip(help_text)
             case NiceGooeyConfig.DisplayHelp.Label:
                 with ui.column():
                     ui.label(name).classes("font-bold")
-                    if self.action.help:
-                        ui.label(self.action.help).classes("text-sm")
+                    if help_text:
+                        ui.label(help_text).classes("text-sm")
 
     def _render_input_element(self) -> None:
         """Creates a ValueElement that represents the input of a single item matching the type of this action."""
@@ -313,24 +314,34 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
     @classmethod
     def _render_action_single(cls, action_info: ActionInfoHelper) -> ValidationElement:
         """Creates and returns an input element depending on just the type of this action, ignoring 'required' and 'nargs'."""
+        number_precision = action_info.ng_config().number_precision
+
+        def on_non_numeric():
+            if number_precision is not None:
+                raise TypeError("The config option 'number_precision' is set but the action is not numeric.")
+
         basic_element: ValidationElement
         if action_info.action.choices is not None:
+            on_non_numeric()
             choices = list(action_info.action.choices)
             basic_element = MaxWidthSelect(options=choices)
         else:
             action_type = action_info.type()
             match action_type:
                 case builtins.bool:
+                    on_non_numeric()
                     basic_element = ValidationCheckbox()
                 case builtins.int:
-                    basic_element = ui.number(format="%d").props("dense")
-                case builtins.float:
                     basic_element = ui.number(
-                        format="%f",
+                        precision=0 if number_precision is None else number_precision
                     ).props("dense")
+                case builtins.float:
+                    basic_element = ui.number(precision=number_precision).props("dense")
                 case builtins.str:
+                    on_non_numeric()
                     basic_element = ui.input().props("dense")
                 case _:
+                    on_non_numeric()
                     basic_element = ui.input().props("dense")
         basic_element.mark(cls.BASIC_ELEMENT_MARKER)
         return basic_element
@@ -434,7 +445,7 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
 
     @classmethod
     def _should_render_enable_box(cls, action_info: ActionInfoHelper) -> bool:
-        is_required = action_info.ng_config().required
+        is_required = action_info.ng_config().override_required
         if is_required is None:
             is_required = False
             is_required = is_required or action_info.action.required

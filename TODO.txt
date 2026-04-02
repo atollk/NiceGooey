@@ -1,2 +1,2 @@
-- render special sequences correctly in help strings
-- line breaks in help strings
+- better file picker
+- errors in the parse-args-processing cause a freeze of the dialog -> instead they should show an error

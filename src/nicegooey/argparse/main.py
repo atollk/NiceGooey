@@ -4,6 +4,7 @@ import dataclasses
 from collections import defaultdict
 from typing import TYPE_CHECKING, Any, Callable, Final, Never, override
 
+import nicegui.functions.style
 import nicegui.binding
 import nicegui.helpers
 import nicegui.run
@@ -146,6 +147,7 @@ class NiceGooeyMain:
 
         with ui.element().classes("w-full flex items-center justify-center"):
             ui.sub_pages({"/": root, "/license": license})
+        ui.query("#app").classes("bg-primary-100")
 
 
 main_instance: Final[NiceGooeyMain] = NiceGooeyMain()
