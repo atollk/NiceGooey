@@ -127,7 +127,10 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
             else:
                 name = self.action.dest
 
-        help_text = self._parser._get_formatter()._expand_help(self.action)
+        if self.action.help:
+            help_text = self._parser._get_formatter()._expand_help(self.action)
+        else:
+            help_text = ""
         match self.parser_config.display_help:
             case NiceGooeyConfig.DisplayHelp.NoDisplay:
                 ui.label(name).classes("font-bold")
