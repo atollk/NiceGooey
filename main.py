@@ -1,34 +1,31 @@
-# type: ignore
-
-
 from nicegui import ui
 
-from file_picker import FilePicker
+from nicegooey.ui_util.file_picker import FilePicker
 
 
 def main():
     # Read mode - single file selection
-    picker = FilePicker(
+    picker1 = FilePicker(
         starting_directory=".",
         mode="read",
         file_filter=[".txt", ".pdf"],
-        on_ok=lambda: print(f"Selected: {picker.get_selected_path()}"),
+        on_ok=lambda: print(f"Selected: {picker1.value}"),
         on_cancel=lambda: print("Cancelled"),
     )
 
     # Write mode - save file
-    picker = FilePicker(
+    picker2 = FilePicker(
         starting_directory=".",
         mode="write",
         show_hidden=True,
-        on_ok=lambda: print(f"Save to: {picker.get_selected_path()}"),
+        on_ok=lambda: print(f"Save to: {picker2.value}"),
     )
 
     # Read mode - multiple selection
-    picker = FilePicker(
+    picker3 = FilePicker(
         mode="read",
         allow_multiple=True,
-        on_ok=lambda: print(f"Selected files: {picker.get_selected_paths()}"),
+        on_ok=lambda: print(f"Selected files: {picker3.value}"),
     )
 
     ui.run()

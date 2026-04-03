@@ -80,7 +80,7 @@ def test_init_default_params(temp_dir_structure):
     assert picker.on_ok is None
     assert picker.on_cancel is None
     assert picker.current_directory == temp_dir_structure
-    assert picker.selected is None
+    assert picker.value is None
 
 
 def test_init_read_mode(temp_dir_structure):
@@ -88,7 +88,7 @@ def test_init_read_mode(temp_dir_structure):
     picker = FilePicker(starting_directory=str(temp_dir_structure), mode="read")
 
     assert picker.mode == "read"
-    assert picker.selected is None
+    assert picker.value is None
 
 
 def test_init_write_mode(temp_dir_structure):
@@ -96,7 +96,7 @@ def test_init_write_mode(temp_dir_structure):
     picker = FilePicker(starting_directory=str(temp_dir_structure), mode="write")
 
     assert picker.mode == "write"
-    assert picker.selected is None
+    assert picker.value is None
     assert picker._filename_input_value == ""
 
 
@@ -139,7 +139,7 @@ def test_init_multiple_selection(temp_dir_structure):
     picker = FilePicker(starting_directory=str(temp_dir_structure), allow_multiple=True)
 
     assert picker.allow_multiple is True
-    assert picker.selected == []
+    assert picker.value == []
 
 
 def test_init_directory_selection(temp_dir_structure):
@@ -390,7 +390,7 @@ def test_single_selection_file(temp_dir_structure):
     file_path = temp_dir_structure / "file1.txt"
     picker._on_item_click({"path": file_path, "is_dir": False, "name": "file1.txt"})
 
-    assert picker.selected == file_path
+    assert picker.value == file_path
 
 
 def test_single_selection_replaces(temp_dir_structure):
@@ -404,7 +404,7 @@ def test_single_selection_replaces(temp_dir_structure):
 
     picker._on_item_click({"path": file2, "is_dir": False, "name": "file2.pdf"})
 
-    assert picker.selected == file2
+    assert picker.value == file2
 
 
 def test_multiple_selection_files(temp_dir_structure):
@@ -418,8 +418,8 @@ def test_multiple_selection_files(temp_dir_structure):
 
     picker._on_item_click({"path": file2, "is_dir": False, "name": "file2.pdf"})
 
-    assert file1 in picker.selected
-    assert file2 in picker.selected
+    assert file1 in picker.value
+    assert file2 in picker.value
 
 
 def test_multiple_selection_toggle(temp_dir_structure):
@@ -430,11 +430,11 @@ def test_multiple_selection_toggle(temp_dir_structure):
 
     # Select
     picker._on_item_click({"path": file1, "is_dir": False, "name": "file1.txt"})
-    assert file1 in picker.selected
+    assert file1 in picker.value
 
     # Deselect
     picker._on_item_click({"path": file1, "is_dir": False, "name": "file1.txt"})
-    assert file1 not in picker.selected
+    assert file1 not in picker.value
 
 
 def test_directory_selection_when_allowed(temp_dir_structure):
@@ -444,7 +444,7 @@ def test_directory_selection_when_allowed(temp_dir_structure):
     folder = temp_dir_structure / "folder1"
     picker._on_item_click({"path": folder, "is_dir": True, "name": "folder1"})
 
-    assert picker.selected == folder
+    assert picker.value == folder
 
 
 def test_directory_selection_when_not_allowed(temp_dir_structure):
@@ -463,7 +463,7 @@ def test_get_selected_path_single(temp_dir_structure):
     picker = FilePicker(starting_directory=str(temp_dir_structure))
 
     file_path = temp_dir_structure / "file1.txt"
-    picker.selected = file_path
+    picker.value = file_path
 
     assert picker.get_selected_path() == file_path
 
@@ -474,7 +474,7 @@ def test_get_selected_path_multiple(temp_dir_structure):
 
     file1 = temp_dir_structure / "file1.txt"
     file2 = temp_dir_structure / "file2.pdf"
-    picker.selected = [file1, file2]
+    picker.value = [file1, file2]
 
     # Should return first selected item
     assert picker.get_selected_path() == file1
@@ -485,7 +485,7 @@ def test_get_selected_paths_single(temp_dir_structure):
     picker = FilePicker(starting_directory=str(temp_dir_structure))
 
     file_path = temp_dir_structure / "file1.txt"
-    picker.selected = file_path
+    picker.value = file_path
 
     paths = picker.get_selected_paths()
     assert paths == [file_path]
@@ -497,7 +497,7 @@ def test_get_selected_paths_multiple(temp_dir_structure):
 
     file1 = temp_dir_structure / "file1.txt"
     file2 = temp_dir_structure / "file2.pdf"
-    picker.selected = [file1, file2]
+    picker.value = [file1, file2]
 
     paths = picker.get_selected_paths()
     assert paths == [file1, file2]
@@ -523,7 +523,7 @@ def test_item_click_selects_file(temp_dir_structure):
     file_path = temp_dir_structure / "file1.txt"
     picker._on_item_click({"path": file_path, "is_dir": False, "name": "file1.txt"})
 
-    assert picker.selected == file_path
+    assert picker.value == file_path
 
 
 def test_item_double_click_navigates(temp_dir_structure):
@@ -562,7 +562,7 @@ def test_selection_display_updates(temp_dir_structure):
     picker._selected_label = Mock()
 
     file_path = temp_dir_structure / "file1.txt"
-    picker.selected = file_path
+    picker.value = file_path
 
     picker._update_selection_display()
 
@@ -593,7 +593,7 @@ def test_ok_callback_read_mode(temp_dir_structure):
     picker = FilePicker(starting_directory=str(temp_dir_structure), on_ok=ok_callback)
 
     file_path = temp_dir_structure / "file1.txt"
-    picker.selected = file_path
+    picker.value = file_path
 
     picker._on_ok_click()
 
@@ -610,7 +610,7 @@ def test_ok_callback_write_mode(temp_dir_structure):
     picker._on_ok_click()
 
     ok_callback.assert_called_once()
-    assert picker.selected == temp_dir_structure / "newfile.txt"
+    assert picker.value == temp_dir_structure / "newfile.txt"
 
 
 def test_ok_validation_no_selection(temp_dir_structure, mock_notify):
@@ -680,7 +680,7 @@ def test_write_mode_ok_creates_full_path(temp_dir_structure):
     picker._on_ok_click()
 
     expected_path = temp_dir_structure / "newfile.txt"
-    assert picker.selected == expected_path
+    assert picker.value == expected_path
 
 
 # ==================== 8. Edge Cases and Error Handling ====================
@@ -761,7 +761,7 @@ def test_complete_file_selection_workflow(temp_dir_structure):
     # Select a file in the folder
     file_path = folder1 / "file_in_folder.txt"
     picker._on_item_click({"path": file_path, "is_dir": False, "name": "file_in_folder.txt"})
-    assert picker.selected == file_path
+    assert picker.value == file_path
 
     # Get selected path
     assert picker.get_selected_path() == file_path
@@ -787,7 +787,7 @@ def test_complete_save_file_workflow(temp_dir_structure):
 
     # Selected should be the full path
     expected_path = folder1 / "newfile.txt"
-    assert picker.selected == expected_path
+    assert picker.value == expected_path
 
 
 def test_multiple_file_selection_workflow(temp_dir_structure):

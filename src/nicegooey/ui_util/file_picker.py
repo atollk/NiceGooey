@@ -5,17 +5,21 @@ This module provides a FilePicker class that creates a file selection interface
 similar to native file pickers, with support for both read and write modes.
 """
 
+import enum
 import os
 import platform
 import string
+from collections.abc import Callable
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Callable, List, Optional, Union
+import stat
 
 from nicegui import ui
+from nicegui.elements.mixins.validation_element import ValidationElement
 
 
-class FilePicker:
+class FilePicker(ValidationElement):
     """
     A file picker widget for NiceGUI applications.
 
@@ -39,6 +43,33 @@ class FilePicker:
         on_cancel: Callback function called when Cancel is clicked (default: None)
     """
 
+    class _Mode(enum.Enum):
+        READ = "read"
+        WRITE = "write"
+
+    @dataclass
+    class _InnerElements:
+        container: ui.element
+        path_bar: ui.element
+        drives_panel: ui.element | None
+        file_table: ui.table
+        filename_input: ui.input | None
+        selected_label: ui.label | None
+
+    mode: _Mode
+    allow_directory_selection: bool
+    allow_multiple: bool
+    show_hidden: bool
+    show_buttons: bool
+    file_filter: list[str] | None
+    on_ok: Callable[[], None]
+    on_cancel: Callable[[], None]
+
+    current_directory: Path
+    _filename_input_value: str
+    _inner_elements: _InnerElements
+    value: list[Path]
+
     def __init__(
         self,
         starting_directory: str = ".",
@@ -47,16 +78,19 @@ class FilePicker:
         allow_multiple: bool = False,
         show_hidden: bool = False,
         show_buttons: bool = True,
-        file_filter: Optional[List[str]] = None,
-        on_ok: Optional[Callable] = None,
-        on_cancel: Optional[Callable] = None,
+        file_filter: list[str] | None = None,
+        on_ok: Callable[[], None] = lambda: None,
+        on_cancel: Callable[[], None] = lambda: None,
     ):
-        # Validate mode
-        if mode not in ("read", "write"):
-            raise ValueError("mode must be 'read' or 'write'")
+        super().__init__(value=[], validation={})
 
         # Store configuration
-        self.mode = mode
+        if mode == "read":
+            self.mode = self._Mode.READ
+        elif mode == "write":
+            self.mode = self._Mode.WRITE
+        else:
+            raise ValueError("mode must be 'read' or 'write'")
         self.allow_directory_selection = allow_directory_selection
         self.allow_multiple = allow_multiple and mode == "read"
         self.show_hidden = show_hidden
@@ -71,25 +105,17 @@ class FilePicker:
 
         # Initialize state
         self.current_directory = Path(starting_directory).resolve()
-        self.selected: Union[Path, List[Path], None] = [] if self.allow_multiple else None
         self._filename_input_value = ""
 
-        # UI component references
-        self._container = None
-        self._path_bar = None
-        self._drives_panel = None
-        self._file_table = None
-        self._filename_input = None
-        self._selected_label = None
-
         # Render the UI
-        self._render()
+        self._inner_elements = self._render()
 
-    def _is_windows(self) -> bool:
+    @staticmethod
+    def _is_windows() -> bool:
         """Check if running on Windows."""
         return platform.system() == "Windows"
 
-    def _get_drives(self) -> List[str]:
+    def _get_drives(self) -> list[str]:
         """Get list of available drives on Windows."""
         if not self._is_windows():
             return []
@@ -108,9 +134,7 @@ class FilePicker:
 
         if self._is_windows():
             try:
-                import stat
-
-                attrs = os.stat(path).st_file_attributes
+                attrs = os.stat(path).st_file_attributes  # pyrefly: ignore[missing-attribute]
                 return bool(attrs & stat.FILE_ATTRIBUTE_HIDDEN)
             except (AttributeError, OSError):
                 return False
@@ -151,7 +175,7 @@ class FilePicker:
         except OSError:
             return ""
 
-    def _list_directory(self) -> List[dict]:
+    def _list_directory(self) -> list[dict]:
         """List contents of current directory."""
         items = []
 
@@ -209,13 +233,13 @@ class FilePicker:
             # Select the item
             if self.allow_multiple:
                 # Toggle selection in multiple mode
-                if item["path"] in self.selected:
-                    self.selected.remove(item["path"])
+                if item["path"] in self.value:
+                    self.value.remove(item["path"])
                 else:
-                    self.selected.append(item["path"])
+                    self.value.append(item["path"])
             else:
                 # Set selection in single mode
-                self.selected = item["path"]
+                self.value = item["path"]
                 if self.mode == "write":
                     self._filename_input_value = item["name"]
                     if self._filename_input:
@@ -230,21 +254,23 @@ class FilePicker:
 
     def _update_selection_display(self):
         """Update the selection display in the bottom bar."""
-        if not self._selected_label:
+        if self._inner_elements.selected_label is None:
             return
 
         if self.allow_multiple:
-            count = len(self.selected)
-            if count == 0:
-                self._selected_label.set_text("No files selected")
-            elif count == 1:
-                self._selected_label.set_text(f"1 file selected: {self.selected[0].name}")
-            else:
-                self._selected_label.set_text(f"{count} files selected")
-        elif self.selected:
-            self._selected_label.set_text(f"Selected: {self.selected.name}")
+            match len(self.value):
+                case 0:
+                    text = "No files selected"
+                case 1:
+                    text = f"1 file selected: {str(self.value[0])}"
+                case n:
+                    text = f"{n} files selected"
+        elif self.value:
+            text = f"Selected: {str(self.value[0])}"
         else:
-            self._selected_label.set_text("No file selected")
+            text = "No file selected"
+
+        self._inner_elements.selected_label.set_text(text)
 
     def _create_breadcrumbs(self):
         """Create breadcrumb navigation for current path."""
@@ -268,8 +294,6 @@ class FilePicker:
 
     def _create_new_folder_dialog(self):
         """Show dialog to create a new folder."""
-        folder_name = ""
-
         with ui.dialog() as dialog, ui.card():
             ui.label("Create New Folder").classes("text-lg font-bold")
 
@@ -303,9 +327,9 @@ class FilePicker:
 
     def _refresh_ui(self):
         """Refresh all UI components."""
-        if self._path_bar:
-            self._path_bar.clear()
-            with self._path_bar:
+        if (path_bar := self._inner_elements.path_bar) is not None:
+            path_bar.clear()
+            with path_bar:
                 self._create_breadcrumbs()
 
                 ui.space()
@@ -327,19 +351,17 @@ class FilePicker:
                         "flat dense"
                     ).tooltip("New folder")
 
-        if self._file_table:
-            self._update_file_table()
-
-        if self._drives_panel and self._is_windows():
-            self._update_drives_panel()
+        self._update_file_table()
+        self._update_drives_panel()
 
     def _update_drives_panel(self):
         """Update the drives panel (Windows only)."""
-        if not self._drives_panel:
+        drives_panel = self._inner_elements.drives_panel
+        if drives_panel is None:
             return
 
-        self._drives_panel.clear()
-        with self._drives_panel:
+        drives_panel.clear()
+        with drives_panel:
             ui.label("Drives").classes("font-bold text-sm mb-2")
             for drive in self._get_drives():
                 ui.button(drive, on_click=lambda d=drive: self._navigate_to(Path(d))).props(
@@ -348,29 +370,22 @@ class FilePicker:
 
     def _update_file_table(self):
         """Update the file table with current directory contents."""
-        if not self._file_table:
+        file_table = self._inner_elements.file_table
+        if file_table is None:
             return
 
-        items = self._list_directory()
-
-        # Build table rows
-        rows = []
-        for item in items:
-            rows.append(
-                {
-                    "id": str(item["path"]),
-                    "name": item["name"],
-                    "size": item["size"],
-                    "modified": item["modified"],
-                    "icon": item["icon"],
-                    "is_dir": item["is_dir"],
-                }
-            )
-
-        # Update the table rows
-        self._file_table.rows.clear()
-        self._file_table.rows.extend(rows)
-        self._file_table.update()
+        file_table.rows = [
+            {
+                "id": str(item["path"]),
+                "name": item["name"],
+                "size": item["size"],
+                "modified": item["modified"],
+                "icon": item["icon"],
+                "is_dir": item["is_dir"],
+            }
+            for item in self._list_directory()
+        ]
+        file_table.update()
 
     def _on_ok_click(self):
         """Handle OK button click."""
@@ -382,16 +397,16 @@ class FilePicker:
                 ui.notify("Please enter a filename", type="warning")
                 return
 
-            self.selected = self.current_directory / filename
+            self.value = [self.current_directory / filename]
 
         # Validate selection
         if self.mode == "read":
             if self.allow_multiple:
-                if not self.selected:
+                if not self.value:
                     ui.notify("Please select at least one file", type="warning")
                     return
             else:
-                if not self.selected:
+                if not self.value:
                     ui.notify("Please select a file", type="warning")
                     return
 
@@ -404,14 +419,11 @@ class FilePicker:
         if self.on_cancel:
             self.on_cancel()
 
-    def _render(self):
+    def _render(self) -> _InnerElements:
         """Render the file picker UI."""
         with ui.column().classes("w-full h-full gap-2") as container:
-            self._container = container
-
             # Path bar
             with ui.row().classes("w-full items-center gap-2") as path_bar:
-                self._path_bar = path_bar
                 self._create_breadcrumbs()
 
                 ui.space()
@@ -438,12 +450,13 @@ class FilePicker:
                 # Left panel: Drives (Windows only)
                 if self._is_windows():
                     with ui.column().classes("w-32 gap-1") as drives_panel:
-                        self._drives_panel = drives_panel
                         ui.label("Drives").classes("font-bold text-sm mb-2")
                         for drive in self._get_drives():
                             ui.button(drive, on_click=lambda d=drive: self._navigate_to(Path(d))).props(
                                 "flat dense"
                             ).classes("w-full justify-start")
+                else:
+                    drives_panel = None
 
                 # Right panel: File table
                 with ui.column().classes("flex-grow"):
@@ -479,14 +492,12 @@ class FilePicker:
                             }
                         )
 
-                    table = ui.table(
+                    file_table = ui.table(
                         columns=columns,
                         rows=rows,
                         row_key="id",
                         selection="multiple" if self.allow_multiple else "single",
                     ).classes("w-full")
-
-                    self._file_table = table
 
                     # Add click handlers
                     def on_row_click(e):
@@ -517,11 +528,11 @@ class FilePicker:
                         }
                         self._on_item_double_click(item_dict)
 
-                    table.on("row-click", on_row_click)
-                    table.on("row-dblclick", on_row_double_click)
+                    file_table.on("row-click", on_row_click)
+                    file_table.on("row-dblclick", on_row_double_click)
 
                     # Add icon column rendering
-                    table.add_slot(
+                    file_table.add_slot(
                         "body-cell-name",
                         """
                         <q-td :props="props">
@@ -540,11 +551,12 @@ class FilePicker:
                     filename_input.on(
                         "update:model-value", lambda e: setattr(self, "_filename_input_value", e.args)
                     )
-                    self._filename_input = filename_input
+                    selected_label = None
                 else:
                     # Selection display in read mode
+                    filename_input = None
                     selected_label = ui.label("No file selected").classes("text-sm flex-grow")
-                    self._selected_label = selected_label
+                    selected_label = selected_label
 
                 ui.space()
 
@@ -553,41 +565,17 @@ class FilePicker:
                     ui.button("Cancel", on_click=self._on_cancel_click).props("flat")
                     ui.button("OK", on_click=self._on_ok_click).props("color=primary")
 
-    # Public API
+        return self._InnerElements(
+            container=container,
+            path_bar=path_bar,
+            drives_panel=drives_panel,
+            file_table=file_table,
+            filename_input=filename_input,
+            selected_label=selected_label,
+        )
 
-    def get_selected_path(self) -> Optional[Path]:
-        """
-        Get the currently selected path (single selection mode).
-
-        Returns:
-            The selected Path object, or None if nothing is selected.
-        """
-        if self.allow_multiple:
-            # In multiple mode, selected is a list
-            return self.selected[0] if isinstance(self.selected, list) and self.selected else None
-        # In single mode, selected is Path or None
-        return self.selected if isinstance(self.selected, Path) else None
-
-    def get_selected_paths(self) -> List[Path]:
-        """
-        Get the currently selected paths (multiple selection mode).
-
-        Returns:
-            List of selected Path objects.
-        """
-        if self.allow_multiple:
-            # In multiple mode, selected is a list
-            return self.selected if isinstance(self.selected, list) else []
-        # In single mode, selected is Path or None
-        return [self.selected] if isinstance(self.selected, Path) else []
-
-    def set_directory(self, path: str):
-        """
-        Programmatically change the current directory.
-
-        Args:
-            path: Path to the directory to navigate to.
-        """
+    def set_directory(self, path: str) -> None:
+        """Programmatically change the current directory."""
         new_path = Path(path).resolve()
         if new_path.is_dir():
             self._navigate_to(new_path)
@@ -597,13 +585,3 @@ class FilePicker:
     def refresh(self):
         """Refresh the current directory listing."""
         self._refresh_ui()
-
-    @property
-    def current_directory(self) -> Path:
-        """Get the current directory being viewed."""
-        return self._current_directory
-
-    @current_directory.setter
-    def current_directory(self, value: Path):
-        """Set the current directory."""
-        self._current_directory = value
