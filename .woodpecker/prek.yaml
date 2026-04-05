@@ -1,5 +1,9 @@
+when:
+  - event: manual
+  - even: pull_request
+
 steps:
   - name: prek
-    image: ghcr.io/astral-sh/uv:alpine3.22
+    image: ghcr.io/astral-sh/uv:python3.14-trixie-slim
     commands:
       - uv run prek
