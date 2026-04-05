@@ -6,5 +6,4 @@ steps:
   - name: prek
     image: ghcr.io/astral-sh/uv:python3.14-trixie-slim
     commands:
-      - uv tool install prek
-      - uv run prek --all-files
+      - uvx prek --all-files
