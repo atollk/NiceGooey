@@ -1,8 +1,3 @@
-when:
-  - event: pull_request
-  - event: push
-  - event: manual
-
 steps:
   - name: prek
     image: ghcr.io/astral-sh/uv:latest
