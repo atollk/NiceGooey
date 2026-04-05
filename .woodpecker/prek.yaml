@@ -1,5 +1,5 @@
 steps:
   - name: prek
-    image: ghcr.io/astral-sh/uv:latest
+    image: ghcr.io/astral-sh/uv:alpine3.21
     commands:
       - uv run prek
