@@ -1,6 +1,7 @@
 when:
   - event: pull_request
   - event: push
+  - event: manual
 
 steps:
   - name: prek
