@@ -4,7 +4,7 @@ when:
 
 steps:
   - name: prek
-    image: ghcr.io/astral-sh/uv:python3.14-trixie-slim
+    image: ghcr.io/astral-sh/uv:python3.14-trixie
     commands:
       - apt install git
       - uvx prek --all-files
