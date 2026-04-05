@@ -27,6 +27,7 @@ class NiceGooeyConfig:
             This can be overwritten for individual actions.
         action_config: A dict that maps parser action objects to `ActionConfig` classes.
             Use this to set configurations affecting individual actions.
+        nicegui_run_kwargs: A dict of keyword-arguments that is passed to ui.run.
 
     """
 
@@ -39,6 +40,7 @@ class NiceGooeyConfig:
     action_card_class: str = ""
     display_help: DisplayHelp = DisplayHelp.Tooltip
     require_all_with_default: bool = False
+    nicegui_run_kwargs: dict[str, Any] = dataclasses.field(default_factory=dict)
 
     @dataclasses.dataclass
     class ActionConfig:

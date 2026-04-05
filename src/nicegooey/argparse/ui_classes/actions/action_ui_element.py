@@ -8,14 +8,14 @@ from nicegui import ui, ElementFilter
 from nicegui.elements.mixins.validation_element import ValidationElement
 from nicegui.elements.mixins.value_element import ValueElement
 
-from ..util.disableable_div import DisableableDiv
+from nicegooey.ui_util.disableable_div import DisableableDiv
+from nicegooey.ui_util.max_width_select import MaxWidthSelect
+from nicegooey.ui_util.optional_value_element import OptionalValidationElement
+from nicegooey.ui_util.validation_checkbox import ValidationCheckbox
 from ..util.grouping_sync_ui import UiWrapperSyncElement
-from ..util.max_width_select import MaxWidthSelect
 from ..util.misc import Nargs, add_validation, q_field, clear_value_element
-from ..util.optional_value_element import OptionalValidationElement
 from ..util.sync_element import SyncElement
 from ..util.ui_wrapper import UiWrapper
-from ..util.validation_checkbox import ValidationCheckbox
 from ... import NiceGooeyConfig
 from ...main import NiceGooeyMain, NiceGooeyNamespace, main_instance
 from .action_info_helper import ActionInfoHelper

@@ -28,8 +28,11 @@ def main():
         on_ok=lambda: print(f"Selected files: {picker3.value}"),
     )
 
-    ui.run()
 
+# needed on linux
+import multiprocessing
+
+multiprocessing.set_start_method("spawn", force=True)
 
 if __name__ in {"__main__", "__mp_main__"}:
-    main()
+    ui.run(main, native=True)

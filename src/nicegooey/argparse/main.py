@@ -83,7 +83,7 @@ class NiceGooeyMain:
         else:
             self.is_running = True
             self.parent_parser = argument_parser
-            ui.run(self._ui_root, reload=False)
+            ui.run(self._ui_root, reload=False, **self.config.nicegui_run_kwargs)
 
             if nicegui.helpers.is_pytest():
                 return argparse.Namespace()

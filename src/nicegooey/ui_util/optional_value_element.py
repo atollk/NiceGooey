@@ -5,8 +5,8 @@ from nicegui.elements.mixins.validation_element import ValidationElement
 from nicegui.elements.mixins.value_element import ValueElement
 from nicegui.events import Handler, ValueChangeEventArguments
 
-from nicegooey.argparse.ui_classes.util.disableable_div import DisableableDiv
 from nicegooey.argparse.ui_classes.util.misc import clear_value_element
+from nicegooey.ui_util.disableable_div import DisableableDiv
 
 
 class OptionalValidationElement(ValidationElement):

@@ -68,7 +68,7 @@ class FilePicker(ValidationElement):
     current_directory: Path
     _filename_input_value: str
     _inner_elements: _InnerElements
-    value: list[Path]
+    value: list[Path]  # pyrefly: ignore[bad-override]
 
     def __init__(
         self,
@@ -239,11 +239,11 @@ class FilePicker(ValidationElement):
                     self.value.append(item["path"])
             else:
                 # Set selection in single mode
-                self.value = item["path"]
-                if self.mode == "write":
+                self.value = [item["path"]]
+                if self.mode == self._Mode.WRITE:
                     self._filename_input_value = item["name"]
-                    if self._filename_input:
-                        self._filename_input.set_value(self._filename_input_value)
+                    if self._inner_elements.filename_input:
+                        self._inner_elements.filename_input.set_value(self._filename_input_value)
 
             self._update_selection_display()
 
@@ -280,9 +280,8 @@ class FilePicker(ValidationElement):
             # Home/root button
             if self._is_windows():
                 # On Windows, show drive letter
-                ui.button(parts[0], on_click=lambda p=Path(parts[0]): self._navigate_to(p)).props(
-                    "flat dense"
-                )
+                path = Path(parts[0])
+                ui.button(parts[0], on_click=lambda _, p=path: self._navigate_to(p)).props("flat dense")
             else:
                 ui.button("/", on_click=lambda: self._navigate_to(Path("/"))).props("flat dense")
 
@@ -290,7 +289,7 @@ class FilePicker(ValidationElement):
             for i, part in enumerate(parts[1:], 1):
                 ui.label("/").classes("text-gray-500")
                 path = Path(*parts[: i + 1])
-                ui.button(part, on_click=lambda p=path: self._navigate_to(p)).props("flat dense")
+                ui.button(part, on_click=lambda _, p=path: self._navigate_to(p)).props("flat dense")
 
     def _create_new_folder_dialog(self):
         """Show dialog to create a new folder."""
@@ -346,7 +345,7 @@ class FilePicker(ValidationElement):
                     ).props("flat dense").tooltip("Parent directory")
 
                 # New folder button (write mode only)
-                if self.mode == "write":
+                if self.mode == self._Mode.WRITE:
                     ui.button(icon="create_new_folder", on_click=self._create_new_folder_dialog).props(
                         "flat dense"
                     ).tooltip("New folder")
@@ -364,7 +363,7 @@ class FilePicker(ValidationElement):
         with drives_panel:
             ui.label("Drives").classes("font-bold text-sm mb-2")
             for drive in self._get_drives():
-                ui.button(drive, on_click=lambda d=drive: self._navigate_to(Path(d))).props(
+                ui.button(drive, on_click=lambda _, d=drive: self._navigate_to(Path(d))).props(
                     "flat dense"
                 ).classes("w-full justify-start")
 
@@ -390,7 +389,7 @@ class FilePicker(ValidationElement):
     def _on_ok_click(self):
         """Handle OK button click."""
         # Get the final selection
-        if self.mode == "write":
+        if self.mode == self._Mode.WRITE:
             # In write mode, use the filename input
             filename = self._filename_input_value.strip()
             if not filename:
@@ -400,7 +399,7 @@ class FilePicker(ValidationElement):
             self.value = [self.current_directory / filename]
 
         # Validate selection
-        if self.mode == "read":
+        if self.mode == self._Mode.READ:
             if self.allow_multiple:
                 if not self.value:
                     ui.notify("Please select at least one file", type="warning")
@@ -440,7 +439,7 @@ class FilePicker(ValidationElement):
                     ).props("flat dense").tooltip("Parent directory")
 
                 # New folder button (write mode only)
-                if self.mode == "write":
+                if self.mode == self._Mode.WRITE:
                     ui.button(icon="create_new_folder", on_click=self._create_new_folder_dialog).props(
                         "flat dense"
                     ).tooltip("New folder")
@@ -452,7 +451,7 @@ class FilePicker(ValidationElement):
                     with ui.column().classes("w-32 gap-1") as drives_panel:
                         ui.label("Drives").classes("font-bold text-sm mb-2")
                         for drive in self._get_drives():
-                            ui.button(drive, on_click=lambda d=drive: self._navigate_to(Path(d))).props(
+                            ui.button(drive, on_click=lambda _, d=drive: self._navigate_to(Path(d))).props(
                                 "flat dense"
                             ).classes("w-full justify-start")
                 else:
@@ -544,7 +543,7 @@ class FilePicker(ValidationElement):
 
             # Bottom bar
             with ui.row().classes("w-full items-center gap-2"):
-                if self.mode == "write":
+                if self.mode == self._Mode.WRITE:
                     # Filename input in write mode
                     ui.label("File name:").classes("text-sm")
                     filename_input = ui.input().classes("flex-grow")

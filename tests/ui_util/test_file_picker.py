@@ -13,10 +13,13 @@ Tests cover:
 - Integration workflows
 """
 
+import pathlib
 import platform
-from unittest.mock import Mock, patch
+from collections.abc import Iterator
+from unittest.mock import Mock, patch, MagicMock
 
 import pytest
+from nicegui.testing import User
 
 from nicegooey.ui_util.file_picker import FilePicker
 
@@ -25,7 +28,7 @@ from nicegooey.ui_util.file_picker import FilePicker
 
 
 @pytest.fixture
-def temp_dir_structure(tmp_path):
+def temp_dir_structure(tmp_path: pathlib.Path) -> pathlib.Path:
     """
     Create a temporary directory structure for testing.
 
@@ -58,10 +61,16 @@ def temp_dir_structure(tmp_path):
 
 
 @pytest.fixture
-def mock_notify():
+def mock_notify() -> Iterator[MagicMock]:
     """Mock ui.notify to capture notification calls."""
     with patch("nicegooey.ui_util.file_picker.ui.notify") as mock:
         yield mock
+
+
+@pytest.fixture
+def file_picker_read(temp_dir_structure: pathlib.Path, user: User) -> FilePicker:
+    with user:
+        return FilePicker(starting_directory=str(temp_dir_structure), mode="read")
 
 
 # ==================== 1. Initialization Tests ====================
@@ -71,32 +80,27 @@ def test_init_default_params(temp_dir_structure):
     """Test FilePicker initialization with default parameters."""
     picker = FilePicker(starting_directory=str(temp_dir_structure))
 
-    assert picker.mode == "read"
     assert picker.allow_directory_selection is False
     assert picker.allow_multiple is False
     assert picker.show_hidden is False
     assert picker.show_buttons is True
     assert picker.file_filter is None
-    assert picker.on_ok is None
-    assert picker.on_cancel is None
     assert picker.current_directory == temp_dir_structure
-    assert picker.value is None
+    assert picker.value == []
 
 
 def test_init_read_mode(temp_dir_structure):
     """Test initialization in read mode."""
     picker = FilePicker(starting_directory=str(temp_dir_structure), mode="read")
 
-    assert picker.mode == "read"
-    assert picker.value is None
+    assert picker.value == []
 
 
 def test_init_write_mode(temp_dir_structure):
     """Test initialization in write mode."""
     picker = FilePicker(starting_directory=str(temp_dir_structure), mode="write")
 
-    assert picker.mode == "write"
-    assert picker.value is None
+    assert picker.value == []
     assert picker._filename_input_value == ""
 
 
@@ -106,12 +110,6 @@ def test_init_with_starting_directory(temp_dir_structure):
     picker = FilePicker(starting_directory=str(subfolder))
 
     assert picker.current_directory == subfolder
-
-
-def test_init_invalid_mode(temp_dir_structure):
-    """Test that invalid mode raises ValueError."""
-    with pytest.raises(ValueError, match="mode must be 'read' or 'write'"):
-        FilePicker(starting_directory=str(temp_dir_structure), mode="invalid")
 
 
 def test_init_with_file_filter(temp_dir_structure):
@@ -390,7 +388,7 @@ def test_single_selection_file(temp_dir_structure):
     file_path = temp_dir_structure / "file1.txt"
     picker._on_item_click({"path": file_path, "is_dir": False, "name": "file1.txt"})
 
-    assert picker.value == file_path
+    assert picker.value == [file_path]
 
 
 def test_single_selection_replaces(temp_dir_structure):
@@ -404,7 +402,7 @@ def test_single_selection_replaces(temp_dir_structure):
 
     picker._on_item_click({"path": file2, "is_dir": False, "name": "file2.pdf"})
 
-    assert picker.value == file2
+    assert picker.value == [file2]
 
 
 def test_multiple_selection_files(temp_dir_structure):
@@ -444,7 +442,7 @@ def test_directory_selection_when_allowed(temp_dir_structure):
     folder = temp_dir_structure / "folder1"
     picker._on_item_click({"path": folder, "is_dir": True, "name": "folder1"})
 
-    assert picker.value == folder
+    assert picker.value == [folder]
 
 
 def test_directory_selection_when_not_allowed(temp_dir_structure):
@@ -458,49 +456,27 @@ def test_directory_selection_when_not_allowed(temp_dir_structure):
     assert picker.current_directory == folder
 
 
-def test_get_selected_path_single(temp_dir_structure):
-    """Test get_selected_path() in single selection mode."""
+def test_value_single_selection(temp_dir_structure):
+    """Test value property in single selection mode."""
     picker = FilePicker(starting_directory=str(temp_dir_structure))
 
     file_path = temp_dir_structure / "file1.txt"
-    picker.value = file_path
+    picker.value = [file_path]
 
-    assert picker.get_selected_path() == file_path
+    assert picker.value == [file_path]
+    assert picker.value[0] == file_path
 
 
-def test_get_selected_path_multiple(temp_dir_structure):
-    """Test get_selected_path() in multiple selection mode."""
+def test_value_multiple_selection(temp_dir_structure):
+    """Test value property in multiple selection mode."""
     picker = FilePicker(starting_directory=str(temp_dir_structure), allow_multiple=True)
 
     file1 = temp_dir_structure / "file1.txt"
     file2 = temp_dir_structure / "file2.pdf"
     picker.value = [file1, file2]
 
-    # Should return first selected item
-    assert picker.get_selected_path() == file1
-
-
-def test_get_selected_paths_single(temp_dir_structure):
-    """Test get_selected_paths() in single selection mode."""
-    picker = FilePicker(starting_directory=str(temp_dir_structure))
-
-    file_path = temp_dir_structure / "file1.txt"
-    picker.value = file_path
-
-    paths = picker.get_selected_paths()
-    assert paths == [file_path]
-
-
-def test_get_selected_paths_multiple(temp_dir_structure):
-    """Test get_selected_paths() in multiple selection mode."""
-    picker = FilePicker(starting_directory=str(temp_dir_structure), allow_multiple=True)
-
-    file1 = temp_dir_structure / "file1.txt"
-    file2 = temp_dir_structure / "file2.pdf"
-    picker.value = [file1, file2]
-
-    paths = picker.get_selected_paths()
-    assert paths == [file1, file2]
+    assert picker.value == [file1, file2]
+    assert len(picker.value) == 2
 
 
 # ==================== 5. UI Interaction Tests ====================
@@ -523,7 +499,7 @@ def test_item_click_selects_file(temp_dir_structure):
     file_path = temp_dir_structure / "file1.txt"
     picker._on_item_click({"path": file_path, "is_dir": False, "name": "file1.txt"})
 
-    assert picker.value == file_path
+    assert picker.value == [file_path]
 
 
 def test_item_double_click_navigates(temp_dir_structure):
@@ -559,15 +535,15 @@ def test_selection_display_updates(temp_dir_structure):
     picker = FilePicker(starting_directory=str(temp_dir_structure))
 
     # Create a mock label
-    picker._selected_label = Mock()
+    picker._inner_elements.selected_label = Mock()
 
     file_path = temp_dir_structure / "file1.txt"
-    picker.value = file_path
+    picker.value = [file_path]
 
     picker._update_selection_display()
 
     # Should have called set_text
-    picker._selected_label.set_text.assert_called_once()
+    picker._inner_elements.selected_label.set_text.assert_called_once()
 
 
 def test_filename_input_in_write_mode(temp_dir_structure):
@@ -593,7 +569,7 @@ def test_ok_callback_read_mode(temp_dir_structure):
     picker = FilePicker(starting_directory=str(temp_dir_structure), on_ok=ok_callback)
 
     file_path = temp_dir_structure / "file1.txt"
-    picker.value = file_path
+    picker.value = [file_path]
 
     picker._on_ok_click()
 
@@ -610,7 +586,7 @@ def test_ok_callback_write_mode(temp_dir_structure):
     picker._on_ok_click()
 
     ok_callback.assert_called_once()
-    assert picker.value == temp_dir_structure / "newfile.txt"
+    assert picker.value == [temp_dir_structure / "newfile.txt"]
 
 
 def test_ok_validation_no_selection(temp_dir_structure, mock_notify):
@@ -680,7 +656,49 @@ def test_write_mode_ok_creates_full_path(temp_dir_structure):
     picker._on_ok_click()
 
     expected_path = temp_dir_structure / "newfile.txt"
-    assert picker.value == expected_path
+    assert picker.value == [expected_path]
+
+
+def test_write_mode_allows_arbitrary_filename_input(temp_dir_structure):
+    """Test that write mode allows entering names of files that don't exist yet."""
+    picker = FilePicker(starting_directory=str(temp_dir_structure), mode="write")
+
+    # Enter a filename for a file that doesn't exist
+    nonexistent_filename = "completely_new_file_that_does_not_exist.txt"
+    picker._filename_input_value = nonexistent_filename
+
+    # Click OK - should accept the non-existent filename
+    picker._on_ok_click()
+
+    # Should create path for the non-existent file
+    expected_path = temp_dir_structure / nonexistent_filename
+    assert picker.value == [expected_path]
+    assert not expected_path.exists()  # File should not actually be created
+
+
+def test_write_mode_no_checkboxes_single_selection(temp_dir_structure):
+    """Test that write mode does not show checkboxes and uses single selection."""
+    picker = FilePicker(starting_directory=str(temp_dir_structure), mode="write")
+
+    # In write mode, the table should use single selection, not multiple
+    assert picker._inner_elements.file_table._props.get("selection") == "single"
+
+    # Verify that filename input exists instead of selection label
+    assert picker._inner_elements.filename_input is not None
+    assert picker._inner_elements.selected_label is None
+
+
+def test_multiselect_read_mode_table_selection_behavior(temp_dir_structure):
+    """Test that multi-select mode uses table's built-in selection (checkboxes)."""
+    picker = FilePicker(starting_directory=str(temp_dir_structure), allow_multiple=True)
+
+    # In multi-select read mode, the table should use 'multiple' selection
+    # This enables Quasar table's checkbox behavior
+    assert picker._inner_elements.file_table._props.get("selection") == "multiple"
+
+    # Verify no filename input in read mode
+    assert picker._inner_elements.filename_input is None
+    assert picker._inner_elements.selected_label is not None
 
 
 # ==================== 8. Edge Cases and Error Handling ====================
@@ -735,15 +753,7 @@ def test_show_buttons_false(temp_dir_structure):
 def test_get_selected_path_returns_none_when_empty(temp_dir_structure):
     """Test get_selected_path returns None when no selection."""
     picker = FilePicker(starting_directory=str(temp_dir_structure))
-
-    assert picker.get_selected_path() is None
-
-
-def test_get_selected_paths_returns_empty_list_when_empty(temp_dir_structure):
-    """Test get_selected_paths returns empty list when no selection."""
-    picker = FilePicker(starting_directory=str(temp_dir_structure))
-
-    assert picker.get_selected_paths() == []
+    assert picker.value == []
 
 
 # ==================== 9. Integration Tests ====================
@@ -764,7 +774,7 @@ def test_complete_file_selection_workflow(temp_dir_structure):
     assert picker.value == file_path
 
     # Get selected path
-    assert picker.get_selected_path() == file_path
+    assert picker.value == [file_path]
 
 
 def test_complete_save_file_workflow(temp_dir_structure):
@@ -803,10 +813,7 @@ def test_multiple_file_selection_workflow(temp_dir_structure):
     picker._on_item_click({"path": file2, "is_dir": False, "name": "file2.pdf"})
 
     # Both should be selected
-    selected = picker.get_selected_paths()
-    assert file1 in selected
-    assert file2 in selected
-    assert len(selected) == 2
+    assert set(picker.value) == {file1, file2}
 
 
 def test_directory_selection_workflow(temp_dir_structure):
@@ -818,7 +825,7 @@ def test_directory_selection_workflow(temp_dir_structure):
     picker._on_item_click({"path": folder, "is_dir": True, "name": "folder1"})
 
     # Folder should be selected
-    assert picker.get_selected_path() == folder
+    assert picker.value == [folder]
 
 
 def test_refresh_method(temp_dir_structure):

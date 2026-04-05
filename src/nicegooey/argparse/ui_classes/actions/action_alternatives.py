@@ -11,11 +11,11 @@ from nicegooey.argparse.ui_classes.actions.standard_actions import (
     StoreActionUiElement,
     StoreConstActionUiElement,
 )
-from nicegooey.argparse.ui_classes.util.disableable_div import DisableableDiv
-from nicegooey.argparse.ui_classes.util.local_file_picker import LocalFilePicker
 from nicegooey.argparse.ui_classes.util.misc import q_field
-from nicegooey.argparse.ui_classes.util.validation_wrapper import ValidationWrapper
-from nicegooey.argparse.ui_classes.util.value_text_element import ValueLabel
+from nicegooey.ui_util.disableable_div import DisableableDiv
+from nicegooey.ui_util.local_file_picker import LocalFilePicker
+from nicegooey.ui_util.validation_wrapper import ValidationWrapper
+from nicegooey.ui_util.value_text_element import ValueLabel
 
 
 def store_action_slider(min: float, max: float, step: float = 1) -> Type[StoreActionUiElement]:

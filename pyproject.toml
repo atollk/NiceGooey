@@ -21,6 +21,12 @@ dev = [
     "selenium>=4.41.0",
 ]
 
+[project.optional-dependencies]
+native = [
+    "pywebview[qt]>=6.1",
+    "pygobject>=3.56.2",
+]
+
 [tool.ruff]
 line-length = 110
 
