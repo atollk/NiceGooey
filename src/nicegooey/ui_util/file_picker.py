@@ -68,7 +68,7 @@ class FilePicker(ValidationElement):
     current_directory: Path
     _filename_input_value: str
     _inner_elements: _InnerElements
-    value: list[Path]  # pyrefly: ignore[bad-override]
+    value: list[str]  # pyrefly: ignore[bad-override]
 
     def __init__(
         self,
@@ -232,25 +232,63 @@ class FilePicker(ValidationElement):
         else:
             # Select the item
             if self.allow_multiple:
-                # Toggle selection in multiple mode
-                if item["path"] in self.value:
-                    self.value.remove(item["path"])
-                else:
-                    self.value.append(item["path"])
+                # In multi-select mode, toggle the table's checkbox selection
+                path_str = str(item["path"])
+                current_selected = self._inner_elements.file_table.selected or []
+
+                # Find the row dict for this item
+                row_to_toggle = next(
+                    (row for row in self._inner_elements.file_table.rows if row["id"] == path_str), None
+                )
+
+                if row_to_toggle:
+                    # Toggle selection
+                    if any(row["id"] == path_str for row in current_selected):
+                        # Remove from selection
+                        self._inner_elements.file_table.selected = [
+                            row for row in current_selected if row["id"] != path_str
+                        ]
+                    else:
+                        # Add to selection
+                        self._inner_elements.file_table.selected = current_selected + [row_to_toggle]
+
+                    # Sync value property
+                    self.value = [row["id"] for row in self._inner_elements.file_table.selected]
+                    self._update_selection_display()
             else:
-                # Set selection in single mode
-                self.value = [item["path"]]
+                # Single selection mode - keep existing behavior
+                self.value = [str(item["path"])]
                 if self.mode == self._Mode.WRITE:
                     self._filename_input_value = item["name"]
                     if self._inner_elements.filename_input:
                         self._inner_elements.filename_input.set_value(self._filename_input_value)
 
-            self._update_selection_display()
+                # Also update table selection
+                row_to_select = next(
+                    (row for row in self._inner_elements.file_table.rows if row["id"] == str(item["path"])),
+                    None,
+                )
+                if row_to_select:
+                    self._inner_elements.file_table.selected = [row_to_select]
+
+                self._update_selection_display()
 
     def _on_item_double_click(self, item: dict):
         """Handle double-clicking on a file or directory."""
         if item["is_dir"]:
             self._navigate_to(item["path"])
+
+    def _on_table_selection_change(self, e):
+        """Handle table selection changes (from checkbox clicks)."""
+        # e.args contains the selection event data
+        # Extract selected rows from the event
+        selected_rows = e.args if isinstance(e.args, list) else []
+
+        # Update FilePicker value property
+        self.value = [row["id"] for row in selected_rows if isinstance(row, dict)]
+
+        # Update the custom selection display
+        self._update_selection_display()
 
     def _update_selection_display(self):
         """Update the selection display in the bottom bar."""
@@ -262,11 +300,11 @@ class FilePicker(ValidationElement):
                 case 0:
                     text = "No files selected"
                 case 1:
-                    text = f"1 file selected: {str(self.value[0])}"
+                    text = f"1 file selected: {Path(self.value[0]).name}"
                 case n:
                     text = f"{n} files selected"
         elif self.value:
-            text = f"Selected: {str(self.value[0])}"
+            text = f"Selected: {Path(self.value[0]).name}"
         else:
             text = "No file selected"
 
@@ -384,6 +422,12 @@ class FilePicker(ValidationElement):
             }
             for item in self._list_directory()
         ]
+
+        # Restore selection after updating rows
+        if self.value:
+            selected_rows = [row for row in file_table.rows if row["id"] in self.value]
+            file_table.selected = selected_rows
+
         file_table.update()
 
     def _on_ok_click(self):
@@ -396,7 +440,7 @@ class FilePicker(ValidationElement):
                 ui.notify("Please enter a filename", type="warning")
                 return
 
-            self.value = [self.current_directory / filename]
+            self.value = [str(self.current_directory / filename)]
 
         # Validate selection
         if self.mode == self._Mode.READ:
@@ -417,6 +461,18 @@ class FilePicker(ValidationElement):
         """Handle Cancel button click."""
         if self.on_cancel:
             self.on_cancel()
+
+    def _on_filename_input_change(self, e):
+        """Handle filename input changes in write mode."""
+        # Update the internal filename value
+        self._filename_input_value = e.args
+
+        # Clear any file selection when user manually types
+        self.value = []
+
+        # Clear table selection
+        if self._inner_elements.file_table:
+            self._inner_elements.file_table.selected = []
 
     def _render(self) -> _InnerElements:
         """Render the file picker UI."""
@@ -491,12 +547,19 @@ class FilePicker(ValidationElement):
                             }
                         )
 
-                    file_table = ui.table(
-                        columns=columns,
-                        rows=rows,
-                        row_key="id",
-                        selection="multiple" if self.allow_multiple else "single",
-                    ).classes("w-full")
+                    file_table = (
+                        ui.table(
+                            columns=columns,
+                            rows=rows,
+                            row_key="id",
+                            selection="multiple" if self.allow_multiple else "single",
+                        )
+                        .classes("w-full")
+                        .props("hide-selected-banner")
+                    )
+
+                    # Add selection change listener
+                    file_table.on("selection", self._on_table_selection_change)
 
                     # Add click handlers
                     def on_row_click(e):
@@ -547,9 +610,7 @@ class FilePicker(ValidationElement):
                     # Filename input in write mode
                     ui.label("File name:").classes("text-sm")
                     filename_input = ui.input().classes("flex-grow")
-                    filename_input.on(
-                        "update:model-value", lambda e: setattr(self, "_filename_input_value", e.args)
-                    )
+                    filename_input.on("update:model-value", self._on_filename_input_change)
                     selected_label = None
                 else:
                     # Selection display in read mode

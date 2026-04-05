@@ -2,6 +2,7 @@ import argparse
 import enum
 from typing import Any
 
+from nicegui import ui
 from nicegui.elements.mixins.validation_element import ValidationElement, ValidationDict, ValidationFunction
 from nicegui.elements.mixins.value_element import ValueElement
 from nicegui.helpers import is_coroutine_function
@@ -18,7 +19,10 @@ class Nargs(enum.Enum):
 
 
 def clear_value_element(e: ValueElement) -> None:
-    e.value = ""
+    if isinstance(e, ui.number):
+        e.value = None
+    else:
+        e.value = ""
 
 
 def q_field() -> ValidationElement:

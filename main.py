@@ -1,38 +1,20 @@
-from nicegui import ui
+import nicegooey
+from nicegooey.argparse import NgArgumentParser
 
-from nicegooey.ui_util.file_picker import FilePicker
+import multiprocessing
 
 
+@nicegooey.argparse.nice_gooey_argparse_main(patch_argparse=False)
 def main():
-    # Read mode - single file selection
-    picker1 = FilePicker(
-        starting_directory=".",
-        mode="read",
-        file_filter=[".txt", ".pdf"],
-        on_ok=lambda: print(f"Selected: {picker1.value}"),
-        on_cancel=lambda: print("Cancelled"),
-    )
-
-    # Write mode - save file
-    picker2 = FilePicker(
-        starting_directory=".",
-        mode="write",
-        show_hidden=True,
-        on_ok=lambda: print(f"Save to: {picker2.value}"),
-    )
-
-    # Read mode - multiple selection
-    picker3 = FilePicker(
-        mode="read",
-        allow_multiple=True,
-        on_ok=lambda: print(f"Selected files: {picker3.value}"),
-    )
+    parser = NgArgumentParser()
+    parser.add_argument("--value-str", dest="value", type=str, default="", help="Value as string")
+    parser.add_argument("--value-int", dest="value", type=int, default=0, help="Value as int")
+    parser.parse_args()
 
 
 # needed on linux
-import multiprocessing
-
 multiprocessing.set_start_method("spawn", force=True)
 
 if __name__ in {"__main__", "__mp_main__"}:
-    ui.run(main, native=True)
+    # ui.run(main, native=True)
+    main()
