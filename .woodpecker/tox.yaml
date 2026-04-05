@@ -1,11 +1,6 @@
-when:
-  - event: pull_request
-  - event: push
-  - event: manual
-
 steps:
   - name: tox
-    image: ghcr.io/astral-sh/uv:latest
+    image: ghcr.io/astral-sh/uv:alpine3.22
     commands:
       - uv tool install tox --with tox-uv
       - tox
