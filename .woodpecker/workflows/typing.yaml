@@ -1,0 +1,9 @@
+when:
+  - event: pull_request
+  - event: push
+
+steps:
+  - name: typing
+    image: ghcr.io/astral-sh/uv:latest
+    commands:
+      - uv run pyrefly check

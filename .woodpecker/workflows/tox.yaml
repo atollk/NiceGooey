@@ -1,0 +1,10 @@
+when:
+  - event: pull_request
+  - event: push
+
+steps:
+  - name: tox
+    image: ghcr.io/astral-sh/uv:latest
+    commands:
+      - uv tool install tox --with tox-uv
+      - tox
