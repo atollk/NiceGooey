@@ -1,6 +1,7 @@
 import argparse
 import contextlib
 import dataclasses
+import inspect
 import traceback
 from collections import defaultdict
 from typing import TYPE_CHECKING, Any, Callable, Final, Never, override
@@ -54,9 +55,9 @@ class NiceGooeyNamespace(argparse.Namespace):
 class NiceGooeyMain:
     # General State
     parent_parser: argparse.ArgumentParser | None
-    main_func: Callable | None
+    main_func: Callable[[], None] | None
     is_running: bool
-    config: NiceGooeyConfig = NiceGooeyConfig()
+    config: NiceGooeyConfig
 
     # Argument values
     namespace: NiceGooeyNamespace
@@ -72,6 +73,7 @@ class NiceGooeyMain:
         self.parent_parser = None
         self.main_func = None
         self.is_running = False
+        self.config = NiceGooeyConfig()
         self.namespace = NiceGooeyNamespace()
         self.ui_root = None
 
@@ -103,14 +105,28 @@ class NiceGooeyMain:
             logger.warning("Validation error")
             return
 
+        # Process results
+        assert self.main_func is not None
+        result = self.config.process_arguments_on_submit(self.main_func)
+        if inspect.isawaitable(result):
+            await result
+
+    @staticmethod
+    async def submit_xterm_dialog(main_func: Callable[[], None]) -> None:
+        """
+        Default (i.e., if not overridden by config) behavior of the "Submit" button.
+        Opens a dialog overlay with a terminal inside it that simulates the CLI execution of the argparse tool.
+
+        :param main_func: The function that executes the original logic of CLI tool after arguments are parsed.
+        """
         # Process result
         with ui.dialog() as dialog:
             with ui.card() as dialog_card:
-                xterm_options = {}  # {"cols": 80}
+                xterm_options = {"cols": 80}
                 terminal = ui.xterm(xterm_options)
                 # For some reason, the terminal is rendered too narrow so we need to increase the width manually.
-                # ui.query(".xterm-screen").style(f"width: {xterm_options['cols'] * 9 + 20}px")
-                # ui.query(".xterm-rows > div").style("width: none")
+                ui.query(".xterm-screen").style(f"width: {xterm_options['cols'] * 9 + 20}px")
+                ui.query(".xterm-rows > div").style("width: none")
                 dialog_card.style("max-width: none")
                 finish_button = ui.button("Close", on_click=dialog.close)
         finish_button.disable()
@@ -122,10 +138,9 @@ class NiceGooeyMain:
         file_buffer = CallbackWriter(write_to_terminal)
 
         def run_main_func() -> None:
-            assert self.main_func is not None
             try:
                 with contextlib.redirect_stdout(file_buffer):
-                    self.main_func()
+                    main_func()
             except Exception as e:
                 # Switch to red color and print the traceback.
                 file_buffer.write("\x1b[1;31m")

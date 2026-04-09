@@ -2,14 +2,18 @@ import argparse
 import dataclasses
 import enum
 from collections import defaultdict
+from collections.abc import Awaitable
 from typing import TYPE_CHECKING, Callable, Any, Type
+
 
 if TYPE_CHECKING:
     from nicegooey.argparse.ui_classes.actions.action_ui_element import ActionUiElement
 
 
-def foo():
-    return defaultdict(NiceGooeyConfig.ActionConfig)
+def _process_arguments_on_submit_default() -> Callable[[Callable[[], None]], Awaitable[None]]:
+    from .main import NiceGooeyMain
+
+    return NiceGooeyMain.submit_xterm_dialog
 
 
 @dataclasses.dataclass
@@ -28,6 +32,11 @@ class NiceGooeyConfig:
         action_config: A dict that maps parser action objects to `ActionConfig` classes.
             Use this to set configurations affecting individual actions.
         nicegui_run_kwargs: A dict of keyword-arguments that is passed to ui.run.
+        process_arguments_on_submit: A function that will be called when the user presses the "Submit" button.
+            It is given another callable as parameter, which executes the logic of the original CLI tool, i.e.
+            everything after the `parse_args` function.
+            Most likely, you will either want to open a dialog or navigate to a certain route here. Look at the
+            implementation of the default value to get an idea.
 
     """
 
@@ -41,6 +50,9 @@ class NiceGooeyConfig:
     display_help: DisplayHelp = DisplayHelp.Tooltip
     require_all_with_default: bool = False
     nicegui_run_kwargs: dict[str, Any] = dataclasses.field(default_factory=dict)
+    process_arguments_on_submit: (
+        Callable[[Callable[[], None]], None] | Callable[[Callable[[], None]], Awaitable[None]]
+    ) = dataclasses.field(default_factory=_process_arguments_on_submit_default)
 
     @dataclasses.dataclass
     class ActionConfig:
@@ -70,7 +82,9 @@ class NiceGooeyConfig:
         override_type: Type | None = None
         number_precision: int | None = None
 
-    action_config: dict[argparse.Action, ActionConfig] = dataclasses.field(default_factory=foo)
+    action_config: dict[argparse.Action, ActionConfig] = dataclasses.field(
+        default_factory=lambda: defaultdict(NiceGooeyConfig.ActionConfig)
+    )
 
     def get_action_config(self, action: argparse.Action) -> ActionConfig:
         config = self.action_config.get(action, None)
