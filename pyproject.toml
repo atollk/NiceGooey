@@ -27,6 +27,9 @@ native = [
     "pygobject>=3.56.2",
 ]
 
+[tool.uv]
+package = true
+
 [tool.ruff]
 line-length = 110
 

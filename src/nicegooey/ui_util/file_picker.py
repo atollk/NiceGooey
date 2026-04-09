@@ -14,6 +14,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 import stat
+from typing import Literal
 
 from nicegui import ui
 from nicegui.elements.mixins.validation_element import ValidationElement
@@ -73,7 +74,7 @@ class FilePicker(ValidationElement):
     def __init__(
         self,
         starting_directory: str = ".",
-        mode: str = "read",
+        mode: Literal["read", "write"] = "read",
         allow_directory_selection: bool = False,
         allow_multiple: bool = False,
         show_hidden: bool = False,

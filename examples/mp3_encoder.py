@@ -4,6 +4,7 @@ import argparse
 
 
 from nicegooey.argparse import NgArgumentParser, nice_gooey_argparse_main, NiceGooeyConfig
+from nicegooey.argparse.ui_classes.actions import action_alternatives
 from nicegooey.argparse.util import parse_quasar_theme_variables
 
 """
@@ -29,7 +30,7 @@ def build_parser() -> argparse.ArgumentParser:
         "input",
         metavar="INPUT_FILE",
         help="Path to the source audio file to encode (e.g. /Desktop/song.flac).",
-    )
+    ).nicegooey_config.element_override = action_alternatives.store_action_file("read_file")
 
     # ── Output Stage ──────────────────────────────────────────────────────────
     output_group = parser.add_argument_group(

@@ -1,7 +1,7 @@
 """A bunch of default implementations for action UI elements that can be used to override the default in certain cases."""
 
 import os
-from typing import Type, override, Callable
+from typing import Type, override, Callable, LiteralString, Literal
 
 from nicegui import ui
 from nicegui.elements.mixins.validation_element import ValidationElement
@@ -13,7 +13,7 @@ from nicegooey.argparse.ui_classes.actions.standard_actions import (
 )
 from nicegooey.argparse.ui_classes.util.misc import q_field
 from nicegooey.ui_util.disableable_div import DisableableDiv
-from nicegooey.ui_util.local_file_picker import LocalFilePicker
+from nicegooey.ui_util.file_picker import FilePicker
 from nicegooey.ui_util.validation_wrapper import ValidationWrapper
 from nicegooey.ui_util.value_text_element import ValueLabel
 
@@ -88,17 +88,24 @@ def store_const_action_toggle() -> Type[StoreConstActionUiElement]:
     return StoreActionToggleElement
 
 
-def store_action_file() -> Type[StoreActionUiElement]:
-    """Displays a string 'store' action with a file picker widget instead of a free text input."""
+def store_action_file(mode: Literal["read_file", "write_file", "read_file_or_dir"]) -> Type[StoreActionUiElement]:
+    """
+    Displays a string 'store' action with a file picker widget instead of a free text input.
+    """
 
     class StoreActionFileElement(StoreActionUiElement):
         @override
         @classmethod
         def _render_action_single(cls, action_info: ActionInfoHelper) -> ValidationElement:
             async def pick_file():
-                picker_dialog = LocalFilePicker(os.getcwd(), multiple=False)
-                if result := await picker_dialog:
-                    basic_element.value = result[0]
+                with ui.dialog() as dialog:
+                    with ui.card():
+                        picker = FilePicker(os.getcwd(), mode="write" if mode == "write_file" else "read")
+                picker.on_ok = lambda: dialog.submit(picker.value)
+                picker.on_cancel = lambda: dialog.close()
+
+                if result := await dialog:
+                    basic_element.value = None if result is None else result[0]
 
             with ui.row().classes("items-center"):
                 ui.button("Browse files", on_click=pick_file, icon="folder_open")
