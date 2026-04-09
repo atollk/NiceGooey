@@ -42,7 +42,7 @@ def main() -> None:
 
     # Configure file picker override
     parser.nicegooey_config.action_config[config_action] = NiceGooeyConfig.ActionConfig(
-        element_override=store_action_file()
+        element_override=store_action_file(mode="read_file")
     )
 
     parser.parse_args()
