@@ -1,6 +1,7 @@
 import argparse
 import contextlib
 import dataclasses
+import traceback
 from collections import defaultdict
 from typing import TYPE_CHECKING, Any, Callable, Final, Never, override
 
@@ -103,22 +104,34 @@ class NiceGooeyMain:
             return
 
         # Process result
-        assert self.main_func is not None
         with ui.dialog() as dialog:
             with ui.card() as dialog_card:
-                xterm_options = {"cols": 80}
+                xterm_options = {}  # {"cols": 80}
                 terminal = ui.xterm(xterm_options)
                 # For some reason, the terminal is rendered too narrow so we need to increase the width manually.
-                ui.query(".xterm-screen").style(f"width: {xterm_options['cols'] * 9 + 20}px")
-                ui.query(".xterm-rows > div").style("width: none")
+                # ui.query(".xterm-screen").style(f"width: {xterm_options['cols'] * 9 + 20}px")
+                # ui.query(".xterm-rows > div").style("width: none")
                 dialog_card.style("max-width: none")
                 finish_button = ui.button("Close", on_click=dialog.close)
         finish_button.disable()
         dialog.open()
-        write_terminal: Callable[[str], Any] = terminal.write
-        file_buffer = CallbackWriter(write_terminal)
-        with contextlib.redirect_stdout(file_buffer):
-            await nicegui.run.io_bound(self.main_func)
+
+        def write_to_terminal(data: str) -> None:
+            terminal.write(data.replace("\n", "\r\n"))
+
+        file_buffer = CallbackWriter(write_to_terminal)
+
+        def run_main_func() -> None:
+            assert self.main_func is not None
+            try:
+                with contextlib.redirect_stdout(file_buffer):
+                    self.main_func()
+            except Exception as e:
+                # Switch to red color and print the traceback.
+                file_buffer.write("\x1b[1;31m")
+                traceback.print_exception(e, limit=None, file=file_buffer, chain=True)
+
+        await nicegui.run.io_bound(run_main_func)
         finish_button.enable()
 
     def _ui_root(self) -> None:

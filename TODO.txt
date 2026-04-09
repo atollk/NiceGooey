@@ -1,3 +1,1 @@
-- errors in the parse-args-processing cause a freeze of the dialog -> instead they should show an error
 - custom processing-widget instead of xterm
-- use FilePicker instead of LocalFilePicker

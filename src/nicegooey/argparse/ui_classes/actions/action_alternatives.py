@@ -1,7 +1,7 @@
 """A bunch of default implementations for action UI elements that can be used to override the default in certain cases."""
 
 import os
-from typing import Type, override, Callable, LiteralString, Literal
+from typing import Type, override, Callable, Literal
 
 from nicegui import ui
 from nicegui.elements.mixins.validation_element import ValidationElement
@@ -88,7 +88,9 @@ def store_const_action_toggle() -> Type[StoreConstActionUiElement]:
     return StoreActionToggleElement
 
 
-def store_action_file(mode: Literal["read_file", "write_file", "read_file_or_dir"]) -> Type[StoreActionUiElement]:
+def store_action_file(
+    mode: Literal["read_file", "write_file", "read_file_or_dir"],
+) -> Type[StoreActionUiElement]:
     """
     Displays a string 'store' action with a file picker widget instead of a free text input.
     """
