@@ -89,8 +89,8 @@ async def test_is_hidden_unix(user: User) -> None:
     hidden_file = temp_dir / ".hidden_file"
     regular_file = temp_dir / "file1.txt"
 
-    assert picker._is_hidden(hidden_file) is True
-    assert picker._is_hidden(regular_file) is False
+    assert picker._path_is_hidden(hidden_file) is True
+    assert picker._path_is_hidden(regular_file) is False
 
 
 @pytest.mark.nicegui_main_file(__file__)
@@ -101,7 +101,7 @@ async def test_matches_filter_no_filter(user: User) -> None:
     picker = user.find(FilePicker).elements.pop()
     temp_dir = picker.current_directory
     file_path = temp_dir / "file1.txt"
-    assert picker._matches_filter(file_path) is True
+    assert picker._path_matches_filter(file_path) is True
 
 
 @pytest.mark.nicegui_main_file(__file__)
@@ -112,7 +112,7 @@ async def test_matches_filter_directories_always_match(user: User) -> None:
     picker = user.find(FilePicker).elements.pop()
     temp_dir = picker.current_directory
     folder = temp_dir / "folder1"
-    assert picker._matches_filter(folder) is True
+    assert picker._path_matches_filter(folder) is True
 
 
 @pytest.mark.nicegui_main_file(__file__)
@@ -123,7 +123,7 @@ async def test_get_file_size(user: User) -> None:
     picker = user.find(FilePicker).elements.pop()
     temp_dir = picker.current_directory
     file_path = temp_dir / "file1.txt"
-    size = picker._get_file_size(file_path)
+    size = picker._get_formatted_file_size(file_path)
 
     assert isinstance(size, str)
     assert "B" in size
@@ -137,7 +137,7 @@ async def test_get_file_size_directory(user: User) -> None:
     picker = user.find(FilePicker).elements.pop()
     temp_dir = picker.current_directory
     folder = temp_dir / "folder1"
-    size = picker._get_file_size(folder)
+    size = picker._get_formatted_file_size(folder)
 
     assert size == ""
 
@@ -150,7 +150,7 @@ async def test_get_modified_time(user: User) -> None:
     picker = user.find(FilePicker).elements.pop()
     temp_dir = picker.current_directory
     file_path = temp_dir / "file1.txt"
-    mtime = picker._get_modified_time(file_path)
+    mtime = picker._get_formatted_modtime(file_path)
 
     assert isinstance(mtime, str)
     assert "-" in mtime

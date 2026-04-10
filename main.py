@@ -1,7 +1,9 @@
+"""Purely for internal testing"""
+
 from nicegui import ui
 
 import nicegooey
-from nicegooey.argparse import NgArgumentParser
+from nicegooey.argparse import NgArgumentParser, NiceGooeyConfig
 
 import multiprocessing
 
@@ -13,11 +15,9 @@ def foo(main_func):
 @nicegooey.argparse.nice_gooey_argparse_main(patch_argparse=False)
 def main():
     parser = NgArgumentParser()
-    parser.add_argument("--value-str", dest="value", type=str, default="", help="Value as string")
-    parser.add_argument("--value-int", dest="value", type=int, default=0, help="Value as int")
-    parser.nicegooey_config.process_arguments_on_submit = foo
+    flag_action = parser.add_argument("--flag", type=str, help="A flag", required=True)
+    flag_action.nicegooey_config = NiceGooeyConfig.ActionConfig(override_type=bool)
     parser.parse_args()
-    raise NotImplementedError
 
 
 # needed on linux

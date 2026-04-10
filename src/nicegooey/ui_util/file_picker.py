@@ -10,13 +10,13 @@ import os
 import platform
 import string
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from datetime import datetime
 from pathlib import Path
 import stat
 from typing import Literal
 
-from nicegui import ui
+from nicegui import ui, events
 from nicegui.elements.mixins.validation_element import ValidationElement
 
 
@@ -39,7 +39,7 @@ class FilePicker(ValidationElement):
         allow_multiple: Allow multiple file selection in read mode (default: False)
         show_hidden: Show hidden files and folders (default: False)
         show_buttons: Show OK and Cancel buttons (default: True)
-        file_filter: List of file extensions to show, e.g., ['.txt', '.pdf'] (default: None, shows all)
+        file_filter: A list of file extensions to show, e.g., ['.txt', '.pdf']. If None, all files are shown.
         on_ok: Callback function called when OK is clicked (default: None)
         on_cancel: Callback function called when Cancel is clicked (default: None)
     """
@@ -47,6 +47,15 @@ class FilePicker(ValidationElement):
     class _Mode(enum.Enum):
         READ = "read"
         WRITE = "write"
+
+        @classmethod
+        def from_value(cls, value: str) -> "FilePicker._Mode":
+            if value == "read":
+                return cls.READ
+            elif value == "write":
+                return cls.WRITE
+            else:
+                raise ValueError("mode must be 'read' or 'write'")
 
     @dataclass
     class _InnerElements:
@@ -86,12 +95,7 @@ class FilePicker(ValidationElement):
         super().__init__(value=[], validation={})
 
         # Store configuration
-        if mode == "read":
-            self.mode = self._Mode.READ
-        elif mode == "write":
-            self.mode = self._Mode.WRITE
-        else:
-            raise ValueError("mode must be 'read' or 'write'")
+        self.mode = self._Mode.from_value(mode)
         self.allow_directory_selection = allow_directory_selection
         self.allow_multiple = allow_multiple and mode == "read"
         self.show_hidden = show_hidden
@@ -111,25 +115,33 @@ class FilePicker(ValidationElement):
         # Render the UI
         self._inner_elements = self._render()
 
+    # ---------- Public Functions ----------
+
+    def navigate_to(self, path: str) -> None:
+        """Programmatically change the current directory."""
+        new_path = Path(path).resolve()
+        if new_path.is_dir():
+            self._navigate_to(new_path)
+        else:
+            ui.notify(f"Not a directory: {path}", type="warning")
+
+    def reload_from_disk(self):
+        """Refresh the current directory listing from the files on disk."""
+        self._refresh_ui()
+
+    # ---------- Non-Modifying Internal Utility Functions ----------
+
     @staticmethod
     def _is_windows() -> bool:
-        """Check if running on Windows."""
         return platform.system() == "Windows"
 
-    def _get_drives(self) -> list[str]:
-        """Get list of available drives on Windows."""
+    def _get_windows_drives(self) -> list[str]:
         if not self._is_windows():
             return []
 
-        drives = []
-        for letter in string.ascii_uppercase:
-            drive = f"{letter}:\\"
-            if os.path.exists(drive):
-                drives.append(drive)
-        return drives
+        return [drive for letter in string.ascii_uppercase if os.path.exists(drive := f"{letter}:\\")]
 
-    def _is_hidden(self, path: Path) -> bool:
-        """Check if a file or directory is hidden."""
+    def _path_is_hidden(self, path: Path) -> bool:
         if path.name.startswith("."):
             return True
 
@@ -142,8 +154,7 @@ class FilePicker(ValidationElement):
 
         return False
 
-    def _matches_filter(self, path: Path) -> bool:
-        """Check if a file matches the current filter."""
+    def _path_matches_filter(self, path: Path) -> bool:
         if path.is_dir():
             return True
 
@@ -152,66 +163,77 @@ class FilePicker(ValidationElement):
 
         return path.suffix.lower() in self.file_filter
 
-    def _get_file_size(self, path: Path) -> str:
+    def _get_formatted_file_size(self, path: Path) -> str:
         """Get human-readable file size."""
         if path.is_dir():
             return ""
 
         try:
             size = path.stat().st_size
-            for unit in ["B", "KB", "MB", "GB", "TB"]:
-                if size < 1024.0:
-                    return f"{size:.1f} {unit}"
-                size /= 1024.0
-            return f"{size:.1f} PB"
         except OSError:
             return ""
 
-    def _get_modified_time(self, path: Path) -> str:
+        for unit in ["B", "KiB", "MiB", "GiB", "TiB"]:
+            if size >= 1024.0:
+                size /= 1024.0
+            else:
+                break
+        else:
+            unit = "PiB"
+        return f"{size:.1f} {unit}"
+
+    def _get_formatted_modtime(self, path: Path) -> str:
         """Get human-readable modification time."""
         try:
             mtime = path.stat().st_mtime
-            dt = datetime.fromtimestamp(mtime)
-            return dt.strftime("%Y-%m-%d %H:%M")
         except OSError:
             return ""
+        return datetime.fromtimestamp(mtime).strftime("%Y-%m-%d %H:%M")
 
-    def _list_directory(self) -> list[dict]:
-        """List contents of current directory."""
+    @dataclass(frozen=True)
+    class _DirectoryItemTableRow:
+        id: str
+        name: str
+        is_dir: bool
+        size: str
+        modified: str
+        icon: Literal["folder", "description"]
+
+        @property
+        def path(self) -> Path:
+            return Path(self.id)
+
+    def _list_directory(self) -> list[_DirectoryItemTableRow]:
+        """List contents of current directory, to be then used as rows for the table widget."""
         items = []
 
         try:
-            for item in self.current_directory.iterdir():
-                # Skip hidden files if not showing them
-                if not self.show_hidden and self._is_hidden(item):
+            for path in self.current_directory.iterdir():
+                if not self.show_hidden and self._path_is_hidden(path):
                     continue
 
-                # Skip files that don't match filter
-                if not self._matches_filter(item):
+                if not self._path_matches_filter(path):
                     continue
 
-                items.append(
-                    {
-                        "path": item,
-                        "name": item.name,
-                        "is_dir": item.is_dir(),
-                        "size": self._get_file_size(item),
-                        "modified": self._get_modified_time(item),
-                        "icon": "folder" if item.is_dir() else "description",
-                    }
+                row = self._DirectoryItemTableRow(
+                    id=str(path),
+                    name=path.name,
+                    is_dir=path.is_dir(),
+                    size=self._get_formatted_file_size(path),
+                    modified=self._get_formatted_modtime(path),
+                    icon="folder" if path.is_dir() else "description",
                 )
+                items.append(row)
         except PermissionError:
-            ui.notify(f"Permission denied: {self.current_directory}", type="negative")
+            self._display_error(f"Permission denied: {self.current_directory}")
         except OSError as e:
-            ui.notify(f"Error reading directory: {e}", type="negative")
+            self._display_error(f"Error reading directory: {e}")
 
         # Sort: directories first, then files, alphabetically
-        items.sort(key=lambda x: (not x["is_dir"], x["name"].lower()))
-
+        items.sort(key=lambda x: (not x.is_dir, x.name.lower()))
         return items
 
-    def _navigate_to(self, path: Path):
-        """Navigate to a new directory."""
+    def _navigate_to(self, path: Path) -> None:
         if not path.is_dir():
             return
 
@@ -221,65 +243,51 @@ class FilePicker(ValidationElement):
             self.current_directory = path.resolve()
             self._refresh_ui()
         except PermissionError:
-            ui.notify(f"Permission denied: {path}", type="negative")
+            self._display_error(f"Permission denied: {path}")
         except OSError as e:
-            ui.notify(f"Cannot access directory: {e}", type="negative")
+            self._display_error(f"Cannot access directory: {e}")
 
-    def _on_item_click(self, item: dict):
-        """Handle clicking on a file or directory."""
-        if item["is_dir"] and not self.allow_directory_selection:
-            # Navigate into directory
-            self._navigate_to(item["path"])
-        else:
-            # Select the item
-            if self.allow_multiple:
-                # In multi-select mode, toggle the table's checkbox selection
-                path_str = str(item["path"])
-                current_selected = self._inner_elements.file_table.selected or []
+    # ---------- Internal Functions for UI Callbacks ----------
 
-                # Find the row dict for this item
-                row_to_toggle = next(
-                    (row for row in self._inner_elements.file_table.rows if row["id"] == path_str), None
-                )
+    def _on_item_click(self, row: _DirectoryItemTableRow) -> None:
+        if row["is_dir"]:
+            self._navigate_to(row.path)
+            return
 
-                if row_to_toggle:
-                    # Toggle selection
-                    if any(row["id"] == path_str for row in current_selected):
-                        # Remove from selection
-                        self._inner_elements.file_table.selected = [
-                            row for row in current_selected if row["id"] != path_str
-                        ]
-                    else:
-                        # Add to selection
-                        self._inner_elements.file_table.selected = current_selected + [row_to_toggle]
-
-                    # Sync value property
-                    self.value = [row["id"] for row in self._inner_elements.file_table.selected]
-                    self._update_selection_display()
+        if self.allow_multiple:
+            # Toggle the checkbox selection
+            current_selected = self._get_selected_rows()
+            if row in current_selected:
+                # Remove from selection
+                self._set_selected_rows([r for r in current_selected if r != row])
             else:
-                # Single selection mode - keep existing behavior
-                self.value = [str(item["path"])]
-                if self.mode == self._Mode.WRITE:
-                    self._filename_input_value = item["name"]
-                    if self._inner_elements.filename_input:
-                        self._inner_elements.filename_input.set_value(self._filename_input_value)
+                # Add to selection
+                self._set_selected_rows(current_selected + [row])
+        else:
+            if self.mode == self._Mode.WRITE:
+                self._filename_input_value = row.name
+                if self._inner_elements.filename_input:
+                    self._inner_elements.filename_input.set_value(self._filename_input_value)
 
-                # Also update table selection
-                row_to_select = next(
-                    (row for row in self._inner_elements.file_table.rows if row["id"] == str(item["path"])),
-                    None,
-                )
-                if row_to_select:
-                    self._inner_elements.file_table.selected = [row_to_select]
+            # row_to_select = next(
+            #     (row for row in self._inner_elements.file_table.rows if row["id"] == str(row["path"])),
+            #     None,
+            # )
+            # TODO: what happens if we are in write mode and type in a non-existent file?
+            row_to_select = row
+            if row_to_select:
+                self._set_selected_rows([row_to_select])
 
-                self._update_selection_display()
+        # Sync value property
+        self.value = [row.id for row in self._get_selected_rows()]
+        self._update_selection_display()
 
-    def _on_item_double_click(self, item: dict):
-        """Handle double-clicking on a file or directory."""
+    def _on_item_double_click(self, item: _DirectoryItemTableRow) -> None:
         if item["is_dir"]:
-            self._navigate_to(item["path"])
+            self._navigate_to(Path(item["id"]))
 
-    def _on_table_selection_change(self, e):
+    # TODO specify type
+    def _on_table_selection_change(self, e: events.GenericEventArguments) -> None:
         """Handle table selection changes (from checkbox clicks)."""
         # e.args contains the selection event data
         # Extract selected rows from the event
@@ -290,6 +298,56 @@ class FilePicker(ValidationElement):
 
         # Update the custom selection display
         self._update_selection_display()
+
+    def _on_ok_click(self):
+        # Get the final selection
+        if self.mode == self._Mode.WRITE:
+            # In write mode, use the filename input
+            filename = self._filename_input_value.strip()
+            if not filename:
+                ui.notify("Please enter a filename", type="warning")
+                return
+
+            self.value = [str(self.current_directory / filename)]
+
+        # Validate selection
+        if self.mode == self._Mode.READ:
+            if not self.value:
+                err = "Please select at least one file" if self.allow_multiple else "Please select a file"
+                self._display_error(err)
+                return
+
+        # Call the callback
+        if self.on_ok:
+            self.on_ok()
+
+    def _on_cancel_click(self):
+        if self.on_cancel:
+            self.on_cancel()
+
+    def _on_filename_input_change(self, e):
+        """Handle filename input changes in write mode."""
+        # Update the internal filename value
+        self._filename_input_value = e.args
+
+        # Clear any file selection when user manually types
+        self.value = []
+
+        # Clear table selection
+        if self._inner_elements.file_table:
+            self._set_selected_rows([])
+
+    # ---------- Internal Functions for UI Logic ----------
+
+    def _get_selected_rows(self) -> list[_DirectoryItemTableRow]:
+        return [self._DirectoryItemTableRow(**row) for row in self._inner_elements.file_table.selected]
+
+    def _set_selected_rows(self, rows: list[_DirectoryItemTableRow]) -> None:
+        self._inner_elements.file_table.selected = [asdict(row) for row in rows]
+        self._inner_elements.file_table.update()  # TODO: ?
+
+    def _display_error(self, message: str) -> None:
+        ui.notify(message, type="negative")
 
     def _update_selection_display(self):
         """Update the selection display in the bottom bar."""
@@ -343,21 +401,20 @@ class FilePicker(ValidationElement):
                 def create_folder():
                     name = folder_input.value.strip()
                     if not name:
-                        ui.notify("Please enter a folder name", type="warning")
+                        self._display_error("Please enter a folder name")
                         return
 
                     new_folder = self.current_directory / name
                     if new_folder.exists():
-                        ui.notify("Folder already exists", type="warning")
+                        self._display_error("Folder already exists")
                         return
 
                     try:
                         new_folder.mkdir()
-                        ui.notify(f"Created folder: {name}", type="positive")
                         dialog.close()
                         self._refresh_ui()
                     except OSError as e:
-                        ui.notify(f"Error creating folder: {e}", type="negative")
+                        self._display_error(f"Error creating folder: {e}")
 
                 ui.button("Create", on_click=create_folder).props("color=primary")
 
@@ -401,79 +458,20 @@ class FilePicker(ValidationElement):
         drives_panel.clear()
         with drives_panel:
             ui.label("Drives").classes("font-bold text-sm mb-2")
-            for drive in self._get_drives():
+            for drive in self._get_windows_drives():
                 ui.button(drive, on_click=lambda _, d=drive: self._navigate_to(Path(d))).props(
                     "flat dense"
                 ).classes("w-full justify-start")
 
     def _update_file_table(self):
         """Update the file table with current directory contents."""
-        file_table = self._inner_elements.file_table
-        if file_table is None:
+        if self._inner_elements.file_table is None:
             return
-
-        file_table.rows = [
-            {
-                "id": str(item["path"]),
-                "name": item["name"],
-                "size": item["size"],
-                "modified": item["modified"],
-                "icon": item["icon"],
-                "is_dir": item["is_dir"],
-            }
-            for item in self._list_directory()
-        ]
+        self._set_selected_rows(self._list_directory())
 
         # Restore selection after updating rows
         if self.value:
-            selected_rows = [row for row in file_table.rows if row["id"] in self.value]
-            file_table.selected = selected_rows
-
-        file_table.update()
-
-    def _on_ok_click(self):
-        """Handle OK button click."""
-        # Get the final selection
-        if self.mode == self._Mode.WRITE:
-            # In write mode, use the filename input
-            filename = self._filename_input_value.strip()
-            if not filename:
-                ui.notify("Please enter a filename", type="warning")
-                return
-
-            self.value = [str(self.current_directory / filename)]
-
-        # Validate selection
-        if self.mode == self._Mode.READ:
-            if self.allow_multiple:
-                if not self.value:
-                    ui.notify("Please select at least one file", type="warning")
-                    return
-            else:
-                if not self.value:
-                    ui.notify("Please select a file", type="warning")
-                    return
-
-        # Call the callback
-        if self.on_ok:
-            self.on_ok()
-
-    def _on_cancel_click(self):
-        """Handle Cancel button click."""
-        if self.on_cancel:
-            self.on_cancel()
-
-    def _on_filename_input_change(self, e):
-        """Handle filename input changes in write mode."""
-        # Update the internal filename value
-        self._filename_input_value = e.args
-
-        # Clear any file selection when user manually types
-        self.value = []
-
-        # Clear table selection
-        if self._inner_elements.file_table:
-            self._inner_elements.file_table.selected = []
+            self._set_selected_rows([row for row in self._get_selected_rows() if row.id in self.value])
 
     def _render(self) -> _InnerElements:
         """Render the file picker UI."""
@@ -507,7 +505,7 @@ class FilePicker(ValidationElement):
                 if self._is_windows():
                     with ui.column().classes("w-32 gap-1") as drives_panel:
                         ui.label("Drives").classes("font-bold text-sm mb-2")
-                        for drive in self._get_drives():
+                        for drive in self._get_windows_drives():
                             ui.button(drive, on_click=lambda _, d=drive: self._navigate_to(Path(d))).props(
                                 "flat dense"
                             ).classes("w-full justify-start")
@@ -534,24 +532,10 @@ class FilePicker(ValidationElement):
                         },
                     ]
 
-                    items = self._list_directory()
-                    rows = []
-                    for item in items:
-                        rows.append(
-                            {
-                                "id": str(item["path"]),
-                                "name": item["name"],
-                                "size": item["size"],
-                                "modified": item["modified"],
-                                "icon": item["icon"],
-                                "is_dir": item["is_dir"],
-                            }
-                        )
-
                     file_table = (
                         ui.table(
                             columns=columns,
-                            rows=rows,
+                            rows=[asdict(row) for row in self._list_directory()],
                             row_key="id",
                             selection="multiple" if self.allow_multiple else "single",
                         )
@@ -584,12 +568,7 @@ class FilePicker(ValidationElement):
                         else:
                             row_data = e.args[0] if e.args else {}
 
-                        item_dict = {
-                            "path": Path(row_data["id"]),
-                            "is_dir": row_data["is_dir"],
-                            "name": row_data["name"],
-                        }
-                        self._on_item_double_click(item_dict)
+                        self._on_item_double_click(row_data)
 
                     file_table.on("row-click", on_row_click)
                     file_table.on("row-dblclick", on_row_double_click)
@@ -634,15 +613,3 @@ class FilePicker(ValidationElement):
             filename_input=filename_input,
             selected_label=selected_label,
         )
-
-    def set_directory(self, path: str) -> None:
-        """Programmatically change the current directory."""
-        new_path = Path(path).resolve()
-        if new_path.is_dir():
-            self._navigate_to(new_path)
-        else:
-            ui.notify(f"Not a directory: {path}", type="warning")
-
-    def refresh(self):
-        """Refresh the current directory listing."""
-        self._refresh_ui()

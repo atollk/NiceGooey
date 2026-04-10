@@ -54,7 +54,7 @@ async def test_set_directory(user: User) -> None:
     subfolder = temp_dir / "folder1"
 
     # Use set_directory method
-    picker.set_directory(str(subfolder))
+    picker.navigate_to(str(subfolder))
 
     assert picker.current_directory == subfolder
 
@@ -71,7 +71,7 @@ async def test_set_directory_invalid(user: User) -> None:
     original_dir = picker.current_directory
 
     # Try to set directory to a file (should fail or be ignored)
-    picker.set_directory(str(file_path))
+    picker.navigate_to(str(file_path))
 
     # Directory should not change
     assert picker.current_directory == original_dir

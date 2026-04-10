@@ -66,11 +66,11 @@ async def test_matches_filter_with_extensions(user: User) -> None:
     jpg_file = temp_dir / "file5.jpg"
     no_ext_file = temp_dir / "no_extension"
 
-    assert picker._matches_filter(txt_file) is True
-    assert picker._matches_filter(pdf_file) is True
-    assert picker._matches_filter(doc_file) is False
-    assert picker._matches_filter(jpg_file) is False
-    assert picker._matches_filter(no_ext_file) is False
+    assert picker._path_matches_filter(txt_file) is True
+    assert picker._path_matches_filter(pdf_file) is True
+    assert picker._path_matches_filter(doc_file) is False
+    assert picker._path_matches_filter(jpg_file) is False
+    assert picker._path_matches_filter(no_ext_file) is False
 
 
 @pytest.mark.nicegui_main_file(__file__)
@@ -109,7 +109,7 @@ async def test_file_filter_case_insensitive(user: User) -> None:
 
     # Test with uppercase extension
     txt_upper = temp_dir / "file2.TXT"
-    assert picker._matches_filter(txt_upper) is True
+    assert picker._path_matches_filter(txt_upper) is True
 
     # Verify it appears in listing
     items = picker._list_directory()
@@ -136,11 +136,11 @@ async def test_file_filter_with_and_without_dot(user: User) -> None:
 
     # These should be created by the second page setup
     if jpg_file.exists():
-        assert picker._matches_filter(jpg_file) is True
+        assert picker._path_matches_filter(jpg_file) is True
     if png_file.exists():
-        assert picker._matches_filter(png_file) is True
+        assert picker._path_matches_filter(png_file) is True
     if txt_file.exists():
-        assert picker._matches_filter(txt_file) is False
+        assert picker._path_matches_filter(txt_file) is False
 
 
 @pytest.mark.nicegui_main_file(__file__)
