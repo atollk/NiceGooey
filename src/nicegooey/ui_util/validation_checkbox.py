@@ -2,11 +2,10 @@ from nicegui import ui
 from nicegui.defaults import DEFAULT_PROPS
 from nicegui.elements.mixins.validation_element import ValidationElement
 from nicegui.events import Handler, ValueChangeEventArguments
-from typing_extensions import override
 
 
 class ValidationCheckbox(ValidationElement, ui.checkbox):
-    @override
+    # No @override because the constructor does not match ValidationElement
     def __init__(
         self,
         text: str = "",

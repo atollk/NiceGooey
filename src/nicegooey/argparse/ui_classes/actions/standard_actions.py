@@ -188,7 +188,7 @@ class CountActionUiElement(ActionUiElement[argparse.Action]):
 
     _original_action: argparse.Action
 
-    @override
+    # no @override
     def __init__(self, parent: NiceGooeyMain, action: argparse._CountAction) -> None:
         self._original_action = action
         super().__init__(parent, self._create_pseudo_action(action))
