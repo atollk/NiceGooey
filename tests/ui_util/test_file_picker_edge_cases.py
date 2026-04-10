@@ -15,6 +15,17 @@ from nicegui.testing import User
 from nicegooey.ui_util.file_picker import FilePicker
 
 
+def _make_row(path, name, is_dir):
+    return FilePicker._DirectoryItemTableRow(
+        id=str(path),
+        name=name,
+        is_dir=is_dir,
+        size="",
+        modified="",
+        icon="folder" if is_dir else "description",
+    )
+
+
 def create_temp_structure() -> Path:
     """Create temporary directory structure for tests."""
     temp_dir = Path(tempfile.mkdtemp())
@@ -125,7 +136,7 @@ async def test_hidden_files_not_shown_by_default(user: User) -> None:
 
     # List directory
     items = picker._list_directory()
-    names = [item["name"] for item in items]
+    names = [item.name for item in items]
 
     # Hidden file should not appear
     assert ".hidden_file" not in names
@@ -159,7 +170,7 @@ async def test_double_click_on_file(user: User) -> None:
     original_dir = picker.current_directory
 
     # Double-click on file (should select, not navigate)
-    picker._on_item_double_click({"path": file_path, "is_dir": False, "name": "file1.txt"})
+    picker._on_item_double_click(_make_row(file_path, "file1.txt", False))
 
     # Should not change directory
     assert picker.current_directory == original_dir
@@ -176,7 +187,7 @@ async def test_double_click_on_folder(user: User) -> None:
     folder = temp_dir / "folder1"
 
     # Double-click on folder (should navigate)
-    picker._on_item_double_click({"path": folder, "is_dir": True, "name": "folder1"})
+    picker._on_item_double_click(_make_row(folder, "folder1", True))
 
     # Should navigate into folder
     assert picker.current_directory == folder

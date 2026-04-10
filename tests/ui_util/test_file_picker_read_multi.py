@@ -14,6 +14,17 @@ from nicegui.testing import User
 from nicegooey.ui_util.file_picker import FilePicker
 
 
+def _make_row(path, name, is_dir):
+    return FilePicker._DirectoryItemTableRow(
+        id=str(path),
+        name=name,
+        is_dir=is_dir,
+        size="",
+        modified="",
+        icon="folder" if is_dir else "description",
+    )
+
+
 def create_temp_structure() -> Path:
     """Create temporary directory structure for tests."""
     temp_dir = Path(tempfile.mkdtemp())
@@ -67,16 +78,16 @@ async def test_multiple_selection_files(user: User) -> None:
     file3 = temp_dir / "file3.doc"
 
     # Select first file
-    picker._on_item_click({"path": file1, "is_dir": False, "name": "file1.txt"})
+    picker._on_item_click(_make_row(file1, "file1.txt", False))
     assert str(file1) in picker.value
 
     # Select second file (should add to selection)
-    picker._on_item_click({"path": file2, "is_dir": False, "name": "file2.pdf"})
+    picker._on_item_click(_make_row(file2, "file2.pdf", False))
     assert str(file1) in picker.value
     assert str(file2) in picker.value
 
     # Select third file
-    picker._on_item_click({"path": file3, "is_dir": False, "name": "file3.doc"})
+    picker._on_item_click(_make_row(file3, "file3.doc", False))
     assert str(file1) in picker.value
     assert str(file2) in picker.value
     assert str(file3) in picker.value
@@ -95,24 +106,24 @@ async def test_multiple_selection_toggle(user: User) -> None:
     file2 = temp_dir / "file2.pdf"
 
     # Select file1
-    picker._on_item_click({"path": file1, "is_dir": False, "name": "file1.txt"})
+    picker._on_item_click(_make_row(file1, "file1.txt", False))
     assert str(file1) in picker.value
     assert len(picker.value) == 1
 
     # Select file2
-    picker._on_item_click({"path": file2, "is_dir": False, "name": "file2.pdf"})
+    picker._on_item_click(_make_row(file2, "file2.pdf", False))
     assert str(file1) in picker.value
     assert str(file2) in picker.value
     assert len(picker.value) == 2
 
     # Toggle file1 (deselect)
-    picker._on_item_click({"path": file1, "is_dir": False, "name": "file1.txt"})
+    picker._on_item_click(_make_row(file1, "file1.txt", False))
     assert str(file1) not in picker.value
     assert str(file2) in picker.value
     assert len(picker.value) == 1
 
     # Toggle file1 again (select)
-    picker._on_item_click({"path": file1, "is_dir": False, "name": "file1.txt"})
+    picker._on_item_click(_make_row(file1, "file1.txt", False))
     assert str(file1) in picker.value
     assert str(file2) in picker.value
     assert len(picker.value) == 2
@@ -146,7 +157,7 @@ async def test_directory_selection_navigates_in_multi_mode(user: User) -> None:
     temp_dir = picker.current_directory
     folder = temp_dir / "folder1"
 
-    picker._on_item_click({"path": folder, "is_dir": True, "name": "folder1"})
+    picker._on_item_click(_make_row(folder, "folder1", True))
 
     # Should navigate into the directory
     assert picker.current_directory == folder
@@ -164,8 +175,8 @@ async def test_table_selection_syncs_with_value(user: User) -> None:
     file2 = temp_dir / "file2.pdf"
 
     # Select files via _on_item_click
-    picker._on_item_click({"path": file1, "is_dir": False, "name": "file1.txt"})
-    picker._on_item_click({"path": file2, "is_dir": False, "name": "file2.pdf"})
+    picker._on_item_click(_make_row(file1, "file1.txt", False))
+    picker._on_item_click(_make_row(file2, "file2.pdf", False))
 
     # Check that table selection is synced
     table = picker._inner_elements.file_table
@@ -186,7 +197,7 @@ async def test_selection_persists_after_navigation(user: User) -> None:
     file1 = temp_dir / "file1.txt"
 
     # Select a file
-    picker._on_item_click({"path": file1, "is_dir": False, "name": "file1.txt"})
+    picker._on_item_click(_make_row(file1, "file1.txt", False))
     assert str(file1) in picker.value
 
     # Navigate to subfolder
@@ -213,8 +224,8 @@ async def test_complete_multiple_file_selection_workflow(user: User) -> None:
     file1 = temp_dir / "file1.txt"
     file2 = temp_dir / "file2.pdf"
 
-    picker._on_item_click({"path": file1, "is_dir": False, "name": "file1.txt"})
-    picker._on_item_click({"path": file2, "is_dir": False, "name": "file2.pdf"})
+    picker._on_item_click(_make_row(file1, "file1.txt", False))
+    picker._on_item_click(_make_row(file2, "file2.pdf", False))
 
     assert len(picker.value) == 2
     assert str(file1) in picker.value
@@ -224,14 +235,16 @@ async def test_complete_multiple_file_selection_workflow(user: User) -> None:
     folder1 = temp_dir / "folder1"
     picker._navigate_to(folder1)
 
-    # Add file from subfolder
-    file_in_folder = folder1 / "file_in_folder.txt"
-    picker._on_item_click({"path": file_in_folder, "is_dir": False, "name": "file_in_folder.txt"})
-
-    # Should have 3 files selected now
-    assert len(picker.value) == 3
+    # Value from root is preserved after navigation
+    assert len(picker.value) == 2
     assert str(file1) in picker.value
     assert str(file2) in picker.value
+
+    # Select file from subfolder (replaces table-based selection with current directory view)
+    file_in_folder = folder1 / "file_in_folder.txt"
+    picker._on_item_click(_make_row(file_in_folder, "file_in_folder.txt", False))
+
+    # Value now reflects the current table selection (only items visible in the table)
     assert str(file_in_folder) in picker.value
 
 

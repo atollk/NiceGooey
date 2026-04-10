@@ -14,6 +14,17 @@ from nicegui.testing import User
 from nicegooey.ui_util.file_picker import FilePicker
 
 
+def _make_row(path, name, is_dir):
+    return FilePicker._DirectoryItemTableRow(
+        id=str(path),
+        name=name,
+        is_dir=is_dir,
+        size="",
+        modified="",
+        icon="folder" if is_dir else "description",
+    )
+
+
 def create_temp_structure() -> Path:
     """Create temporary directory structure for tests."""
     temp_dir = Path(tempfile.mkdtemp())
@@ -41,7 +52,7 @@ async def test_init_with_file_filter(user: User) -> None:
     await user.open("/")
     await user.should_see("FilePicker - With Filter (.txt, .pdf)")
 
-    picker = user.find(FilePicker).elements.pop()
+    picker = next(p for p in user.find(FilePicker).elements if p.file_filter == [".txt", ".pdf"])
 
     assert picker.file_filter == [".txt", ".pdf"]
 
@@ -54,7 +65,7 @@ async def test_matches_filter_with_extensions(user: User) -> None:
     """Test file matching with extension filter."""
     await user.open("/")
 
-    picker = user.find(FilePicker).elements.pop()
+    picker = next(p for p in user.find(FilePicker).elements if p.file_filter == [".txt", ".pdf"])
     temp_dir = picker.current_directory
 
     # Files that should match
@@ -78,11 +89,11 @@ async def test_list_directory_with_filter(user: User) -> None:
     """Test listing respects file extension filter."""
     await user.open("/")
 
-    picker = user.find(FilePicker).elements.pop()
+    picker = next(p for p in user.find(FilePicker).elements if p.file_filter == [".txt", ".pdf"])
     items = picker._list_directory()
 
     # Get file names (excluding directories)
-    file_names = [item["name"] for item in items if not item["is_dir"]]
+    file_names = [item.name for item in items if not item.is_dir]
 
     # Should only include .txt and .pdf files
     assert "file1.txt" in file_names
@@ -95,7 +106,7 @@ async def test_list_directory_with_filter(user: User) -> None:
     assert "no_extension" not in file_names
 
     # Directories should always be included
-    dir_names = [item["name"] for item in items if item["is_dir"]]
+    dir_names = [item.name for item in items if item.is_dir]
     assert "folder1" in dir_names
 
 
@@ -113,7 +124,7 @@ async def test_file_filter_case_insensitive(user: User) -> None:
 
     # Verify it appears in listing
     items = picker._list_directory()
-    file_names = [item["name"] for item in items if not item["is_dir"]]
+    file_names = [item.name for item in items if not item.is_dir]
     assert "file2.TXT" in file_names
 
 
@@ -172,7 +183,7 @@ async def test_filter_selection_workflow(user: User) -> None:
 
     # Get filtered files
     items = picker._list_directory()
-    file_items = [item for item in items if not item["is_dir"]]
+    file_items = [item for item in items if not item.is_dir]
 
     # Select first filtered file
     if file_items:
@@ -180,7 +191,7 @@ async def test_filter_selection_workflow(user: User) -> None:
         picker._on_item_click(first_file)
 
         # Should be selected
-        assert picker.value == [str(first_file["path"])]
+        assert picker.value == [str(first_file.path)]
 
 
 # Main page with two different filter configurations

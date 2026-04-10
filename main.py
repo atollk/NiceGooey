@@ -3,7 +3,7 @@
 from nicegui import ui
 
 import nicegooey
-from nicegooey.argparse import NgArgumentParser, NiceGooeyConfig
+from nicegooey.argparse import NgArgumentParser
 
 import multiprocessing
 
@@ -15,9 +15,16 @@ def foo(main_func):
 @nicegooey.argparse.nice_gooey_argparse_main(patch_argparse=False)
 def main():
     parser = NgArgumentParser()
-    flag_action = parser.add_argument("--flag", type=str, help="A flag", required=True)
-    flag_action.nicegooey_config = NiceGooeyConfig.ActionConfig(override_type=bool)
-    parser.parse_args()
+    parser.add_argument(
+        "--fruit",
+        choices=["apple", "banana", "orange"],
+        const="orange",
+        default="apple",
+        nargs="?",
+        help="Pick a fruit",
+    )
+    ns = parser.parse_args()
+    print(ns)
 
 
 # needed on linux

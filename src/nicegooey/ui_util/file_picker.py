@@ -250,7 +250,7 @@ class FilePicker(ValidationElement):
     # ---------- Internal Functions for UI Callbacks ----------
 
     def _on_item_click(self, row: _DirectoryItemTableRow) -> None:
-        if row["is_dir"]:
+        if row.is_dir:
             self._navigate_to(row.path)
             return
 
@@ -283,14 +283,15 @@ class FilePicker(ValidationElement):
         self._update_selection_display()
 
     def _on_item_double_click(self, item: _DirectoryItemTableRow) -> None:
-        if item["is_dir"]:
-            self._navigate_to(Path(item["id"]))
+        if item.is_dir:
+            self._navigate_to(item.path)
 
     # TODO specify type
     def _on_table_selection_change(self, e: events.GenericEventArguments) -> None:
         """Handle table selection changes (from checkbox clicks)."""
         # e.args contains the selection event data
         # Extract selected rows from the event
+        raise NotImplementedError
         selected_rows = e.args if isinstance(e.args, list) else []
 
         # Update FilePicker value property
@@ -554,12 +555,7 @@ class FilePicker(ValidationElement):
                         else:
                             row_data = e.args[0] if e.args else {}
 
-                        item_dict = {
-                            "path": Path(row_data["id"]),
-                            "is_dir": row_data["is_dir"],
-                            "name": row_data["name"],
-                        }
-                        self._on_item_click(item_dict)
+                        self._on_item_click(self._DirectoryItemTableRow(**row_data))
 
                     def on_row_double_click(e):
                         # e.args is a list; the row data is typically in args[1] for Quasar events
@@ -568,7 +564,7 @@ class FilePicker(ValidationElement):
                         else:
                             row_data = e.args[0] if e.args else {}
 
-                        self._on_item_double_click(row_data)
+                        self._on_item_double_click(self._DirectoryItemTableRow(**row_data))
 
                     file_table.on("row-click", on_row_click)
                     file_table.on("row-dblclick", on_row_double_click)

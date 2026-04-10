@@ -81,6 +81,12 @@ class NgActionWrapper(argparse.Action):
     def set_nicegooey_config(self, value: NiceGooeyConfig.ActionConfig) -> None:
         self.nicegooey_config = value
 
+    def __hash__(self) -> int:
+        return hash(self.original_action)
+
+    def __eq__(self, other: object) -> bool:
+        return self.original_action == other
+
 
 class NgArgumentGroup(_NgActionsContainer, argparse._ArgumentGroup):
     pass

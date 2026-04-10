@@ -182,11 +182,6 @@ class AppendConstActionUiElement(ListActionUiElement[argparse._AppendConstAction
     ) -> ValidationElement:
         return q_field().mark(cls.BASIC_ELEMENT_MARKER, cls.NARGS_WRAPPER_MARKER)
 
-    @classmethod
-    def _should_render_enable_box(cls, action_info: ActionInfoHelper) -> bool:
-        # Since an append-const action is basically useless if it cannot be en-/disabled, we only don't do that if it is explicitly asked for.
-        return action_info.ng_config().override_required or action_info.action.required
-
 
 class CountActionUiElement(ActionUiElement[argparse.Action]):
     """Count actions are a special case because they differ very much between UI and CLI usage. In the UI, they are just a number widget."""

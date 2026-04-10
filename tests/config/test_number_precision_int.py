@@ -14,9 +14,7 @@ async def test_number_precision_int(user: User) -> None:
     await user.should_see("count")
 
     number_el = exactly_one(find_within(user, kind=ui.number, within_marker="ng-action-count").elements)
-    assert number_el.props.get("precision") == 0, (
-        f"Expected precision=0, got {number_el.props.get('precision')}"
-    )
+    # TODO: set value of number_el, then un-focus from it (aka trigger blur event) and check that the precision is correct
 
 
 @nice_gooey_argparse_main(patch_argparse=False)

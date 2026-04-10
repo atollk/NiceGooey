@@ -14,6 +14,17 @@ from nicegui.testing import User
 from nicegooey.ui_util.file_picker import FilePicker
 
 
+def _make_row(path, name, is_dir):
+    return FilePicker._DirectoryItemTableRow(
+        id=str(path),
+        name=name,
+        is_dir=is_dir,
+        size="",
+        modified="",
+        icon="folder" if is_dir else "description",
+    )
+
+
 def create_temp_structure() -> Path:
     """Create temporary directory structure for tests."""
     temp_dir = Path(tempfile.mkdtemp())
@@ -73,7 +84,7 @@ async def test_write_mode_selection_sets_filename(user: User) -> None:
     file_path = temp_dir / "file1.txt"
 
     # Click on a file
-    picker._on_item_click({"path": file_path, "is_dir": False, "name": "file1.txt"})
+    picker._on_item_click(_make_row(file_path, "file1.txt", False))
 
     # Filename input should be populated
     assert picker._filename_input_value == "file1.txt"
@@ -92,7 +103,7 @@ async def test_write_mode_filename_input_clears_selection(user: User) -> None:
     file_path = temp_dir / "file1.txt"
 
     # First, select a file
-    picker._on_item_click({"path": file_path, "is_dir": False, "name": "file1.txt"})
+    picker._on_item_click(_make_row(file_path, "file1.txt", False))
     assert picker.value == [str(file_path)]
     assert picker._filename_input_value == "file1.txt"
 
@@ -130,7 +141,7 @@ async def test_write_mode_directory_click_navigates(user: User) -> None:
     folder = temp_dir / "folder1"
 
     # Click on directory
-    picker._on_item_click({"path": folder, "is_dir": True, "name": "folder1"})
+    picker._on_item_click(_make_row(folder, "folder1", True))
 
     # Should navigate, not select
     assert picker.current_directory == folder
@@ -167,7 +178,7 @@ async def test_complete_save_file_workflow(user: User) -> None:
 
     # Alternative: select existing file
     file_in_folder = folder1 / "file_in_folder.txt"
-    picker._on_item_click({"path": file_in_folder, "is_dir": False, "name": "file_in_folder.txt"})
+    picker._on_item_click(_make_row(file_in_folder, "file_in_folder.txt", False))
 
     # Filename should be populated
     assert picker._filename_input_value == "file_in_folder.txt"

@@ -5,6 +5,7 @@ from nicegui import ui, ElementFilter
 from nicegui.testing import User
 
 from nicegooey.argparse import NgArgumentParser, nice_gooey_argparse_main
+import os
 
 
 @pytest.mark.nicegui_main_file(__file__)
@@ -39,7 +40,10 @@ def main() -> None:
     parser.add_argument("--name", type=str, help="Your name", required=True, default="Alice")
     parser.parse_args()
 
-    raise RuntimeError("test error — intentional exception")
+    # Due to the way nicegui executes in tests, we need to prevent execution in setup manually.
+    current_test = os.environ["PYTEST_CURRENT_TEST"]
+    if not current_test.endswith("(setup)"):
+        raise RuntimeError("test error — intentional exception")
 
 
 if __name__ == "__main__":

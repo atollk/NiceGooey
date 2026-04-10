@@ -15,6 +15,17 @@ from nicegui.testing import User
 from nicegooey.ui_util.file_picker import FilePicker
 
 
+def _make_row(path, name, is_dir):
+    return FilePicker._DirectoryItemTableRow(
+        id=str(path),
+        name=name,
+        is_dir=is_dir,
+        size="",
+        modified="",
+        icon="folder" if is_dir else "description",
+    )
+
+
 def create_temp_structure() -> Path:
     """Create temporary directory structure for tests."""
     temp_dir = Path(tempfile.mkdtemp())
@@ -167,9 +178,9 @@ async def test_list_directory(user: User) -> None:
 
     assert isinstance(items, list)
     assert len(items) > 0
-    assert all("path" in item for item in items)
-    assert all("name" in item for item in items)
-    assert all("is_dir" in item for item in items)
+    assert all(hasattr(item, "path") for item in items)
+    assert all(hasattr(item, "name") for item in items)
+    assert all(hasattr(item, "is_dir") for item in items)
 
 
 @pytest.mark.nicegui_main_file(__file__)
@@ -179,7 +190,7 @@ async def test_list_directory_filters_hidden_files(user: User) -> None:
 
     picker = user.find(FilePicker).elements.pop()
     items = picker._list_directory()
-    names = [item["name"] for item in items]
+    names = [item.name for item in items]
 
     assert ".hidden_file" not in names
     assert ".hidden_folder" not in names
@@ -194,16 +205,16 @@ async def test_list_directory_sorting(user: User) -> None:
     items = picker._list_directory()
 
     # Find the index of first file
-    first_file_idx = next((i for i, item in enumerate(items) if not item["is_dir"]), None)
+    first_file_idx = next((i for i, item in enumerate(items) if not item.is_dir), None)
 
     if first_file_idx is not None:
         # All items before first_file_idx should be directories
         for i in range(first_file_idx):
-            assert items[i]["is_dir"] is True
+            assert items[i].is_dir is True
 
         # All items after should be files
         for i in range(first_file_idx, len(items)):
-            assert items[i]["is_dir"] is False
+            assert items[i].is_dir is False
 
 
 # ==================== Navigation Tests ====================
@@ -260,7 +271,7 @@ async def test_single_selection_file(user: User) -> None:
     picker = user.find(FilePicker).elements.pop()
     temp_dir = picker.current_directory
     file_path = temp_dir / "file1.txt"
-    picker._on_item_click({"path": file_path, "is_dir": False, "name": "file1.txt"})
+    picker._on_item_click(_make_row(file_path, "file1.txt", False))
 
     assert picker.value == [str(file_path)]
 
@@ -275,8 +286,8 @@ async def test_single_selection_replaces(user: User) -> None:
     file1 = temp_dir / "file1.txt"
     file2 = temp_dir / "file2.pdf"
 
-    picker._on_item_click({"path": file1, "is_dir": False, "name": "file1.txt"})
-    picker._on_item_click({"path": file2, "is_dir": False, "name": "file2.pdf"})
+    picker._on_item_click(_make_row(file1, "file1.txt", False))
+    picker._on_item_click(_make_row(file2, "file2.pdf", False))
 
     assert picker.value == [str(file2)]
 
@@ -289,7 +300,7 @@ async def test_directory_selection_when_not_allowed(user: User) -> None:
     picker = user.find(FilePicker).elements.pop()
     temp_dir = picker.current_directory
     folder = temp_dir / "folder1"
-    picker._on_item_click({"path": folder, "is_dir": True, "name": "folder1"})
+    picker._on_item_click(_make_row(folder, "folder1", True))
 
     # Should navigate into the directory
     assert picker.current_directory == folder
@@ -320,7 +331,7 @@ async def test_item_click_navigates_to_folder(user: User) -> None:
     picker = user.find(FilePicker).elements.pop()
     temp_dir = picker.current_directory
     folder = temp_dir / "folder1"
-    picker._on_item_click({"path": folder, "is_dir": True, "name": "folder1"})
+    picker._on_item_click(_make_row(folder, "folder1", True))
 
     assert picker.current_directory == folder
 
@@ -333,7 +344,7 @@ async def test_item_click_selects_file(user: User) -> None:
     picker = user.find(FilePicker).elements.pop()
     temp_dir = picker.current_directory
     file_path = temp_dir / "file1.txt"
-    picker._on_item_click({"path": file_path, "is_dir": False, "name": "file1.txt"})
+    picker._on_item_click(_make_row(file_path, "file1.txt", False))
 
     assert picker.value == [str(file_path)]
 
@@ -346,7 +357,7 @@ async def test_item_double_click_navigates(user: User) -> None:
     picker = user.find(FilePicker).elements.pop()
     temp_dir = picker.current_directory
     folder = temp_dir / "folder1"
-    picker._on_item_double_click({"path": folder, "is_dir": True, "name": "folder1"})
+    picker._on_item_double_click(_make_row(folder, "folder1", True))
 
     assert picker.current_directory == folder
 
@@ -370,7 +381,7 @@ async def test_refresh_updates_listing(user: User) -> None:
     updated_items = picker._list_directory()
 
     assert len(updated_items) > len(initial_items)
-    assert any(item["name"] == "new_file.txt" for item in updated_items)
+    assert any(item.name == "new_file.txt" for item in updated_items)
 
 
 # ==================== Integration Tests ====================
@@ -391,7 +402,7 @@ async def test_complete_file_selection_workflow(user: User) -> None:
 
     # Select a file in the folder
     file_path = folder1 / "file_in_folder.txt"
-    picker._on_item_click({"path": file_path, "is_dir": False, "name": "file_in_folder.txt"})
+    picker._on_item_click(_make_row(file_path, "file_in_folder.txt", False))
     assert picker.value == [str(file_path)]
 
     # Verify selected path
