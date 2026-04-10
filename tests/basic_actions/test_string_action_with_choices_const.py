@@ -1,7 +1,11 @@
 import pytest
+from nicegui import ui
 from nicegui.testing import User
 
 from nicegooey.argparse import NgArgumentParser, nice_gooey_argparse_main
+from nicegooey.argparse.main import main_instance
+from nicegooey.argparse.ui_classes.actions.action_ui_element import ActionUiElement
+from tests.conftest import exactly_one, find_within
 
 
 @pytest.mark.nicegui_main_file(__file__)
@@ -12,7 +16,19 @@ async def test_string_action_with_choices_const(user: User) -> None:
     await user.should_see("fruit")
     await user.should_see("required_fruit")
 
-    # TODO: the namespace value should be "apple" at first for "fruit" but "orange" for "required-fruit". but the default selection of the element should be "orange" in both cases from the start. when enabling "fruit", the namespace value should then also be "orange".
+    assert main_instance.namespace.fruit == "apple"
+    assert main_instance.namespace.required_fruit == "orange"
+
+    fruit_select = exactly_one(find_within(user, kind=ui.select, within_marker="ng-action-fruit").elements)
+    required_fruit_select = exactly_one(
+        find_within(user, kind=ui.select, within_marker="ng-action-required_fruit").elements
+    )
+    assert fruit_select.value == "orange"
+    assert required_fruit_select.value == "orange"
+
+    enable_checkbox = user.find(kind=ui.checkbox, marker=ActionUiElement.ENABLE_PARAMETER_BOX_MARKER)
+    enable_checkbox.click()
+    assert main_instance.namespace.fruit == "orange"
 
 
 @nice_gooey_argparse_main(patch_argparse=False)

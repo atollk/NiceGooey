@@ -5,13 +5,7 @@ from nicegui.events import Handler, ValueChangeEventArguments
 from typing_extensions import override
 
 
-# required because of https://github.com/zauberzeug/nicegui/issues/5947
-class _ValidationElementWithDefault(ValidationElement):
-    def __init__(self, validation=None, **kwargs) -> None:
-        super().__init__(validation=validation if validation is not None else {}, **kwargs)
-
-
-class ValidationCheckbox(ui.checkbox, _ValidationElementWithDefault):
+class ValidationCheckbox(ValidationElement, ui.checkbox):
     @override
     def __init__(
         self,
@@ -20,4 +14,4 @@ class ValidationCheckbox(ui.checkbox, _ValidationElementWithDefault):
         value: bool | None = DEFAULT_PROPS["model-value"] | False,
         on_change: Handler[ValueChangeEventArguments] | None = None,
     ) -> None:
-        super().__init__(text=text, value=value, on_change=on_change)
+        super().__init__(text=text, value=value, on_change=on_change, validation={})

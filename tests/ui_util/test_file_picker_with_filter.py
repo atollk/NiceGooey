@@ -12,6 +12,7 @@ from nicegui import ui
 from nicegui.testing import User
 
 from nicegooey.ui_util.file_picker import FilePicker
+from tests.conftest import exactly_one
 
 
 def _make_row(path, name, is_dir):
@@ -52,7 +53,7 @@ async def test_init_with_file_filter(user: User) -> None:
     await user.open("/")
     await user.should_see("FilePicker - With Filter (.txt, .pdf)")
 
-    picker = next(p for p in user.find(FilePicker).elements if p.file_filter == [".txt", ".pdf"])
+    picker = exactly_one(user.find(kind=FilePicker, marker="filepicker1").elements)
 
     assert picker.file_filter == [".txt", ".pdf"]
 
@@ -65,7 +66,7 @@ async def test_matches_filter_with_extensions(user: User) -> None:
     """Test file matching with extension filter."""
     await user.open("/")
 
-    picker = next(p for p in user.find(FilePicker).elements if p.file_filter == [".txt", ".pdf"])
+    picker = exactly_one(user.find(kind=FilePicker, marker="filepicker1").elements)
     temp_dir = picker.current_directory
 
     # Files that should match
@@ -89,7 +90,7 @@ async def test_list_directory_with_filter(user: User) -> None:
     """Test listing respects file extension filter."""
     await user.open("/")
 
-    picker = next(p for p in user.find(FilePicker).elements if p.file_filter == [".txt", ".pdf"])
+    picker = exactly_one(user.find(kind=FilePicker, marker="filepicker1").elements)
     items = picker._list_directory()
 
     # Get file names (excluding directories)
@@ -115,12 +116,12 @@ async def test_file_filter_case_insensitive(user: User) -> None:
     """Test file filter is case-insensitive."""
     await user.open("/")
 
-    picker = user.find(FilePicker).elements.pop()
+    picker = exactly_one(user.find(kind=FilePicker, marker="filepicker1").elements)
     temp_dir = picker.current_directory
 
     # Test with uppercase extension
     txt_upper = temp_dir / "file2.TXT"
-    assert picker._path_matches_filter(txt_upper) is True
+    assert picker._path_matches_filter(txt_upper) is True, str(picker.file_filter)
 
     # Verify it appears in listing
     items = picker._list_directory()
@@ -134,7 +135,7 @@ async def test_file_filter_with_and_without_dot(user: User) -> None:
     await user.open("/")
     await user.should_see("FilePicker - Filter Without Dots (jpg, png)")
 
-    picker = user.find(FilePicker).elements.pop()
+    picker = exactly_one(user.find(kind=FilePicker, marker="filepicker2").elements)
 
     # Filter was specified as ["jpg", "png"] without dots
     # Implementation should normalize to [".jpg", ".png"]
@@ -159,7 +160,7 @@ async def test_filter_empty_directory(user: User) -> None:
     """Test filter works with empty directory."""
     await user.open("/")
 
-    picker = user.find(FilePicker).elements.pop()
+    picker = exactly_one(user.find(kind=FilePicker, marker="filepicker1").elements)
     temp_dir = picker.current_directory
 
     # Navigate to empty folder
@@ -179,7 +180,7 @@ async def test_filter_selection_workflow(user: User) -> None:
     """Test selecting files with filter applied."""
     await user.open("/")
 
-    picker = user.find(FilePicker).elements.pop()
+    picker = exactly_one(user.find(kind=FilePicker, marker="filepicker1").elements)
 
     # Get filtered files
     items = picker._list_directory()
@@ -200,7 +201,9 @@ def main() -> None:
     temp_dir = create_temp_structure()
 
     ui.label("FilePicker - With Filter (.txt, .pdf)").classes("text-h4")
-    FilePicker(starting_directory=str(temp_dir), mode="read", file_filter=[".txt", ".pdf"])
+    FilePicker(starting_directory=str(temp_dir), mode="read", file_filter=[".txt", ".pdf"]).mark(
+        "filepicker1"
+    )
 
     ui.separator()
 
@@ -212,7 +215,7 @@ def main() -> None:
     (temp_dir2 / "folder1").mkdir()
 
     ui.label("FilePicker - Filter Without Dots (jpg, png)").classes("text-h4")
-    FilePicker(starting_directory=str(temp_dir2), mode="read", file_filter=["jpg", "png"])
+    FilePicker(starting_directory=str(temp_dir2), mode="read", file_filter=["jpg", "png"]).mark("filepicker2")
 
 
 if __name__ in {"__main__", "__mp_main__"}:

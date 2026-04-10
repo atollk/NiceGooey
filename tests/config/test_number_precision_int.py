@@ -13,8 +13,10 @@ async def test_number_precision_int(user: User) -> None:
     await user.open("/")
     await user.should_see("count")
 
-    number_el = exactly_one(find_within(user, kind=ui.number, within_marker="ng-action-count").elements)
-    # TODO: set value of number_el, then un-focus from it (aka trigger blur event) and check that the precision is correct
+    input_el = find_within(user, kind=ui.number, within_marker="ng-action-count")
+    input_el.type("5.4")
+    input_el.trigger("blur")
+    assert exactly_one(input_el.elements).value == 5
 
 
 @nice_gooey_argparse_main(patch_argparse=False)

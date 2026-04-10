@@ -5,7 +5,6 @@ from collections import defaultdict
 from collections.abc import Awaitable
 from typing import TYPE_CHECKING, Callable, Any, Type
 
-
 if TYPE_CHECKING:
     from nicegooey.argparse.ui_classes.actions.action_ui_element import ActionUiElement
 
@@ -37,7 +36,6 @@ class NiceGooeyConfig:
             everything after the `parse_args` function.
             Most likely, you will either want to open a dialog or navigate to a certain route here. Look at the
             implementation of the default value to get an idea.
-
     """
 
     class DisplayHelp(enum.Enum):

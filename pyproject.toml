@@ -56,4 +56,4 @@ commands = [["python", "-m", "pytest"]]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
-addopts = "-p nicegui.testing.plugin --cov=nicegooey --cov-report markdown:cov.md"
+addopts = "-p nicegui.testing.plugin --cov=nicegooey"

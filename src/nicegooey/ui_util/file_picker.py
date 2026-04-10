@@ -286,12 +286,10 @@ class FilePicker(ValidationElement):
         if item.is_dir:
             self._navigate_to(item.path)
 
-    # TODO specify type
     def _on_table_selection_change(self, e: events.GenericEventArguments) -> None:
         """Handle table selection changes (from checkbox clicks)."""
         # e.args contains the selection event data
         # Extract selected rows from the event
-        raise NotImplementedError
         selected_rows = e.args if isinstance(e.args, list) else []
 
         # Update FilePicker value property
