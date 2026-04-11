@@ -9,18 +9,19 @@ from nicegui.testing import UserInteraction
 from nicegui.testing.user import User
 
 if sys.platform == "win32":
-    import os as _os
+    from nicegui.persistence import file_persistent_dict as _fpd
 
-    _orig_unlink = _os.unlink
+    _orig_clear = _fpd.FilePersistentDict.clear
 
-    def _unlink(path: str | bytes) -> None:
-        try:
-            _orig_unlink(path)
-        except PermissionError:
-            if not str(path).endswith("storage-general.json"):
-                raise
+    def _retrying_clear(self: _fpd.FilePersistentDict) -> None:
+        while True:
+            try:
+                _orig_clear(self)
+                return
+            except PermissionError:
+                pass
 
-    _os.unlink = _unlink
+    _fpd.FilePersistentDict.clear = _retrying_clear  # type: ignore[method-assign]
 
 
 @pytest.fixture(autouse=True)
