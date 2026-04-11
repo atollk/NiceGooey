@@ -28,14 +28,14 @@ class NiceGooeyConfig:
         display_help: Whether and how to display the help text of arguments. The default is to show it as a tooltip.
         require_all_with_default: If True, arguments with a default value are always treated as "required".
             This can be overwritten for individual actions.
-        action_config: A dict that maps parser action objects to `ActionConfig` classes.
-            Use this to set configurations affecting individual actions.
         nicegui_run_kwargs: A dict of keyword-arguments that is passed to ui.run.
         process_arguments_on_submit: A function that will be called when the user presses the "Submit" button.
             It is given another callable as parameter, which executes the logic of the original CLI tool, i.e.
             everything after the `parse_args` function.
             Most likely, you will either want to open a dialog or navigate to a certain route here. Look at the
             implementation of the default value to get an idea.
+        action_config: A dict that maps parser action objects to `ActionConfig` classes.
+            Use this to set configurations affecting individual actions.
     """
 
     class DisplayHelp(enum.Enum):

@@ -85,7 +85,10 @@ class NgActionWrapper(argparse.Action):
         return hash(self.original_action)
 
     def __eq__(self, other: object) -> bool:
-        return self.original_action == other
+        if isinstance(other, NgActionWrapper):
+            return self.original_action == other.original_action
+        else:
+            return self.original_action == other
 
 
 class NgArgumentGroup(_NgActionsContainer, argparse._ArgumentGroup):

@@ -97,7 +97,9 @@ class FilePicker(ValidationElement):
         # Store configuration
         self.mode = self._Mode.from_value(mode)
         self.allow_directory_selection = allow_directory_selection
-        self.allow_multiple = allow_multiple and mode == "read"
+        self.allow_multiple = allow_multiple
+        if self.allow_multiple and self.mode == self._Mode.WRITE:
+            raise ValueError("Cannot combine allow_multiple with write mode")
         self.show_hidden = show_hidden
         self.show_buttons = show_buttons
         self.file_filter = (
@@ -268,12 +270,6 @@ class FilePicker(ValidationElement):
                 self._filename_input_value = row.name
                 if self._inner_elements.filename_input:
                     self._inner_elements.filename_input.set_value(self._filename_input_value)
-
-            # row_to_select = next(
-            #     (row for row in self._inner_elements.file_table.rows if row["id"] == str(row["path"])),
-            #     None,
-            # )
-            # TODO: what happens if we are in write mode and type in a non-existent file?
             row_to_select = row
             if row_to_select:
                 self._set_selected_rows([row_to_select])
@@ -343,7 +339,6 @@ class FilePicker(ValidationElement):
 
     def _set_selected_rows(self, rows: list[_DirectoryItemTableRow]) -> None:
         self._inner_elements.file_table.selected = [asdict(row) for row in rows]
-        self._inner_elements.file_table.update()  # TODO: ?
 
     def _display_error(self, message: str) -> None:
         ui.notify(message, type="negative")
@@ -464,9 +459,8 @@ class FilePicker(ValidationElement):
 
     def _update_file_table(self):
         """Update the file table with current directory contents."""
-        if self._inner_elements.file_table is None:
-            return
-        self._set_selected_rows(self._list_directory())
+        self._inner_elements.file_table.rows = [asdict(row) for row in self._list_directory()]
+        self._inner_elements.file_table.update()
 
         # Restore selection after updating rows
         if self.value:
@@ -590,7 +584,6 @@ class FilePicker(ValidationElement):
                     # Selection display in read mode
                     filename_input = None
                     selected_label = ui.label("No file selected").classes("text-sm flex-grow")
-                    selected_label = selected_label
 
                 ui.space()
 

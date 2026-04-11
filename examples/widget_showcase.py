@@ -15,9 +15,8 @@ def process(parser: argparse.ArgumentParser, args: argparse.Namespace):
 
 @nice_gooey_argparse_main(patch_argparse=False)
 def main(required: bool = False, nargs: int | str | None = None):
-    config = NiceGooeyConfig(root_card_class="w-4xl")
     parser = NgArgumentParser()
-    main_instance.nicegooey_config = config
+    main_instance.config = NiceGooeyConfig(root_card_class="w-4xl")
 
     parser.add_argument("--name", type=str, default="World", help="Your name", required=required, nargs=nargs)
     parser.add_argument("--age", "-a", type=int, help="Your age", required=required, nargs=nargs)

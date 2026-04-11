@@ -2,7 +2,6 @@
 
 import argparse
 
-
 from nicegooey.argparse import NgArgumentParser, nice_gooey_argparse_main, NiceGooeyConfig
 from nicegooey.argparse.ui_classes.actions import action_alternatives
 from nicegooey.argparse.util import parse_quasar_theme_variables
@@ -113,14 +112,6 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def validate(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
-    """Cross-field validation that argparse itself cannot express."""
-    if args.lowpass_enable and args.lowpass is None:
-        parser.error("--lowpass-enable requires --lowpass <FREQ_KHZ> to be specified.")
-    if args.resample_enable and args.resample is None:
-        parser.error("--resample-enable requires --resample <FREQ_KHZ> to be specified.")
-
-
 @nice_gooey_argparse_main(patch_argparse=True)
 def main() -> None:
     parser = build_parser()
@@ -175,7 +166,6 @@ $linear-dark-2: rgba(18, 18, 18, 1) !default;
     """)
 
     args = parser.parse_args()
-    validate(args, parser)
 
     # Pretty-print parsed configuration (no encoding logic — parser demo only)
     print("=" * 52)
@@ -187,14 +177,8 @@ $linear-dark-2: rgba(18, 18, 18, 1) !default;
     print(f"  Bitrate mode : {args.bitrate_mode}")
     print()
     print("  Resampling")
-    print(
-        f"    Lowpass    : {'enabled' if args.lowpass_enable else 'disabled'}"
-        + (f" @ {args.lowpass} kHz" if args.lowpass is not None else "")
-    )
-    print(
-        f"    Resample   : {'enabled' if args.resample_enable else 'disabled'}"
-        + (f" @ {args.resample} kHz" if args.resample is not None else "")
-    )
+    print(f"    Lowpass    :  @ {args.lowpass} kHz" if args.lowpass is not None else "")
+    print(f"    Resample   :  @ {args.resample} kHz" if args.resample is not None else "")
     print("=" * 52)
     print("  (No encoding performed — parser demonstration only)")
 

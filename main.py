@@ -7,6 +7,8 @@ from nicegooey.argparse import NgArgumentParser
 
 import multiprocessing
 
+from nicegooey.ui_util.file_picker import FilePicker
+
 
 def foo(main_func):
     ui.label(text=main_func.__name__)
@@ -31,4 +33,5 @@ def main():
 multiprocessing.set_start_method("spawn", force=True)
 
 if __name__ in {"__main__", "__mp_main__"}:
-    main()
+    picker = FilePicker(mode="write")
+    ui.run()

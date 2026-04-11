@@ -102,7 +102,11 @@ def store_action_file(
             async def pick_file():
                 with ui.dialog() as dialog:
                     with ui.card():
-                        picker = FilePicker(os.getcwd(), mode="write" if mode == "write_file" else "read")
+                        picker = FilePicker(
+                            os.getcwd(),
+                            mode="write" if mode == "write_file" else "read",
+                            allow_directory_selection=mode == "read_file_or_dir",
+                        )
                 picker.on_ok = lambda: dialog.submit(picker.value)
                 picker.on_cancel = lambda: dialog.close()
 
