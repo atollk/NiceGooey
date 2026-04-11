@@ -1,12 +1,12 @@
-from typing import Any, Callable, Self
+from typing import Any, Callable, Self, override
 
 from nicegui import ui
 from nicegui.elements.mixins.validation_element import ValidationElement
 from nicegui.elements.mixins.value_element import ValueElement
 from nicegui.events import Handler, ValueChangeEventArguments
 
-from nicegooey.argparse.ui_classes.util.disableable_div import DisableableDiv
 from nicegooey.argparse.ui_classes.util.misc import clear_value_element
+from nicegooey.ui_util.disableable_div import DisableableDiv
 
 
 class OptionalValidationElement(ValidationElement):
@@ -43,6 +43,7 @@ class OptionalValidationElement(ValidationElement):
             self.checkbox.value = True
             self.inner_element.value = value
 
+    @override
     def on_value_change(self, callback: Handler[ValueChangeEventArguments]) -> Self:
         def wrapped_cb(ev: ValueChangeEventArguments) -> None:
             new_ev = ValueChangeEventArguments(
@@ -54,30 +55,33 @@ class OptionalValidationElement(ValidationElement):
         self.checkbox.on_value_change(wrapped_cb)
         return self
 
+    @override
     def bind_value_to(
         self,
         target_object: Any,
-        target_name: str = "value",
+        target_name: str | tuple[str, ...] = "value",
         forward: Callable[[Any], Any] | None = None,
         *,
         strict: bool | None = None,
     ) -> Self:
         raise NotImplementedError("bind_value_to is not supported by OptionalValueElement")
 
+    @override
     def bind_value_from(
         self,
         target_object: Any,
-        target_name: str = "value",
+        target_name: str | tuple[str, ...] = "value",
         backward: Callable[[Any], Any] | None = None,
         *,
         strict: bool | None = None,
     ) -> Self:
         raise NotImplementedError("bind_value_from is not supported by OptionalValueElement")
 
+    @override
     def bind_value(
         self,
         target_object: Any,
-        target_name: str = "value",
+        target_name: str | tuple[str, ...] = "value",
         *,
         forward: Callable[[Any], Any] | None = None,
         backward: Callable[[Any], Any] | None = None,

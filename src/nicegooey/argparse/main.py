@@ -1,15 +1,18 @@
 import argparse
 import contextlib
 import dataclasses
+import inspect
+import traceback
 from collections import defaultdict
 from typing import TYPE_CHECKING, Any, Callable, Final, Never, override
 
+import nicegui.functions.style
 import nicegui.binding
 import nicegui.helpers
 import nicegui.run
 from nicegui import ui
 
-from .argument_parser import NgArgumentParser, NiceGooeyConfig
+from .argument_parser import NiceGooeyConfig
 from .util import CallbackWriter, logger
 
 if TYPE_CHECKING:
@@ -52,8 +55,9 @@ class NiceGooeyNamespace(argparse.Namespace):
 class NiceGooeyMain:
     # General State
     parent_parser: argparse.ArgumentParser | None
-    main_func: Callable | None
+    main_func: Callable[[], None] | None
     is_running: bool
+    config: NiceGooeyConfig
 
     # Argument values
     namespace: NiceGooeyNamespace
@@ -64,18 +68,12 @@ class NiceGooeyMain:
     def __init__(self):
         self.reset()
 
-    @property
-    def parser_config(self) -> NiceGooeyConfig:
-        if isinstance(self.parent_parser, NgArgumentParser):
-            return self.parent_parser.nicegooey_config
-        else:
-            return NiceGooeyConfig()
-
     def reset(self) -> None:
         """Used to reset the instance during testing."""
         self.parent_parser = None
         self.main_func = None
         self.is_running = False
+        self.config = NiceGooeyConfig()
         self.namespace = NiceGooeyNamespace()
         self.ui_root = None
 
@@ -88,7 +86,7 @@ class NiceGooeyMain:
         else:
             self.is_running = True
             self.parent_parser = argument_parser
-            ui.run(self._ui_root, reload=False)
+            ui.run(self._ui_root, reload=False, **self.config.nicegui_run_kwargs)
 
             if nicegui.helpers.is_pytest():
                 return argparse.Namespace()
@@ -107,8 +105,21 @@ class NiceGooeyMain:
             logger.warning("Validation error")
             return
 
-        # Process result
+        # Process results
         assert self.main_func is not None
+        result = self.config.process_arguments_on_submit(self.main_func)
+        if inspect.isawaitable(result):
+            await result
+
+    @staticmethod
+    async def submit_xterm_dialog(main_func: Callable[[], None]) -> None:
+        """
+        Default (i.e., if not overridden by config) behavior of the "Submit" button.
+        Opens a dialog overlay with a terminal inside it that simulates the CLI execution of the argparse tool.
+
+        :param main_func: The function that executes the original logic of CLI tool after arguments are parsed.
+        """
+        # Process result
         with ui.dialog() as dialog:
             with ui.card() as dialog_card:
                 xterm_options = {"cols": 80}
@@ -120,10 +131,22 @@ class NiceGooeyMain:
                 finish_button = ui.button("Close", on_click=dialog.close)
         finish_button.disable()
         dialog.open()
-        write_terminal: Callable[[str], Any] = terminal.write
-        file_buffer = CallbackWriter(write_terminal)
-        with contextlib.redirect_stdout(file_buffer):
-            await nicegui.run.io_bound(self.main_func)
+
+        def write_to_terminal(data: str) -> None:
+            terminal.write(data.replace("\n", "\r\n"))
+
+        file_buffer = CallbackWriter(write_to_terminal)
+
+        def run_main_func() -> None:
+            try:
+                with contextlib.redirect_stdout(file_buffer):
+                    main_func()
+            except Exception as e:
+                # Switch to red color and print the traceback.
+                file_buffer.write("\x1b[1;31m")
+                traceback.print_exception(e, limit=None, file=file_buffer, chain=True)
+
+        await nicegui.run.io_bound(run_main_func)
         finish_button.enable()
 
     def _ui_root(self) -> None:
@@ -152,6 +175,7 @@ class NiceGooeyMain:
 
         with ui.element().classes("w-full flex items-center justify-center"):
             ui.sub_pages({"/": root, "/license": license})
+        ui.query("#app").classes("bg-primary-100")
 
 
 main_instance: Final[NiceGooeyMain] = NiceGooeyMain()

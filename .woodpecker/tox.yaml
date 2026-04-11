@@ -1,0 +1,18 @@
+when:
+  - event: manual
+  - event: pull_request
+
+steps:
+  - name: tox
+    image: ghcr.io/astral-sh/uv:python3.14-trixie-slim
+    commands:
+      # Install chrome
+      - apt update
+      - apt install extrepo -y
+      - sed -i 's/# - non-free/- non-free/' /etc/extrepo/config.yaml
+      - extrepo enable google_chrome
+      - apt update
+      - apt install google-chrome-stable -y
+      # Run tox
+      - uv tool install tox --with tox-uv
+      - tox

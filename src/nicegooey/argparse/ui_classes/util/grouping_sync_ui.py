@@ -7,8 +7,6 @@ from nicegooey.argparse.main import NiceGooeyNamespace
 from nicegooey.argparse.ui_classes.util.sync_element import SyncElement
 from nicegooey.argparse.ui_classes.util.ui_wrapper import UiWrapper
 
-# TODO: the class names in this file suck
-
 
 class UiWrapperSyncElement(Protocol):
     def deactivate(self) -> None: ...

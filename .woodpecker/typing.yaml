@@ -1,0 +1,9 @@
+when:
+  - event: manual
+  - event: pull_request
+
+steps:
+  - name: typing
+    image: ghcr.io/astral-sh/uv:python3.14-trixie-slim
+    commands:
+      - uv run pyrefly check

@@ -40,7 +40,6 @@ class StoreConstActionUiElement(ActionUiElement[argparse._StoreConstAction]):
         if el is None:
             # The element is required, so we can't do anything.
             return
-        # This logic doesn't matter because the value isn't actually used, but it's fun to have here :)
         if value == self.action.const:
             el.value = True
         elif value == ActionInfoHelper(action=self.action, parser=self._parser).default():
@@ -56,6 +55,14 @@ class StoreConstActionUiElement(ActionUiElement[argparse._StoreConstAction]):
         assert self._parser is not None
         self.action(self._parser, ns, None)
         return getattr(ns, self.action.dest)
+
+    @classmethod
+    def _should_render_enable_box(cls, action_info: ActionInfoHelper) -> bool:
+        # Since a store-const action is basically useless if it cannot be en-/disabled, we only don't do that if it is explicitly asked for.
+        override = action_info.ng_config().override_required
+        if override is not None:
+            return override
+        return action_info.action.required
 
 
 class ListActionUiElement[ActionT: argparse.Action](ActionUiElement[ActionT], abc.ABC):
@@ -184,7 +191,7 @@ class CountActionUiElement(ActionUiElement[argparse.Action]):
 
     _original_action: argparse.Action
 
-    @override
+    # no @override
     def __init__(self, parent: NiceGooeyMain, action: argparse._CountAction) -> None:
         self._original_action = action
         super().__init__(parent, self._create_pseudo_action(action))

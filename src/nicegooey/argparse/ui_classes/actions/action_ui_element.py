@@ -8,14 +8,15 @@ from nicegui import ui, ElementFilter
 from nicegui.elements.mixins.validation_element import ValidationElement
 from nicegui.elements.mixins.value_element import ValueElement
 
-from ..util.disableable_div import DisableableDiv
+from nicegooey.ui_util.disableable_div import DisableableDiv
+from nicegooey.ui_util.max_width_select import MaxWidthSelect
+from nicegooey.ui_util.optional_value_element import OptionalValidationElement
+from nicegooey.ui_util.validation_checkbox import ValidationCheckbox
 from ..util.grouping_sync_ui import UiWrapperSyncElement
-from ..util.max_width_select import MaxWidthSelect
 from ..util.misc import Nargs, add_validation, q_field, clear_value_element
-from ..util.optional_value_element import OptionalValidationElement
 from ..util.sync_element import SyncElement
 from ..util.ui_wrapper import UiWrapper
-from ..util.validation_checkbox import ValidationCheckbox
+from ... import NiceGooeyConfig
 from ...main import NiceGooeyMain, NiceGooeyNamespace, main_instance
 from .action_info_helper import ActionInfoHelper
 
@@ -107,15 +108,15 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
 
     @override
     def render(self) -> ui.element:
-        c = ui.column()
-        with c:
+        with ui.column() as c:
             self._render_action_name()
             self._render_input_element()
         return c
 
     def _render_action_name(self):
-        """Renders the name of this action (i.e. the metavar or dest) and a tooltip with the help text if it exists."""
-        with ui.row(align_items="center"):
+        """Renders the name of this action (i.e. the metavar or dest) and the help text."""
+        name = self._action_info.ng_config().display_name
+        if name is None:
             if isinstance(self.action.metavar, str):
                 name = self.action.metavar
             elif isinstance(self.action.metavar, tuple):
@@ -125,15 +126,30 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
                 name = max(self.action.option_strings, key=len).lstrip(self._parser.prefix_chars)
             else:
                 name = self.action.dest
-            ui.label(name).classes("font-bold")
-            if self.action.help:
-                with ui.button(icon="question_mark") as btn:
-                    # Styling
-                    btn.props("round padding=xs size=xs")
-                    # Non-focusable with keyboard
-                    btn.props("tabindex='-1'")
-                    # Tooltip on hover
-                    ui.tooltip(self.action.help)
+
+        if self.action.help:
+            help_text = self._parser._get_formatter()._expand_help(self.action)
+        else:
+            help_text = ""
+        match self.parser_config.display_help:
+            case NiceGooeyConfig.DisplayHelp.NoDisplay:
+                ui.label(name).classes("font-bold")
+            case NiceGooeyConfig.DisplayHelp.Tooltip:
+                with ui.row(align_items="center"):
+                    ui.label(name).classes("font-bold")
+                    if help_text:
+                        with ui.button(icon="question_mark") as btn:
+                            # Styling
+                            btn.props("round padding=xs size=xs")
+                            # Non-focusable with keyboard
+                            btn.props("tabindex='-1'")
+                            # Tooltip on hover
+                            ui.tooltip(help_text)
+            case NiceGooeyConfig.DisplayHelp.Label:
+                with ui.column():
+                    ui.label(name).classes("font-bold")
+                    if help_text:
+                        ui.label(help_text).classes("text-sm")
 
     def _render_input_element(self) -> None:
         """Creates a ValueElement that represents the input of a single item matching the type of this action."""
@@ -165,7 +181,11 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
         if self.action.choices:
             el = self.inner_elements.basic_element_inner or self.inner_elements.basic_element
             assert hasattr(el, "options")
-            el.value = action_info.action.const or next(iter(el.options))
+            el.value = action_info.action.const
+            if el.value is None or el.value not in el.options:
+                el.value = action_info.action.default
+            if el.value is None or el.value not in el.options:
+                el.value = next(iter(el.options))
 
         # Bind the namespace value to the element which handles the value.
         self.subscribe()
@@ -297,24 +317,34 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
     @classmethod
     def _render_action_single(cls, action_info: ActionInfoHelper) -> ValidationElement:
         """Creates and returns an input element depending on just the type of this action, ignoring 'required' and 'nargs'."""
+        number_precision = action_info.ng_config().number_precision
+
+        def on_non_numeric():
+            if number_precision is not None:
+                raise TypeError("The config option 'number_precision' is set but the action is not numeric.")
+
         basic_element: ValidationElement
         if action_info.action.choices is not None:
+            on_non_numeric()
             choices = list(action_info.action.choices)
             basic_element = MaxWidthSelect(options=choices)
         else:
             action_type = action_info.type()
             match action_type:
                 case builtins.bool:
+                    on_non_numeric()
                     basic_element = ValidationCheckbox()
                 case builtins.int:
-                    basic_element = ui.number(format="%d").props("dense")
-                case builtins.float:
                     basic_element = ui.number(
-                        format="%f",
+                        precision=0 if number_precision is None else number_precision
                     ).props("dense")
+                case builtins.float:
+                    basic_element = ui.number(precision=number_precision).props("dense")
                 case builtins.str:
+                    on_non_numeric()
                     basic_element = ui.input().props("dense")
                 case _:
+                    on_non_numeric()
                     basic_element = ui.input().props("dense")
         basic_element.mark(cls.BASIC_ELEMENT_MARKER)
         return basic_element
@@ -417,14 +447,25 @@ class ActionUiElement[ActionT: argparse.Action](UiWrapper, SyncElement, UiWrappe
         return nargs_value_element
 
     @classmethod
+    def _should_render_enable_box(cls, action_info: ActionInfoHelper) -> bool:
+        is_required = action_info.ng_config().override_required
+        if is_required is None:
+            is_required = False
+            is_required = is_required or action_info.action.required
+            # Unlike the vanilla argparse, we consider positional arguments to be required in all cases.
+            is_required = is_required or len(action_info.action.option_strings) == 0
+            is_required = is_required or (
+                main_instance.config.require_all_with_default and action_info.action.default is not None
+            )
+        return is_required
+
+    @classmethod
     def _render_action_required(
         cls, action_info: ActionInfoHelper, nargs_wrapper_element: Callable[[], ValidationElement]
     ) -> ValidationElement:
         """Creates and returns an element that wraps the nargs wrapper element depending on whether this action is required or optional."""
         with q_field() as required_wrapper:
-            # Unlike the vanilla argparse, we consider positional arguments to be required in all cases.
-            is_required = action_info.action.required or len(action_info.action.option_strings) == 0
-            if is_required:
+            if cls._should_render_enable_box(action_info):
                 nargs_wrapper_element()
             else:
                 with ui.row():

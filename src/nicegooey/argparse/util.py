@@ -1,9 +1,10 @@
 import argparse
 import io
 import logging
+import re
 from typing import Any, Callable, Iterable
 
-from nicegui import binding
+from nicegui import binding, app
 
 logger = logging.getLogger("nicegooey.argparse")
 
@@ -57,3 +58,14 @@ class CallbackWriter(io.StringIO):
     def writelines(self, lines: Iterable[str]) -> None:  # type: ignore[override]
         for line in lines:
             self.write(line)
+
+
+def parse_quasar_theme_variables(scss: str) -> None:
+    """
+    Given a list of SCSS variables, e.g. created by https://www.quasarui.com/tools/theme-builder, parses them and sets
+    them as the nicegui theme.
+    """
+    colors = {}
+    for m in re.finditer(r"^\$(\S+)\s*:\s*(#[0-9a-f]{6});", scss, re.MULTILINE):
+        colors[m.group(1)] = m.group(2)
+    app.colors(**colors)
