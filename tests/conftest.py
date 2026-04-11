@@ -9,26 +9,18 @@ from nicegui.testing import UserInteraction
 from nicegui.testing.user import User
 
 if sys.platform == "win32":
-    # On Windows, nicegui's FilePersistentDict.backup() uses aiofiles (via the asyncio
-    # executor) to write the storage file asynchronously. When the event loop shuts down
-    # the executor before the aiofiles context manager can close its file handle, the
-    # handle stays open and the subsequent unlink() in clear() raises WinError 32.
-    # Fix: override backup() to always write synchronously in the test process so no
-    # async file handle is ever left open.
-    from nicegui import json as _nicegui_json
-    from nicegui.persistence import file_persistent_dict as _fpd
+    import os as _os
 
-    def _sync_backup(self: _fpd.FilePersistentDict) -> None:
-        if not self.filepath.exists():
-            if not self:
-                return
-            self.filepath.parent.mkdir(exist_ok=True)
-        self.filepath.write_text(
-            _nicegui_json.dumps(self, indent=self.indent),
-            encoding=self.encoding,
-        )
+    _orig_unlink = _os.unlink
 
-    _fpd.FilePersistentDict.backup = _sync_backup  # type: ignore[method-assign]
+    def _unlink(path: str | bytes) -> None:
+        try:
+            _orig_unlink(path)
+        except PermissionError:
+            if not str(path).endswith("storage-general.json"):
+                raise
+
+    _os.unlink = _unlink
 
 
 @pytest.fixture(autouse=True)
