@@ -4,14 +4,18 @@ FilePicker Tests - Callbacks
 Tests for FilePicker OK and Cancel button callbacks.
 """
 
+import sys
 import tempfile
 from pathlib import Path
 
 import pytest
 from nicegui import app, ui
 from nicegui.testing import User
-
 from nicegooey.ui_util.file_picker import FilePicker
+
+pytestmark = pytest.mark.skipif(
+    sys.platform == "win32", reason="https://github.com/zauberzeug/nicegui/issues/5949"
+)
 
 
 def _make_row(path, name, is_dir):

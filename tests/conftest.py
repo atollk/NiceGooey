@@ -1,5 +1,4 @@
 import asyncio
-import sys
 from typing import Iterable, overload, Any
 
 import nicegui.context
@@ -7,21 +6,6 @@ import pytest
 from nicegui import ElementFilter
 from nicegui.testing import UserInteraction
 from nicegui.testing.user import User
-
-if sys.platform == "win32":
-    from nicegui.persistence import file_persistent_dict as _fpd
-
-    _orig_clear = _fpd.FilePersistentDict.clear
-
-    def _retrying_clear(self: _fpd.FilePersistentDict) -> None:
-        while True:
-            try:
-                _orig_clear(self)
-                return
-            except PermissionError:
-                pass
-
-    _fpd.FilePersistentDict.clear = _retrying_clear  # type: ignore[method-assign]
 
 
 @pytest.fixture(autouse=True)

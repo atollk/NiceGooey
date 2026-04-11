@@ -1,10 +1,14 @@
 import asyncio
+import sys
 
 import pytest
 from nicegui import app
 from nicegui.testing import User
-
 from nicegooey.argparse import NgArgumentParser, nice_gooey_argparse_main
+
+pytestmark = pytest.mark.skipif(
+    sys.platform == "win32", reason="https://github.com/zauberzeug/nicegui/issues/5949"
+)
 
 
 @pytest.mark.nicegui_main_file(__file__)

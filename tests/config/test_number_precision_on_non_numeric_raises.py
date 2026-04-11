@@ -1,4 +1,5 @@
 import logging
+import sys
 
 import nicegui
 import pytest
@@ -7,6 +8,10 @@ from nicegui.testing import User
 
 import nicegooey.argparse.main
 from nicegooey.argparse import NgArgumentParser, NiceGooeyConfig, nice_gooey_argparse_main
+
+pytestmark = pytest.mark.skipif(
+    sys.platform == "win32", reason="https://github.com/zauberzeug/nicegui/issues/5949"
+)
 
 
 @pytest.mark.nicegui_main_file(__file__)
