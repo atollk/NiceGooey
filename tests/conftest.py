@@ -1,4 +1,5 @@
 import asyncio
+import sys
 from typing import Iterable, overload, Any
 
 import nicegui.context
@@ -6,6 +7,24 @@ import pytest
 from nicegui import ElementFilter
 from nicegui.testing import UserInteraction
 from nicegui.testing.user import User
+
+
+if sys.platform == "win32":
+    # Python 3.14 on Windows: nicegui's storage cleanup races with subprocess teardown,
+    # leaving storage-general.json locked. Patch unlink to retry once after a short delay.
+    import pathlib
+    import time
+
+    _original_unlink = pathlib.Path.unlink
+
+    def _retrying_unlink(self: pathlib.Path, missing_ok: bool = False) -> None:
+        try:
+            _original_unlink(self, missing_ok=missing_ok)
+        except PermissionError:
+            time.sleep(0.5)
+            _original_unlink(self, missing_ok=missing_ok)
+
+    pathlib.Path.unlink = _retrying_unlink  # type: ignore[method-assign]
 
 
 @pytest.fixture(autouse=True)
