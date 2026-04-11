@@ -1,4 +1,5 @@
 import asyncio
+import sys
 from typing import Iterable, overload, Any
 
 import nicegui.context
@@ -6,6 +7,24 @@ import pytest
 from nicegui import ElementFilter
 from nicegui.testing import UserInteraction
 from nicegui.testing.user import User
+
+if sys.platform == "win32":
+    # Python 3.14 on Windows: nicegui's storage teardown races with subprocess shutdown,
+    # leaving storage-general.json locked (WinError 32). Patch only FilePersistentDict.clear
+    # so the retry sleep never runs inside the async event loop.
+    import time
+    from nicegui.persistence import file_persistent_dict as _fpd
+
+    _orig_clear = _fpd.FilePersistentDict.clear
+
+    def _safe_clear(self: _fpd.FilePersistentDict) -> None:
+        try:
+            _orig_clear(self)
+        except PermissionError:
+            time.sleep(0.5)
+            _orig_clear(self)
+
+    _fpd.FilePersistentDict.clear = _safe_clear  # type: ignore[method-assign]
 
 
 @pytest.fixture(autouse=True)
